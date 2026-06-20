@@ -11,6 +11,9 @@ import resumeRoutes from "./routes/resume.routes";
 import jobRoutes from "./routes/job.routes";
 import applicationRoutes from "./routes/application.routes";
 import { errorHandler } from "./middleware/errorHandler.middleware";
+import { prisma } from "@axiom/database";
+import { redis } from "./services/redis.service";
+import { logger } from "./utils/logger";
 
 const app: Application = express();
 const PORT = process.env.API_PORT ?? 4000;
@@ -39,8 +42,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 // ── Health check ────────────────────────────────────────────
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+app.get("/health", async (_req, res) => {
+  const [dbOk, redisOk] = await Promise.all([
+    prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
+    redis.ping(),
+  ]);
+  const status = dbOk && redisOk ? "ok" : "degraded";
+  res.status(status === "ok" ? 200 : 503).json({
+    status,
+    timestamp: new Date().toISOString(),
+    services: { db: dbOk ? "up" : "down", redis: redisOk ? "up" : "down" },
+  });
 });
 
 // ── Routes ──────────────────────────────────────────────────
@@ -53,8 +65,16 @@ app.use("/api/applications", applicationRoutes);
 // ── Error handler ───────────────────────────────────────────
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.warn(`API running on http://localhost:${PORT}`);
+async function bootstrap() {
+  await redis.connect();
+  app.listen(PORT, () => {
+    logger.info(`API running on http://localhost:${PORT}`);
+  });
+}
+
+bootstrap().catch((err) => {
+  logger.error("Failed to start server", err);
+  process.exit(1);
 });
 
 export default app;
