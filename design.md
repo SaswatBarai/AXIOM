@@ -43,7 +43,7 @@ AXIOM's visual design is inspired by **Linear, Vercel, Stripe, Clerk, Notion, an
 | Principle | Implementation | Example |
 |-----------|-----------------|---------|
 | **Spacing** | Large, generous spacing creates breathing room | 24px, 32px, 48px gaps between sections |
-| **Typography** | Clear hierarchy with Geist font family | H1: 36px, H2: 28px, Body: 16px |
+| **Typography** | Clear hierarchy with Poppins font family | H1: 36px, H2: 28px, Body: 16px |
 | **Cards** | Subtle borders, soft shadows, rounded corners | `rounded-2xl` with `border-zinc-800` |
 | **Hover States** | Smooth transitions, subtle scale/color changes | 200ms ease-out, 0.5% scale increase |
 | **Shadows** | Minimal, used for depth not drama | `shadow-md` for cards, `shadow-lg` for modals |
@@ -55,27 +55,27 @@ AXIOM's visual design is inspired by **Linear, Vercel, Stripe, Clerk, Notion, an
 ```
 H1 (Hero/Main Heading)
 ├─ Large, attention-grabbing
-├─ 36px Geist Bold
+├─ 36px Poppins Bold
 └─ Used once per page
 
 H2 (Section Heading)
 ├─ Defines content sections
-├─ 28px Geist Semibold
+├─ 28px Poppins Semibold
 └─ Multiple per page
 
 H3 (Subsection)
 ├─ Nested content grouping
-├─ 22px Geist Semibold
+├─ 22px Poppins Semibold
 └─ Under H2 elements
 
 Body (Default Text)
 ├─ Main content reading
-├─ 16px Geist Regular
+├─ 16px Poppins Regular
 └─ Line height: 1.6 (25.6px)
 
 Caption (Small Text)
 ├─ Helper text, metadata
-├─ 12px Geist Regular
+├─ 12px Poppins Regular
 └─ `text-muted-foreground`
 ```
 
@@ -90,18 +90,21 @@ We use a sophisticated, minimal color palette optimized for dark mode with caref
 #### Primary Colors
 
 ```
-Brand Color (Purple):
-├─ Purple-50:  #FAFAF9
-├─ Purple-100: #F5F3FF
-├─ Purple-500: #A855F7 (Primary Action)
-├─ Purple-600: #9333EA (Hover)
-└─ Purple-700: #7E22CE (Active)
+Brand Color (Black & White):
+├─ Dark Mode:  White (#FFFFFF)
+├─ Light Mode: Black (#09090B)
+└─ Accent:     Zinc-400 (#A1A1AA)
 
-Accent Color (Blue):
-├─ Blue-400:   #60A5FA (CTAs)
-├─ Blue-500:   #3B82F6 (Links)
-├─ Blue-600:   #2563EB (Hover)
-└─ Blue-700:   #1D4ED8 (Active)
+Gray System (Neutral/Zinc):
+├─ Zinc-50:    #F4F4F5 (Light theme foreground / Dark theme primary button)
+├─ Zinc-100:   #F4F4F5
+├─ Zinc-200:   #E4E4E7 (Borders light)
+├─ Zinc-400:   #A1A1AA (Secondary text)
+├─ Zinc-500:   #71717A (Muted text)
+├─ Zinc-700:   #3F3F46 (Medium borders)
+├─ Zinc-800:   #27272A (Borders dark)
+├─ Zinc-900:   #18181B (Card background dark)
+└─ Zinc-950:   #09090B (Page background dark)
 ```
 
 #### Background Colors
@@ -130,9 +133,9 @@ Card Standard:
 └─ Hover:       bg-zinc-800/50 with 2px border-zinc-700
 
 Card Premium/Featured:
-├─ Background:  Gradient (from-purple-500/10 to-transparent)
-├─ Border:      Purple-600/50
-├─ Accent:      Purple-500
+├─ Background:  bg-zinc-900
+├─ Border:      White (border-white) or Zinc-100 (border-zinc-100)
+├─ Accent:      White
 └─ Use case:    Pro plans, featured jobs, highlights
 
 Card Glassmorphism:
@@ -189,10 +192,11 @@ Tailwind Classes:
 
 ```
 Primary Button:
-├─ bg-purple-500
-├─ hover:bg-purple-600
-├─ active:bg-purple-700
-└─ Tailwind: bg-purple-500 hover:bg-purple-600 transition-colors
+├─ bg-zinc-50 (White in dark mode)
+├─ text-zinc-950 (Black in dark mode)
+├─ hover:bg-zinc-200
+├─ active:bg-zinc-300
+└─ Tailwind: bg-zinc-50 text-zinc-950 hover:bg-zinc-200 transition-colors
 
 Secondary Button:
 ├─ bg-zinc-800
@@ -214,7 +218,7 @@ Divider/Border:
 ├─ Subtle:      border-zinc-800
 ├─ Medium:      border-zinc-700
 ├─ Strong:      border-zinc-600
-└─ Branded:     border-purple-500/50
+└─ Branded:     border-zinc-200
 
 Tailwind Classes:
 ├─ border border-zinc-800
@@ -230,10 +234,10 @@ Tailwind Classes:
 | Component | Background | Border | Text | Hover |
 |-----------|-----------|--------|------|-------|
 | Card | `bg-zinc-900` | `border-zinc-800` | `text-white` | `bg-zinc-800/50` |
-| Button (Primary) | `bg-purple-500` | None | `text-white` | `bg-purple-600` |
+| Button (Primary) | `bg-zinc-50` | None | `text-zinc-950` | `bg-zinc-200` |
 | Button (Secondary) | `bg-zinc-800` | `border-zinc-700` | `text-white` | `bg-zinc-700` |
 | Input Field | `bg-zinc-800` | `border-zinc-700` | `text-white` | `border-zinc-600` |
-| Badge | `bg-purple-500/20` | `border-purple-500/50` | `text-purple-400` | `bg-purple-500/30` |
+| Badge | `bg-zinc-800` | `border-zinc-700` | `text-zinc-100` | `bg-zinc-700` |
 | Success Status | `bg-emerald-500/20` | `border-emerald-500/50` | `text-emerald-400` | Same |
 | Warning Status | `bg-amber-500/20` | `border-amber-500/50` | `text-amber-400` | Same |
 | Error Status | `bg-red-500/20` | `border-red-500/50` | `text-red-400` | Same |
@@ -245,11 +249,11 @@ Tailwind Classes:
 
 ### Font Family
 
-**Geist** (from Vercel)
-- Modern, geometric sans-serif
-- Excellent readability
+**Poppins** (from Google Fonts)
+- Modern, geometric/rounded sans-serif
+- High visual appeal, clean and friendly aesthetic
 - Weights: Regular (400), Medium (500), Semibold (600), Bold (700)
-- CSS: `font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`
+- CSS: `font-family: 'Poppins', sans-serif;`
 
 ### Type Scale & Line Height
 
@@ -349,27 +353,14 @@ Mono/Code
 ### Font Loading
 
 ```css
-/* Use system fonts with Geist fallback */
-@import url('https://rsms.me/inter/inter.css');
-
-/* Custom font loading if using Geist CDN */
-@font-face {
-  font-family: 'Geist';
-  src: url('/fonts/geist/Geist-Regular.woff2') format('woff2');
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: 'Geist';
-  src: url('/fonts/geist/Geist-Bold.woff2') format('woff2');
-  font-weight: 700;
-}
+/* Load Poppins from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 /* Tailwind config */
 module.exports = {
   theme: {
     fontFamily: {
-      sans: ['Geist', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+      sans: ['Poppins', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       mono: ['JetBrains Mono', 'monospace'],
     },
   },
@@ -469,150 +460,149 @@ Grid Layout:
 
 ---
 
-## 🧩 Components Specifications
+## 🧩 Components Specifications (Shadcn/ui Component Suite)
+
+All UI elements are constructed from standard **shadcn/ui** components. Developers should import these components directly from the local UI components library (e.g. `@/components/ui/`) and utilize standard properties and variants.
 
 ### Button Variants
 
-**Primary Button** (Call-to-action)
+We utilize the standard `Button` component from `@/components/ui/button`.
+
 ```tsx
-<Button 
-  className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors duration-200"
->
+import { Button } from "@/components/ui/button"
+
+// Primary Button (Call-to-action)
+<Button variant="default" size="lg">
   Get Started
 </Button>
 
-// Tailwind: bg-purple-500 hover:bg-purple-600 text-white 
-//           px-6 py-2.5 rounded-lg font-medium transition-colors
-```
-
-**Secondary Button**
-```tsx
-<Button 
-  variant="outline"
-  className="border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-white"
->
+// Secondary Button
+<Button variant="secondary">
   Learn More
 </Button>
-```
 
-**Ghost Button**
-```tsx
-<Button 
-  variant="ghost"
-  className="text-white hover:bg-zinc-800 transition-colors"
->
-  View Details
+// Outline Button
+<Button variant="outline">
+  Cancel
+</Button>
+
+// Ghost Button
+<Button variant="ghost" size="icon">
+  <Moon />
 </Button>
 ```
 
-**Button Sizes:**
-```
-Small:    px-3 py-1.5 text-xs
-Medium:   px-4 py-2 text-sm (default)
-Large:    px-6 py-2.5 text-base
-XLarge:   px-8 py-3 text-lg (full-width CTAs)
-```
+**Standard Shadcn Button Variants:**
+- `variant="default"`: Primary brand background color (white text on dark background).
+- `variant="secondary"`: Gray/zinc background with foreground text.
+- `variant="outline"`: Transparent background with borders.
+- `variant="ghost"`: Transparent background, background highlight on hover.
+- `variant="destructive"`: Red alert background (Danger actions).
+- `variant="link"`: Underlined text link behavior.
 
 ### Card Component
 
-**Standard Card:**
+We utilize the `Card` suite from `@/components/ui/card` which automatically implements background, borders, and shadows.
+
 ```tsx
-<Card className="border border-zinc-800 bg-zinc-900 rounded-2xl p-6 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all duration-200">
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter
+} from "@/components/ui/card"
+
+// Standard Card
+<Card>
   <CardHeader>
     <CardTitle>Resume Analysis</CardTitle>
+    <CardDescription>Upload your resume to check ATS score</CardDescription>
   </CardHeader>
   <CardContent>
-    {/* Card content */}
+    <p>Card Content goes here...</p>
   </CardContent>
-</Card>
-
-// Tailwind: border border-zinc-800 bg-zinc-900 rounded-2xl p-6
-//           hover:border-zinc-700 hover:bg-zinc-800/50 
-//           transition-all duration-200
-```
-
-**Featured/Premium Card:**
-```tsx
-<Card className="border border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-transparent rounded-2xl p-6 relative overflow-hidden">
-  <div className="absolute inset-0 border border-purple-500/30 rounded-2xl pointer-events-none" />
-  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50 mb-4">
-    Pro
-  </Badge>
-  {/* Card content */}
+  <CardFooter>
+    <Button>Proceed</Button>
+  </CardFooter>
 </Card>
 ```
 
-**Glassmorphism Card (Hero Section):**
+**Premium / Featured Card (Double border effect):**
 ```tsx
-<div className="border border-white/10 bg-white/5 backdrop-blur-md rounded-2xl p-8 shadow-lg">
-  {/* Content with glassmorphism effect */}
-</div>
-
-// Tailwind: border border-white/10 bg-white/5 backdrop-blur-md 
-//           rounded-2xl p-8 shadow-lg
+<Card className="border border-zinc-800 relative overflow-hidden bg-zinc-950/50">
+  <div className="absolute inset-0 border border-zinc-100/10 pointer-events-none rounded-xl" />
+  <CardHeader>
+    <Badge variant="secondary">Pro Plan</Badge>
+    <CardTitle>Enterprise Analytics</CardTitle>
+  </CardHeader>
+</Card>
 ```
 
 ### Badge Component
 
-```tsx
-// Default Badge
-<Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/50 rounded-full px-3 py-1 text-xs font-medium">
-  New Feature
-</Badge>
+We utilize the `Badge` component from `@/components/ui/badge`.
 
-// Status Badge - Success
-<Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50">
+```tsx
+import { Badge } from "@/components/ui/badge"
+
+// Default Badge
+<Badge variant="default">New</Badge>
+
+// Secondary Badge
+<Badge variant="secondary">Pro</Badge>
+
+// Outline Badge
+<Badge variant="outline">Draft</Badge>
+
+// Destructive Badge
+<Badge variant="destructive">Error</Badge>
+
+// Semantic/Status Badges
+<Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20">
   ✓ Verified
 </Badge>
-
-// Status Badge - Warning
-<Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/50">
+<Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20">
   ⚠ Pending
-</Badge>
-
-// Status Badge - Error
-<Badge className="bg-red-500/20 text-red-400 border border-red-500/50">
-  ✕ Rejected
 </Badge>
 ```
 
 ### Input Field
 
+We utilize the `Input` component from `@/components/ui/input` which includes standard padding, border offsets, and focus styles.
+
 ```tsx
-<input 
+import { Input } from "@/components/ui/input"
+
+<Input 
   type="text"
   placeholder="Search jobs, skills..."
-  className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors duration-200"
 />
-
-// Tailwind: bg-zinc-800 border border-zinc-700 rounded-lg 
-//           focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50
 ```
 
 ### Progress Bar
 
-```tsx
-<Progress 
-  value={73} 
-  className="h-2 bg-zinc-800 rounded-full"
-/>
+We utilize the `Progress` component from `@/components/ui/progress`.
 
-// For visual feedback with color:
-<div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
-  <div 
-    className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-500"
-    style={{ width: '73%' }}
-  />
-</div>
+```tsx
+import { Progress } from "@/components/ui/progress"
+
+<Progress value={87} className="w-full" />
 ```
 
 ### Tag Component
 
+Tags are represented as clickable `Badge` items with standard hover/dismiss actions.
+
 ```tsx
-<span className="inline-flex items-center gap-2 px-3 py-1 bg-zinc-800 border border-zinc-700 rounded-full text-xs font-medium text-zinc-300 hover:border-zinc-600 cursor-pointer transition-colors">
+import { Badge } from "@/components/ui/badge"
+import { X } from "lucide-react"
+
+<Badge variant="secondary" className="gap-2 px-3 py-1 cursor-pointer hover:bg-zinc-800">
   React
-  <button className="ml-1 text-zinc-500 hover:text-zinc-300">×</button>
-</span>
+  <X className="w-3 h-3 text-zinc-500 hover:text-zinc-300" onClick={handleRemove} />
+</Badge>
 ```
 
 ---
@@ -653,7 +643,7 @@ XLarge:   px-8 py-3 text-lg (full-width CTAs)
 **Logo & Branding:**
 ```tsx
 <div className="flex items-center gap-2">
-  <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
     <span className="text-white font-bold text-lg">A</span>
   </div>
   <span className="font-bold text-lg text-white hidden sm:inline">AXIOM</span>
@@ -702,7 +692,7 @@ XLarge:   px-8 py-3 text-lg (full-width CTAs)
   </Button>
 
   {/* Get Started Button (CTA) */}
-  <Button className="bg-purple-500 hover:bg-purple-600 text-white px-5 py-2 rounded-lg font-medium text-sm hidden sm:inline-flex">
+  <Button className="bg-primary hover:bg-primary text-white px-5 py-2 rounded-lg font-medium text-sm hidden sm:inline-flex">
     Get Started
   </Button>
 
@@ -739,7 +729,7 @@ XLarge:   px-8 py-3 text-lg (full-width CTAs)
         <Link href="#" className="block text-sm text-zinc-300 hover:text-white">Pricing</Link>
         <Link href="#" className="block text-sm text-zinc-300 hover:text-white">Docs</Link>
         <Separator className="bg-zinc-800" />
-        <Button className="w-full bg-purple-500 hover:bg-purple-600">Get Started</Button>
+        <Button className="w-full bg-primary hover:bg-primary">Get Started</Button>
       </nav>
     </div>
   </SheetContent>
@@ -778,12 +768,9 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 
 **Background Design:**
 ```tsx
-// Animated glow background
-<div className="absolute inset-0 overflow-hidden">
-  {/* Animated gradient orbs */}
-  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-  <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}} />
-  <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}} />
+// Subtle grid background with mask
+<div className="absolute inset-0 overflow-hidden bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
+  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
 </div>
 
 // Position: absolute, z-index: -1, blend-mode: multiply or screen
@@ -794,14 +781,14 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight -tracking-wide">
   <span className="text-white">Your AI Career</span>
   <br />
-  <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+  <span className="bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">
     Copilot
   </span>
 </h1>
 
 // Animated gradient text
 // Tailwind: text-6xl font-bold leading-tight -tracking-wide
-//           bg-gradient-to-r from-purple-400 via-purple-500 to-blue-500
+//           bg-gradient-to-b from-white to-zinc-400
 //           bg-clip-text text-transparent
 ```
 
@@ -817,7 +804,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 **CTA Buttons:**
 ```tsx
 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-  <Button className="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 text-lg rounded-lg font-medium">
+  <Button className="bg-primary hover:bg-primary text-white px-8 py-3 text-lg rounded-lg font-medium">
     Get Started Free
   </Button>
   <Button variant="outline" className="border border-zinc-700 bg-transparent hover:bg-zinc-800 text-white px-8 py-3 text-lg rounded-lg font-medium">
@@ -895,12 +882,12 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 
 **Feature Cards:**
 ```tsx
-<Card className="group border border-zinc-800 bg-zinc-900 rounded-2xl p-8 hover:border-purple-500/50 hover:bg-zinc-800/50 transition-all duration-300">
+<Card className="group border border-zinc-800 bg-zinc-900 rounded-2xl p-8 hover:border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300">
   <div className="flex items-start gap-4 mb-6">
     <div className="flex-shrink-0">
-      <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-purple-500/20 group-hover:bg-purple-500/30 transition-colors">
+      <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-zinc-800 group-hover:bg-zinc-700 transition-colors">
         {/* Icon */}
-        <Zap className="h-6 w-6 text-purple-400" />
+        <Zap className="h-6 w-6 text-zinc-300" />
       </div>
     </div>
   </div>
@@ -910,14 +897,14 @@ Landing page inspiration: **Linear, Vercel, Stripe**
     Get instant ATS scores, keyword analysis, and optimization recommendations.
   </p>
   
-  <div className="flex items-center text-purple-400 hover:text-purple-300 transition-colors cursor-pointer text-sm font-medium">
+  <div className="flex items-center text-zinc-300 hover:text-white transition-colors cursor-pointer text-sm font-medium">
     Learn more
     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
   </div>
 </Card>
 
 // Tailwind: group border border-zinc-800 bg-zinc-900 rounded-2xl p-8
-//           hover:border-purple-500/50 hover:bg-zinc-800/50 
+//           hover:border-zinc-800 hover:bg-zinc-800/50 
 //           transition-all duration-300
 ```
 
@@ -961,7 +948,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
     </p>
   </div>
 
-  <Card className="border-2 border-dashed border-zinc-700 bg-zinc-900/50 rounded-2xl p-12 hover:border-purple-500/50 transition-colors cursor-pointer">
+  <Card className="border-2 border-dashed border-zinc-700 bg-zinc-900/50 rounded-2xl p-12 hover:border-zinc-800 transition-colors cursor-pointer">
     <div className="flex flex-col items-center justify-center text-center">
       <Upload className="w-12 h-12 text-zinc-500 mb-4" />
       <p className="text-white font-semibold mb-2">Drag & drop your resume</p>
@@ -991,7 +978,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 ```tsx
 <div className="space-y-6">
   {/* ATS Score Card */}
-  <Card className="border border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-transparent rounded-2xl p-8">
+  <Card className="border border-zinc-800 bg-gradient-to-br from-zinc-900/10 to-transparent rounded-2xl p-8">
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-xl font-semibold text-white">ATS Score</h3>
       <Badge className="bg-emerald-500/20 text-emerald-400">Excellent</Badge>
@@ -1047,7 +1034,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 </div>
 
 // Circular progress chart: SVG-based visualization
-// Card with gradient: Purple brand color
+// Card with gradient: Muted black and white style
 // Split cards: Strengths (green) vs Weaknesses (amber)
 ```
 
@@ -1081,10 +1068,10 @@ Landing page inspiration: **Linear, Vercel, Stripe**
   {/* Main Search Input */}
   <div className="relative">
     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-500" />
-    <input
+    <Input
       type="text"
       placeholder="Search job titles, companies, skills..."
-      className="w-full pl-12 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
+      className="w-full pl-12"
     />
   </div>
 
@@ -1154,7 +1141,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
               <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white">
                 <Heart className="w-4 h-4" />
               </Button>
-              <Button size="sm" className="bg-purple-500 hover:bg-purple-600">
+              <Button size="sm" className="bg-primary hover:bg-primary">
                 View
               </Button>
             </div>
@@ -1228,14 +1215,14 @@ Landing page inspiration: **Linear, Vercel, Stripe**
   <ScrollArea className="flex-1 p-6 space-y-4">
     {/* User message */}
     <div className="flex justify-end">
-      <div className="bg-purple-600 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-xs text-sm">
+      <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-none px-4 py-2 max-w-xs text-sm">
         How do I become a data engineer?
       </div>
     </div>
 
     {/* AI response with animation */}
     <div className="flex justify-start">
-      <div className="bg-zinc-800 text-white rounded-2xl rounded-tl-none px-4 py-2 max-w-xs text-sm space-y-2">
+      <div className="bg-zinc-800 text-zinc-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-xs text-sm space-y-2">
         <p>To become a data engineer, focus on:</p>
         <ul className="text-xs space-y-1 ml-4">
           <li>• SQL & database design</li>
@@ -1259,12 +1246,12 @@ Landing page inspiration: **Linear, Vercel, Stripe**
   {/* Chat input */}
   <div className="border-t border-zinc-800 px-6 py-4">
     <div className="flex gap-2">
-      <input
+      <Input
         type="text"
         placeholder="Ask anything..."
-        className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:border-purple-500"
+        className="flex-1"
       />
-      <Button size="sm" className="bg-purple-500 hover:bg-purple-600">
+      <Button size="sm" className="bg-primary hover:bg-primary">
         <Send className="w-4 h-4" />
       </Button>
     </div>
@@ -1273,7 +1260,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 
 // ScrollArea: Framer Motion for smooth scrolling
 // Typing animation: Three bouncing dots
-// Message bubbles: User (purple, right) vs AI (zinc, left)
+// Message bubbles: User (primary/white/foreground, right) vs AI (zinc, left)
 ```
 
 **Example Prompts:**
@@ -1287,12 +1274,13 @@ Landing page inspiration: **Linear, Vercel, Stripe**
       "How do I prepare for interviews?",
       "What's my match for this role?"
     ].map((prompt, idx) => (
-      <button
+      <Button
         key={idx}
-        className="text-left px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-300 hover:bg-zinc-700 hover:border-zinc-600 transition-colors cursor-pointer"
+        variant="outline"
+        className="text-left justify-start px-4 py-6 bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-sm text-zinc-300 transition-colors"
       >
         {prompt}
-      </button>
+      </Button>
     ))}
   </div>
 </div>
@@ -1353,13 +1341,13 @@ Landing page inspiration: **Linear, Vercel, Stripe**
     <XAxis dataKey="month" stroke="#71717a" />
     <YAxis stroke="#71717a" />
     <Tooltip contentStyle={{backgroundColor: '#27272a', border: '1px solid #3f3f46'}} />
-    <Line type="monotone" dataKey="applications" stroke="#a855f7" strokeWidth={2} dot={false} />
+    <Line type="monotone" dataKey="applications" stroke="#ffffff" strokeWidth={2} dot={false} />
   </LineChart>
 </Card>
 
 // Recharts: Customized with dark theme colors
 // Grid: Subtle 27272a color
-// Line: Purple brand color
+// Line: White primary line
 ```
 
 ---
@@ -1419,9 +1407,9 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 </Card>
 
 {/* Pro Plan (Highlighted) */}
-<Card className="border-2 border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-transparent rounded-2xl p-8 relative overflow-hidden scale-105">
+<Card className="border-2 border-zinc-800 bg-gradient-to-br from-zinc-900/10 to-transparent rounded-2xl p-8 relative overflow-hidden scale-105">
   <div className="absolute top-6 right-6">
-    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">
+    <Badge className="bg-zinc-800 text-zinc-300 border-zinc-800">
       Most Popular
     </Badge>
   </div>
@@ -1433,7 +1421,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
     <p className="text-4xl font-bold text-white">$9<span className="text-lg text-zinc-400">/mo</span></p>
   </div>
 
-  <Button className="w-full mb-8 bg-purple-500 hover:bg-purple-600">
+  <Button className="w-full mb-8 bg-primary hover:bg-primary">
     Start Free Trial
   </Button>
 
@@ -1457,7 +1445,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
   </Button>
 </Card>
 
-// Pro plan: Border-2 with purple, scale-105 for emphasis
+// Pro plan: Border-2 with zinc-200, scale-105 for emphasis
 // Most Popular badge: Positioned absolutely at top right
 // Feature list: Check/X marks with color coding
 ```
@@ -1484,7 +1472,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
 **Accordion Items:**
 ```tsx
 <AccordionItem value="item-1" className="border border-zinc-800 rounded-2xl px-6 overflow-hidden hover:border-zinc-700 transition-colors">
-  <AccordionTrigger className="py-4 text-white hover:text-purple-400 transition-colors">
+  <AccordionTrigger className="py-4 text-white hover:text-zinc-300 transition-colors">
     <span className="text-left text-base font-medium">How accurate is the ATS score?</span>
   </AccordionTrigger>
   <AccordionContent className="text-zinc-300 pb-4">
@@ -1526,7 +1514,7 @@ Landing page inspiration: **Linear, Vercel, Stripe**
   {/* Column 1: Logo & Branding */}
   <div>
     <div className="flex items-center gap-2 mb-6">
-      <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
         <span className="text-white font-bold">A</span>
       </div>
       <span className="font-bold text-white">AXIOM</span>
@@ -1596,9 +1584,9 @@ Landing page inspiration: **Linear, Vercel, Stripe**
     <input
       type="email"
       placeholder="your@email.com"
-      className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:border-purple-500"
+      className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:border-zinc-800"
     />
-    <Button size="sm" className="bg-purple-500 hover:bg-purple-600">
+    <Button size="sm" className="bg-primary hover:bg-primary">
       Subscribe
     </Button>
   </div>
@@ -1675,11 +1663,10 @@ All auth pages follow this structure:
       <Label htmlFor="email" className="text-sm font-medium text-white">
         Email Address
       </Label>
-      <input
+      <Input
         id="email"
         type="email"
         placeholder="you@example.com"
-        className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
       />
     </div>
 
@@ -1687,25 +1674,24 @@ All auth pages follow this structure:
       <Label htmlFor="password" className="text-sm font-medium text-white">
         Password
       </Label>
-      <input
+      <Input
         id="password"
         type="password"
         placeholder="••••••••"
-        className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
       />
     </div>
 
     <div className="flex items-center justify-between pt-2">
       <label className="flex items-center gap-2">
-        <input type="checkbox" className="w-4 h-4 rounded border-zinc-700" />
+        <Checkbox />
         <span className="text-sm text-zinc-300">Remember me</span>
       </label>
-      <Link href="/auth/forgot-password" className="text-sm text-purple-400 hover:text-purple-300">
+      <Link href="/auth/forgot-password" className="text-sm text-zinc-300 hover:text-white">
         Forgot password?
       </Link>
     </div>
 
-    <Button type="submit" className="w-full bg-purple-500 hover:bg-purple-600 text-white py-2.5 rounded-lg font-medium">
+    <Button type="submit" className="w-full bg-primary hover:bg-primary text-white py-2.5 rounded-lg font-medium">
       Sign In
     </Button>
   </form>
@@ -1722,7 +1708,7 @@ All auth pages follow this structure:
   {/* Link to signup */}
   <p className="text-center text-sm text-zinc-400">
     Don't have an account?{' '}
-    <Link href="/auth/signup" className="text-purple-400 hover:text-purple-300 font-medium">
+    <Link href="/auth/signup" className="text-zinc-300 hover:text-white font-medium">
       Sign up
     </Link>
   </p>
@@ -1730,7 +1716,7 @@ All auth pages follow this structure:
 
 // Form spacing: space-y-5 between fields
 // Button: Full width, large padding
-// Links: Purple accent color
+// Links: Zinc accent color
 ```
 
 ### Sign Up Page
@@ -1755,12 +1741,7 @@ All auth pages follow this structure:
       <Label htmlFor="name" className="text-sm font-medium text-white">
         Full Name
       </Label>
-      <input
-        id="name"
-        type="text"
-        placeholder="John Doe"
-        className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg"
-      />
+      <Input id="name" type="text" placeholder="John Doe" />
     </div>
 
     {/* Email field */}
@@ -1768,12 +1749,7 @@ All auth pages follow this structure:
       <Label htmlFor="email" className="text-sm font-medium text-white">
         Email Address
       </Label>
-      <input
-        id="email"
-        type="email"
-        placeholder="you@example.com"
-        className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg"
-      />
+      <Input id="email" type="email" placeholder="you@example.com" />
       <p className="text-xs text-zinc-500">We'll send a verification email</p>
     </div>
 
@@ -1782,12 +1758,7 @@ All auth pages follow this structure:
       <Label htmlFor="password" className="text-sm font-medium text-white">
         Password
       </Label>
-      <input
-        id="password"
-        type="password"
-        placeholder="••••••••"
-        className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg"
-      />
+      <Input id="password" type="password" placeholder="••••••••" />
       <ul className="text-xs text-zinc-500 space-y-1 mt-2">
         <li className="flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-500" /> At least 8 characters
@@ -1807,17 +1778,17 @@ All auth pages follow this structure:
       />
       <label htmlFor="terms" className="text-xs text-zinc-400">
         I agree to the{' '}
-        <Link href="#" className="text-purple-400 hover:text-purple-300">
+        <Link href="#" className="text-zinc-300 hover:text-white">
           Terms of Service
         </Link>
         {' '}and{' '}
-        <Link href="#" className="text-purple-400 hover:text-purple-300">
+        <Link href="#" className="text-zinc-300 hover:text-white">
           Privacy Policy
         </Link>
       </label>
     </div>
 
-    <Button type="submit" className="w-full bg-purple-500 hover:bg-purple-600 text-white py-2.5 rounded-lg font-medium">
+    <Button type="submit" className="w-full bg-primary hover:bg-primary text-white py-2.5 rounded-lg font-medium">
       Create Account
     </Button>
   </form>
@@ -1831,7 +1802,7 @@ All auth pages follow this structure:
   {/* Link to login */}
   <p className="text-center text-sm text-zinc-400">
     Already have an account?{' '}
-    <Link href="/auth/login" className="text-purple-400 hover:text-purple-300 font-medium">
+    <Link href="/auth/login" className="text-zinc-300 hover:text-white font-medium">
       Sign in
     </Link>
   </p>
@@ -1859,22 +1830,17 @@ All auth pages follow this structure:
   <form className="space-y-5">
     <div className="space-y-2">
       <Label htmlFor="email">Email Address</Label>
-      <input
-        id="email"
-        type="email"
-        placeholder="you@example.com"
-        className="w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg"
-      />
+      <Input id="email" type="email" placeholder="you@example.com" />
     </div>
 
-    <Button type="submit" className="w-full bg-purple-500 hover:bg-purple-600">
+    <Button type="submit" className="w-full bg-primary hover:bg-primary">
       Send Reset Link
     </Button>
   </form>
 
   <p className="text-center text-sm text-zinc-400">
     Remember your password?{' '}
-    <Link href="/auth/login" className="text-purple-400 hover:text-purple-300 font-medium">
+    <Link href="/auth/login" className="text-zinc-300 hover:text-white font-medium">
       Back to login
     </Link>
   </p>
@@ -1903,12 +1869,11 @@ All auth pages follow this structure:
     {/* OTP Input Fields */}
     <div className="flex gap-2 justify-center">
       {[0, 1, 2, 3, 4, 5].map(index => (
-        <input
+        <Input
           key={index}
           type="text"
-          maxLength="1"
-          inputMode="numeric"
-          className="w-12 h-12 text-center font-bold text-lg bg-zinc-800 border border-zinc-700 rounded-lg focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
+          maxLength={1}
+          className="w-12 h-12 text-center font-bold text-lg"
           placeholder="0"
         />
       ))}
@@ -1916,12 +1881,12 @@ All auth pages follow this structure:
 
     <div className="text-center text-sm text-zinc-400">
       <p>Didn't receive the code?</p>
-      <button className="text-purple-400 hover:text-purple-300 font-medium">
+      <button className="text-zinc-300 hover:text-white font-medium">
         Resend in 30s
       </button>
     </div>
 
-    <Button type="submit" className="w-full bg-purple-500 hover:bg-purple-600">
+    <Button type="submit" className="w-full bg-primary hover:bg-primary">
       Verify Email
     </Button>
   </form>
@@ -1962,7 +1927,7 @@ All auth pages follow this structure:
 <div className="fixed left-0 top-0 h-screen w-64 border-r border-zinc-800 bg-zinc-900 p-6 flex flex-col overflow-auto">
   {/* Logo */}
   <div className="flex items-center gap-2 mb-8">
-    <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
       <span className="text-white font-bold">A</span>
     </div>
     <span className="font-bold text-lg text-white">AXIOM</span>
@@ -2009,7 +1974,7 @@ All auth pages follow this structure:
 // Sidebar: Fixed width (w-64 = 256px), fixed positioning
 // Menu items: Flex layout with icons + labels
 // Hover state: bg-zinc-800 background
-// Active state: Add bg-purple-500/20 and text-purple-400
+// Active state: Add bg-zinc-800 and text-zinc-300
 ```
 
 ### Top Navbar
@@ -2038,7 +2003,7 @@ All auth pages follow this structure:
       <input
         type="text"
         placeholder="Quick search..."
-        className="pl-10 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 w-48 focus:border-purple-500"
+        className="pl-10 w-48"
       />
     </div>
 
@@ -2125,8 +2090,8 @@ All auth pages follow this structure:
       <p className="text-sm text-zinc-400 mb-1">Applications</p>
       <p className="text-3xl font-bold text-white">127</p>
     </div>
-    <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-      <Briefcase className="w-6 h-6 text-purple-400" />
+    <div className="w-12 h-12 bg-zinc-800 rounded-lg flex items-center justify-center">
+      <Briefcase className="w-6 h-6 text-zinc-300" />
     </div>
   </div>
   <p className="text-xs text-emerald-400 mt-4">
@@ -2168,14 +2133,14 @@ All auth pages follow this structure:
 
 **Upload Section:**
 ```tsx
-<Card className="border-2 border-dashed border-zinc-700 bg-zinc-900/50 rounded-2xl p-12 hover:border-purple-500/50 transition-colors">
+<Card className="border-2 border-dashed border-zinc-700 bg-zinc-900/50 rounded-2xl p-12 hover:border-zinc-800 transition-colors">
   <div className="flex flex-col items-center justify-center text-center">
     <Upload className="w-12 h-12 text-zinc-500 mb-4" />
     <h3 className="text-lg font-semibold text-white mb-2">Upload a Resume</h3>
     <p className="text-sm text-zinc-400 mb-6">
       Supported formats: PDF, DOCX (max 5MB)
     </p>
-    <Button className="bg-purple-500 hover:bg-purple-600">
+    <Button className="bg-primary hover:bg-primary">
       Select File
     </Button>
   </div>
@@ -2192,7 +2157,7 @@ All auth pages follow this structure:
   <div className="flex items-start justify-between mb-4">
     <div className="flex items-center gap-4">
       <div className="w-12 h-12 bg-zinc-800 rounded-lg flex items-center justify-center">
-        <FileText className="w-6 h-6 text-purple-400" />
+        <FileText className="w-6 h-6 text-zinc-300" />
       </div>
       <div>
         <h3 className="font-semibold text-white">Frontend_Resume_2026</h3>
@@ -2213,10 +2178,10 @@ All auth pages follow this structure:
 
   <Tabs defaultValue="analytics" className="w-full">
     <TabsList className="bg-zinc-800 border-b border-zinc-700 w-full justify-start px-0 h-auto rounded-none">
-      <TabsTrigger value="analytics" className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500">
+      <TabsTrigger value="analytics" className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-800">
         ATS Score
       </TabsTrigger>
-      <TabsTrigger value="skills" className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500">
+      <TabsTrigger value="skills" className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-800">
         Skills
       </TabsTrigger>
     </TabsList>
@@ -2232,8 +2197,8 @@ All auth pages follow this structure:
   </Tabs>
 </Card>
 
-// File icon: Purple colored
-// Tabs: Underline style with purple active state
+// File icon: Neutral zinc colored
+// Tabs: Underline style with active border matching primary
 // More menu: Three-dot dropdown
 ```
 
@@ -2266,11 +2231,7 @@ All auth pages follow this structure:
     {/* Job Title */}
     <div className="space-y-3">
       <Label className="text-sm font-medium text-white">Job Title</Label>
-      <input
-        type="text"
-        placeholder="Backend Engineer..."
-        className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white"
-      />
+      <Input type="text" placeholder="Backend Engineer..." />
     </div>
 
     {/* Location */}
@@ -2294,7 +2255,7 @@ All auth pages follow this structure:
       <div className="space-y-2">
         {['Entry', 'Mid', 'Senior'].map(level => (
           <label key={level} className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" className="w-4 h-4 rounded border-zinc-700" />
+            <Checkbox />
             <span className="text-sm text-zinc-300">{level} Level</span>
           </label>
         ))}
@@ -2320,7 +2281,7 @@ All auth pages follow this structure:
 
     <Separator className="bg-zinc-800" />
 
-    <Button className="w-full bg-purple-500 hover:bg-purple-600">
+    <Button className="w-full bg-primary hover:bg-primary">
       Apply Filters
     </Button>
     <Button variant="outline" className="w-full border-zinc-700">
@@ -2340,7 +2301,7 @@ All auth pages follow this structure:
   {jobs.map(job => (
     <Card
       key={job.id}
-      className="border border-zinc-800 bg-zinc-900 rounded-2xl p-6 hover:border-purple-500/50 hover:bg-zinc-800/50 transition-all cursor-pointer"
+      className="border border-zinc-800 bg-zinc-900 rounded-2xl p-6 hover:border-zinc-800 hover:bg-zinc-800/50 transition-all cursor-pointer"
       onClick={() => openJobDetailSheet(job.id)}
     >
       <div className="flex items-start justify-between mb-4">
@@ -2369,7 +2330,7 @@ All auth pages follow this structure:
 
       <div className="flex flex-wrap gap-2 mb-4">
         {job.skills.slice(0, 3).map(skill => (
-          <Badge key={skill} className="bg-purple-500/20 text-purple-400 border-purple-500/50">
+          <Badge key={skill} className="bg-zinc-800 text-zinc-300 border-zinc-800">
             {skill}
           </Badge>
         ))}
@@ -2430,7 +2391,7 @@ All auth pages follow this structure:
   {/* Column header */}
   <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
     <h3 className="font-semibold text-white flex items-center gap-2">
-      <div className="w-3 h-3 rounded-full bg-purple-500" />
+      <div className="w-3 h-3 rounded-full bg-primary" />
       Applied
     </h3>
     <Badge className="bg-zinc-800 text-zinc-300">{columnSize}</Badge>
@@ -2506,26 +2467,28 @@ All auth pages follow this structure:
 <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
   <div className={`max-w-md space-y-2 ${
     msg.role === 'user'
-      ? 'bg-purple-600 text-white rounded-2xl rounded-tr-none'
-      : 'bg-zinc-800 text-white rounded-2xl rounded-tl-none'
+      ? 'bg-primary text-primary-foreground rounded-2xl rounded-tr-none'
+      : 'bg-zinc-800 text-zinc-100 rounded-2xl rounded-tl-none'
   } px-4 py-3`}>
     <p className="text-sm leading-relaxed">{msg.content}</p>
     {msg.actions && (
-      <div className="space-y-2 mt-3 pt-3 border-t border-white/20">
+      <div className="space-y-2 mt-3 pt-3 border-t border-zinc-700">
         {msg.actions.map(action => (
-          <button
+          <Button
             key={action.id}
-            className="block w-full text-left text-xs px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+            variant="outline"
+            size="sm"
+            className="w-full text-left justify-start text-xs bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-zinc-300"
           >
             {action.label}
-          </button>
+          </Button>
         ))}
       </div>
     )}
   </div>
 </div>
 
-// User messages: Purple, right-aligned, rounded-tr-none
+// User messages: Primary (black/white), right-aligned, rounded-tr-none
 // AI messages: Zinc, left-aligned, rounded-tl-none
 // Action buttons: Small, full-width in message
 ```
@@ -2584,7 +2547,7 @@ All auth pages follow this structure:
     <Line
       type="monotone"
       dataKey="count"
-      stroke="#a855f7"
+      stroke="#ffffff"
       strokeWidth={2}
       dot={false}
       isAnimationActive={true}
@@ -2638,7 +2601,7 @@ All auth pages follow this structure:
         <AvatarFallback>JD</AvatarFallback>
       </Avatar>
       <div className="space-y-2">
-        <Button className="bg-purple-500 hover:bg-purple-600">Upload Photo</Button>
+        <Button className="bg-primary hover:bg-primary">Upload Photo</Button>
         <p className="text-xs text-zinc-400">JPG, PNG, GIF (max 2MB)</p>
       </div>
     </div>
@@ -2649,17 +2612,17 @@ All auth pages follow this structure:
   <form className="space-y-4">
     <div>
       <Label htmlFor="fullname" className="text-white">Full Name</Label>
-      <input id="fullname" defaultValue="John Doe" className="w-full mt-2 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg" />
+      <Input id="fullname" defaultValue="John Doe" className="mt-2" />
     </div>
     <div>
       <Label htmlFor="email" className="text-white">Email Address</Label>
-      <input id="email" defaultValue="john@example.com" className="w-full mt-2 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg" disabled />
+      <Input id="email" defaultValue="john@example.com" className="mt-2" disabled />
     </div>
     <div>
       <Label htmlFor="bio" className="text-white">Bio</Label>
-      <textarea id="bio" placeholder="Tell us about yourself..." rows={4} className="w-full mt-2 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg" />
+      <Textarea id="bio" placeholder="Tell us about yourself..." className="mt-2" />
     </div>
-    <Button className="bg-purple-500 hover:bg-purple-600">Save Changes</Button>
+    <Button className="bg-primary hover:bg-primary">Save Changes</Button>
   </form>
 </TabsContent>
 
@@ -2723,10 +2686,10 @@ export const ContainerVariants = {
 **Button Hover Effect:**
 ```tsx
 <motion.button
-  whileHover={{ scale: 1.02, backgroundColor: '#9333EA' }}
+  whileHover={{ scale: 1.02, backgroundColor: '#ffffff' }}
   whileTap={{ scale: 0.98 }}
   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-  className="px-6 py-2.5 bg-purple-500 rounded-lg font-medium"
+  className="px-6 py-2.5 bg-primary rounded-lg font-medium"
 >
   Click Me
 </motion.button>
@@ -2740,7 +2703,7 @@ export const ContainerVariants = {
 ```tsx
 <motion.div
   whileHover={{ 
-    borderColor: '#a855f7',
+    borderColor: '#ffffff',
     backgroundColor: 'rgba(168, 85, 247, 0.05)',
   }}
   transition={{ duration: 0.2 }}
@@ -2749,8 +2712,8 @@ export const ContainerVariants = {
   Card content
 </motion.div>
 
-// Border color change: Purple
-// Background subtle change: Purple tint
+// Border color change: White/Zinc-200
+// Background subtle change: Zinc-800
 // Quick animation: 200ms
 ```
 
@@ -2927,10 +2890,10 @@ Minimum touch target: 44px × 44px
 
 ```tsx
 // Visible focus ring
-className="focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+className="focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
 
 // On dark background, add light ring
-className="focus:ring-purple-400"
+className="focus:ring-zinc-400"
 ```
 
 ---
@@ -2952,9 +2915,9 @@ className="focus:ring-purple-400"
 
 ```css
 /* Colors */
---color-primary: #a855f7;
---color-primary-dark: #7e22ce;
---color-secondary: #3b82f6;
+--color-primary: #ffffff;
+--color-primary-dark: #a3a3a3;
+--color-secondary: #27272a;
 --color-success: #10b981;
 --color-warning: #f59e0b;
 --color-danger: #ef4444;
@@ -2968,7 +2931,7 @@ className="focus:ring-purple-400"
 --space-2xl: 48px;
 
 /* Typography */
---font-sans: 'Geist', system-ui, sans-serif;
+--font-sans: 'Poppins', system-ui, sans-serif;
 --font-mono: 'JetBrains Mono', monospace;
 
 /* Border Radius */
@@ -2995,8 +2958,8 @@ className="focus:ring-purple-400"
 
 Before implementing any page/component, verify:
 
-- [ ] Color palette follows system (zinc, slate, white, purple, blue)
-- [ ] Typography hierarchy is correct (Geist font family)
+- [ ] Color palette follows system (zinc, neutral, white, black)
+- [ ] Typography hierarchy is correct (Poppins font family)
 - [ ] Spacing uses 8px scale (4, 8, 16, 24, 32, 48, 64)
 - [ ] Cards are rounded-2xl with zinc-800 borders
 - [ ] All buttons have hover states (200ms transition)

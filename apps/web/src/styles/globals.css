@@ -1,25 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
 
 @theme {
   /* ── Fonts ─────────────────────────────────────── */
-  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", "Courier New", monospace;
 
-  /* ── Brand colors ──────────────────────────────── */
-  --color-brand:        #A855F7;
-  --color-brand-hover:  #9333EA;
-  --color-brand-active: #7E22CE;
+  /* ── Brand colors (Shadcn Black & White) ──────── */
+  --color-brand:        #ffffff; /* primary */
+  --color-brand-hover:  #e4e4e7; /* zinc-200 */
+  --color-brand-active: #d4d4d8; /* zinc-300 */
 
   /* ── Background scale ──────────────────────────── */
-  --color-bg-base:      #09090B; /* zinc-950 */
-  --color-bg-card:      #18181B; /* zinc-900 */
-  --color-bg-elevated:  #27272A; /* zinc-800 */
-  --color-bg-hover:     #3F3F46; /* zinc-700 */
+  --color-bg-base:      #09090b; /* zinc-950 */
+  --color-bg-card:      #18181b; /* zinc-900 */
+  --color-bg-elevated:  #27272a; /* zinc-800 */
+  --color-bg-hover:     #3f3f46; /* zinc-700 */
 
   /* ── Border scale ──────────────────────────────── */
-  --color-border-subtle: #27272A; /* zinc-800 */
-  --color-border-medium: #3F3F46; /* zinc-700 */
-  --color-border-strong: #52525B; /* zinc-600 */
+  --color-border-subtle: #27272a; /* zinc-800 */
+  --color-border-medium: #3f3f46; /* zinc-700 */
+  --color-border-strong: #52525b; /* zinc-600 */
 
   /* ── Semantic ──────────────────────────────────── */
   --color-success: #10B981; /* emerald-500 */
@@ -43,3 +48,60 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Lenis smooth scrolling core styles */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Premium Background Design System */
+.bg-grid-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.02) 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+}
+
+.ambient-glow-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(150px);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes float-slow-1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(25px, -35px) scale(1.06); }
+}
+
+@keyframes float-slow-2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1.06); }
+  50% { transform: translate(-35px, 25px) scale(0.94); }
+}
+
+.animate-float-1 {
+  animation: float-slow-1 22s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-slow-2 28s ease-in-out infinite;
+}
+
+

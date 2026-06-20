@@ -1,31 +1,30 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, ArrowLeft, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { api } from "@/lib/api";
 
 const RESEND_SECONDS = 30;
 
-export default function VerifyOtpPage() {
+function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
-  const mode = searchParams.get("mode"); // "reset" for password reset flow
+  const mode = searchParams.get("mode");
 
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_SECONDS);
   const [resending, setResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => {
-    inputRefs.current[0]?.focus();
-  }, []);
+  useEffect(() => { inputRefs.current[0]?.focus(); }, []);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -38,9 +37,7 @@ export default function VerifyOtpPage() {
     const next = [...digits];
     next[index] = char;
     setDigits(next);
-    if (char && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
+    if (char && index < 5) inputRefs.current[index + 1]?.focus();
   }
 
   function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
@@ -49,15 +46,14 @@ export default function VerifyOtpPage() {
     }
   }
 
-  function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
+  function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (!pasted) return;
     const next = [...digits];
     for (let i = 0; i < pasted.length; i++) next[i] = pasted[i] ?? "";
     setDigits(next);
-    const focusIndex = Math.min(pasted.length, 5);
-    inputRefs.current[focusIndex]?.focus();
+    inputRefs.current[Math.min(pasted.length, 5)]?.focus();
   }
 
   const handleResend = useCallback(async () => {
@@ -67,19 +63,15 @@ export default function VerifyOtpPage() {
       await api.post("/api/auth/forgot-password", { email });
       setCountdown(RESEND_SECONDS);
     } catch {
-      setError("Failed to resend code. Please try again.");
+      setError("Failed to resend code.");
     } finally {
       setResending(false);
     }
   }, [email]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     const otp = digits.join("");
-    if (otp.length < 6) {
-      setError("Please enter all 6 digits.");
-      return;
-    }
+    if (otp.length < 6) { setError("Please enter all 6 digits."); return; }
     setError("");
     setLoading(true);
     try {
@@ -87,11 +79,12 @@ export default function VerifyOtpPage() {
         router.push(`/reset-password?email=${encodeURIComponent(email)}&otp=${otp}`);
       } else {
         await api.post("/api/auth/verify-email", { email, otp });
-        router.push("/login?verified=1");
+        setSuccess(true);
+        setTimeout(() => router.push("/login?verified=1"), 1500);
       }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      setError(msg ?? "Invalid or expired code. Please try again.");
+      setError(msg ?? "Invalid or expired code.");
       setDigits(Array(6).fill(""));
       inputRefs.current[0]?.focus();
     } finally {
@@ -99,63 +92,146 @@ export default function VerifyOtpPage() {
     }
   }
 
+  const filled = digits.filter(Boolean).length;
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-zinc-950 relative overflow-hidden">
-      {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="h-full w-full flex items-center justify-center px-6 relative overflow-hidden">
+      {/* Animated rings */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {[280, 460, 640, 820].map((size, i) => (
+          <motion.div
+            key={size}
+            className="absolute rounded-full border border-zinc-800/40"
+            style={{ width: size, height: size }}
+            animate={{ scale: [1, 1.04, 1], opacity: [0.35, 0.12, 0.35] }}
+            transition={{ duration: 4 + i * 0.8, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
+          />
+        ))}
+      </div>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_50%,transparent_100%)] pointer-events-none" />
 
-      <div className="w-full max-w-md relative">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-sm relative z-10"
+      >
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">A</span>
-          </div>
-          <span className="font-bold text-xl text-white">AXIOM</span>
-        </div>
+        <Link href="/" className="flex items-center justify-center gap-2.5 mb-10 group">
+          <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
+          <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
+        </Link>
 
-        <Card className="border border-zinc-800 bg-zinc-900 rounded-2xl shadow-xl">
-          <CardHeader className="pb-0 text-center space-y-2 pt-8 px-8">
-            <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
-            <h1 className="text-2xl font-bold text-white">
-              {mode === "reset" ? "Reset Your Password" : "Verify Your Email"}
-            </h1>
-            <p className="text-sm text-zinc-400">
-              We sent a 6-digit code to{" "}
-              <span className="text-white font-medium">{email || "your email"}</span>
-            </p>
-          </CardHeader>
+        <AnimatePresence mode="wait">
+          {success ? (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center space-y-4"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ duration: 0.5 }}
+                className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto"
+              >
+                <MailCheck className="w-8 h-8 text-emerald-400" />
+              </motion.div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Verified!</h2>
+                <p className="text-sm text-zinc-400 mt-1">Redirecting you to login…</p>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+              {/* Icon */}
+              <div className="text-center space-y-4">
+                <motion.div
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto shadow-xl"
+                >
+                  <MailCheck className="w-8 h-8 text-zinc-300" />
+                </motion.div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">
+                    {mode === "reset" ? "Reset Your Password" : "Check your email"}
+                  </h1>
+                  <p className="text-sm text-zinc-400 mt-1.5">
+                    Enter the 6-digit code sent to{" "}
+                    <span className="text-white font-medium truncate">{email || "your email"}</span>
+                  </p>
+                </div>
+              </div>
 
-          <CardContent className="pt-8 px-8 pb-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
               {/* OTP boxes */}
-              <div className="flex gap-2 justify-center" onPaste={handlePaste}>
-                {digits.map((digit, i) => (
-                  <input
-                    key={i}
-                    ref={(el) => { inputRefs.current[i] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleChange(i, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(i, e)}
-                    placeholder="0"
-                    className="w-12 h-12 text-center font-bold text-lg bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
-                  />
-                ))}
+              <div>
+                <div
+                  className="flex gap-2.5 justify-center"
+                  onPaste={handlePaste}
+                >
+                  {digits.map((digit, i) => (
+                    <motion.div
+                      key={i}
+                      animate={digit ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <input
+                        ref={(el) => { inputRefs.current[i] = el; }}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleChange(i, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(i, e)}
+                        placeholder="·"
+                        className={[
+                          "w-11 h-13 text-center font-bold text-xl rounded-xl border-2 transition-all duration-150 outline-none bg-zinc-900",
+                          "text-white placeholder:text-zinc-700",
+                          digit ? "border-zinc-500 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]" : "border-zinc-800",
+                          "focus:border-zinc-500 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.06)]",
+                        ].join(" ")}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Progress dots */}
+                <div className="flex gap-1.5 justify-center mt-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ width: i < filled ? 20 : 6, backgroundColor: i < filled ? "#ffffff" : "#3f3f46" }}
+                      transition={{ duration: 0.2 }}
+                      className="h-1 rounded-full"
+                    />
+                  ))}
+                </div>
               </div>
 
               {/* Resend */}
-              <div className="text-center text-sm text-zinc-400">
-                <p>Didn&apos;t receive the code?</p>
+              <div className="text-center text-sm text-zinc-500 space-y-1">
+                <p>Didn&apos;t get the code?</p>
                 {countdown > 0 ? (
-                  <span className="text-zinc-500">Resend in {countdown}s</span>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <div className="relative w-5 h-5">
+                      <svg className="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
+                        <circle cx="10" cy="10" r="8" fill="none" stroke="#3f3f46" strokeWidth="2" />
+                        <motion.circle
+                          cx="10" cy="10" r="8" fill="none" stroke="#71717a" strokeWidth="2"
+                          strokeDasharray={50.3}
+                          animate={{ strokeDashoffset: 50.3 - (50.3 * countdown / RESEND_SECONDS) }}
+                          transition={{ duration: 0.5 }}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                    <span>Resend in {countdown}s</span>
+                  </div>
                 ) : (
                   <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={resending}
-                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors disabled:opacity-50"
+                    type="button" onClick={handleResend} disabled={resending}
+                    className="text-zinc-200 hover:text-white font-medium transition-colors disabled:opacity-50"
                   >
                     {resending ? "Sending…" : "Resend code"}
                   </button>
@@ -163,32 +239,56 @@ export default function VerifyOtpPage() {
               </div>
 
               {error && (
-                <div className="px-4 py-3 bg-red-500/10 border border-red-500/50 rounded-lg text-sm text-red-400">
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400 text-center"
+                >
                   {error}
-                </div>
+                </motion.div>
               )}
 
               <Button
-                type="submit"
-                disabled={loading || digits.join("").length < 6}
-                className="w-full bg-purple-500 hover:bg-purple-600 text-white h-11 rounded-lg font-medium transition-colors duration-200 disabled:opacity-60"
+                onClick={handleSubmit}
+                disabled={loading || filled < 6}
+                className="w-full bg-white hover:bg-zinc-100 text-black h-11 font-semibold transition-all disabled:opacity-30 flex items-center justify-center gap-2 group"
               >
-                {loading ? "Verifying…" : mode === "reset" ? "Continue" : "Verify Email"}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                    Verifying…
+                  </span>
+                ) : (
+                  <>
+                    {mode === "reset" ? "Continue" : "Verify Email"}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </>
+                )}
               </Button>
-            </form>
 
-            <p className="text-center text-sm text-zinc-400 mt-6">
-              Wrong email?{" "}
               <Link
                 href={mode === "reset" ? "/forgot-password" : "/signup"}
-                className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                className="flex items-center justify-center gap-1.5 text-sm text-zinc-500 hover:text-white transition-colors"
               >
-                Go back
+                <ArrowLeft className="w-3.5 h-3.5" />
+                {mode === "reset" ? "Back to reset" : "Wrong email? Go back"}
               </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
+  );
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    }>
+      <VerifyOtpForm />
+    </Suspense>
   );
 }
