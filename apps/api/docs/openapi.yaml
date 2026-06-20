@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: AXIOM API
-  version: 0.7.0
+  version: 0.8.0
   description: |
     AXIOM REST API.
 
@@ -10,6 +10,12 @@ info:
       2. List / read (`GET /api/resumes`, `GET /api/resumes/{id}`) — returns resumes with short-lived presigned URLs.
       3. Delete (`DELETE /api/resumes/{id}`) — removes the resume and its S3 object.
       4. ATS analyze (`POST /api/resumes/{id}/analyze`) — scores a parsed resume against a job description.
+
+    Phase 8 adds the job search + scraping pipeline:
+      1. Search (`GET /api/jobs`) — paginated keyword + filter search backed by Postgres ILIKE.
+      2. Detail (`GET /api/jobs/{id}`) — single job by ID.
+      3. Save / unsave (`POST/DELETE /api/jobs/{id}/save`, `GET /api/jobs/saved`).
+      4. Scrape (`POST /api/jobs/scrape`) — admin-only orchestration trigger for Internshala / Unstop / Naukri scrapers (calls AI service which owns the adapter framework).
 servers:
   - url: http://localhost:4000
     description: Local development
@@ -18,6 +24,8 @@ security:
 tags:
   - name: Resumes
     description: Resume upload, retrieval, and ATS analysis.
+  - name: Jobs
+    description: Job search, save/unsave, and admin-only scrape trigger.
 
 paths:
   /api/resumes:
@@ -164,6 +172,149 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  # ── Phase 8: Jobs ──────────────────────────────────────────────────────────
+  /api/jobs:
+    get:
+      tags: [Jobs]
+      summary: Search jobs with filters + pagination
+      operationId: searchJobs
+      parameters:
+        - { in: query, name: q,               schema: { type: string,  maxLength: 200 }, description: Free-text search over title/company/description. }
+        - { in: query, name: location,        schema: { type: string,  maxLength: 120 } }
+        - { in: query, name: remote,          schema: { type: boolean } }
+        - { in: query, name: jobType,         schema: { type: string, enum: [FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, FREELANCE] } }
+        - { in: query, name: experienceLevel, schema: { type: string, enum: [ENTRY, MID, SENIOR, LEAD, EXECUTIVE] } }
+        - { in: query, name: source,          schema: { type: string, enum: [internshala, unstop, naukri, manual] } }
+        - { in: query, name: salaryMin,       schema: { type: integer, minimum: 0 } }
+        - { in: query, name: salaryMax,       schema: { type: integer, minimum: 0 } }
+        - { in: query, name: skills,          schema: { type: string }, description: "Comma-separated list of skill names." }
+        - { in: query, name: page,            schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: pageSize,        schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /api/jobs/saved:
+    get:
+      tags: [Jobs]
+      summary: List the authenticated user's saved jobs
+      operationId: listSavedJobs
+      parameters:
+        - { in: query, name: page,     schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: pageSize, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/jobs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    get:
+      tags: [Jobs]
+      summary: Get a single job by ID
+      operationId: getJob
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { job: { $ref: "#/components/schemas/Job" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/jobs/{id}/save:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      tags: [Jobs]
+      summary: Save a job for the authenticated user
+      operationId: saveJob
+      responses:
+        "201":
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Job saved" }
+                  jobId:   { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Jobs]
+      summary: Unsave a job (idempotent)
+      operationId: unsaveJob
+      responses:
+        "200":
+          description: Unsaved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Job unsaved" }
+                  jobId:   { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/jobs/scrape:
+    post:
+      tags: [Jobs]
+      summary: Trigger a scrape run (admin only)
+      description: |
+        Calls the AI service to scrape `source` for `query`, normalizes the
+        results, and upserts into the `jobs` table. Idempotent by unique
+        `sourceUrl` — re-runs update existing rows.
+      operationId: runScrape
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source]
+              properties:
+                source:   { type: string, enum: [internshala, unstop, naukri] }
+                query:    { type: string, maxLength: 200, default: "" }
+                maxPages: { type: integer, minimum: 1, maximum: 10,  default: 2 }
+                maxJobs:  { type: integer, minimum: 1, maximum: 500, default: 100 }
+      responses:
+        "200":
+          description: Scrape complete.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary: { $ref: "#/components/schemas/ScrapeRunSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+        "503":
+          description: Scraper service unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
 components:
   parameters:
     ResumeId:
@@ -172,6 +323,12 @@ components:
       required: true
       description: Resume CUID.
       schema: { type: string, example: cmqmk6ho00002tyi0w4hl2pph }
+    JobId:
+      name: id
+      in: path
+      required: true
+      description: Job CUID.
+      schema: { type: string, example: cmqxxx0000abctyi0aaaa1111 }
 
   responses:
     BadRequest:
@@ -313,3 +470,58 @@ components:
           type: array
           items: { type: string }
           example: ["Add a projects section to showcase practical experience"]
+
+    # ── Phase 8: Jobs ────────────────────────────────────────────────────────
+    Job:
+      type: object
+      required: [id, title, company, location, remote, jobType, experienceLevel, source, sourceUrl, postedAt, createdAt, updatedAt]
+      properties:
+        id:               { type: string,  example: cmq111j0000001tyi0aaaaaaa1 }
+        title:            { type: string,  example: "Senior Backend Engineer" }
+        company:          { type: string,  example: "Bluefox Systems" }
+        companyLogoUrl:   { oneOf: [{ type: string, format: uri }, { type: "null" }] }
+        location:         { type: string,  example: "Bengaluru, Karnataka" }
+        remote:           { type: boolean, example: false }
+        jobType:          { type: string, enum: [FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, FREELANCE] }
+        experienceLevel:  { type: string, enum: [ENTRY, MID, SENIOR, LEAD, EXECUTIVE] }
+        salaryMin:        { oneOf: [{ type: integer, minimum: 0 }, { type: "null" }] }
+        salaryMax:        { oneOf: [{ type: integer, minimum: 0 }, { type: "null" }] }
+        currency:         { type: string, example: INR }
+        description:      { type: string }
+        requiredSkills:
+          type: array
+          items: { type: string }
+          example: [python, fastapi, postgresql]
+        niceToHaveSkills:
+          type: array
+          items: { type: string }
+          example: [kafka, redis]
+        source:           { type: string, enum: [internshala, unstop, naukri, manual] }
+        sourceUrl:        { type: string, format: uri }
+        postedAt:         { type: string, format: date-time }
+        expiresAt:        { oneOf: [{ type: string, format: date-time }, { type: "null" }] }
+        createdAt:        { type: string, format: date-time }
+        updatedAt:        { type: string, format: date-time }
+
+    JobSearchResult:
+      type: object
+      required: [jobs, total, page, pageSize]
+      properties:
+        jobs:
+          type: array
+          items: { $ref: "#/components/schemas/Job" }
+        total:    { type: integer, minimum: 0, example: 247 }
+        page:     { type: integer, minimum: 1, example: 1 }
+        pageSize: { type: integer, minimum: 1, example: 20 }
+
+    ScrapeRunSummary:
+      type: object
+      required: [source, fetched, inserted, updated, skipped, errors, durationMs]
+      properties:
+        source:     { type: string, enum: [internshala, unstop, naukri] }
+        fetched:    { type: integer, example: 18 }
+        inserted:   { type: integer, example: 14 }
+        updated:    { type: integer, example: 4 }
+        skipped:    { type: integer, example: 0 }
+        errors:     { type: integer, example: 0 }
+        durationMs: { type: integer, example: 4321 }

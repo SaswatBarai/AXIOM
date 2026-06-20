@@ -91,6 +91,31 @@ readability, formatting, strengths, missingSkills, suggestions } } }`.
 - **Benchmark:** `cd apps/api && ACCESS_TOKEN=… RESUME_ID=… pnpm tsx scripts/bench-ats.ts --n=100`
   - Local p50 ≈ 8 ms, p95 ≈ 13 ms, p99 ≈ 16 ms over 80 sequential requests (full stack: Postgres + Redis + Express + FastAPI)
 
+## Job Search + Scraping (Phase 8)
+
+Search across jobs ingested from **Internshala**, **Unstop**, and **Naukri** via a
+pluggable scraper framework in [apps/ai/services/scrapers/](apps/ai/services/scrapers/).
+LinkedIn and Indeed are out of scope for this phase (no public API, hostile anti-bot)
+but can be plugged in later as additional adapters.
+
+```
+GET    /api/jobs               # search with filters + pagination
+GET    /api/jobs/:id           # single job
+GET    /api/jobs/saved         # user's saved jobs
+POST   /api/jobs/:id/save      # save
+DELETE /api/jobs/:id/save      # unsave
+POST   /api/jobs/scrape        # admin-only: trigger a scrape run
+```
+
+- **Architecture:** [docs/adr/0002-job-scraping.md](docs/adr/0002-job-scraping.md)
+- **Scrapers:** [internshala.py](apps/ai/services/scrapers/internshala.py) · [unstop.py](apps/ai/services/scrapers/unstop.py) · [naukri.py](apps/ai/services/scrapers/naukri.py)
+- **Tests:** 33 pytest cases (parsers + skill extraction) + 17 vitest cases (routes); each adapter has a frozen-fixture pytest so CI never hits the network.
+- **Politeness:** 1 req / 3 s per host, UA rotation, `Retry-After` honored, `bleach`-sanitized descriptions, upsert dedupe by unique `sourceUrl`.
+
+> **Operator note:** scraping is in a ToS gray area. Run respectfully (default
+> rate limits, low concurrency) and revisit with a paid aggregator before any
+> commercial launch.
+
 ## Development Phases
 
 See [Development.md](Development.md) for the full 18-phase roadmap.

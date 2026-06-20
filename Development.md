@@ -973,71 +973,111 @@ axiom/                                      ← Turborepo root
 
 ## Phase 8: Job Search Integration
 
-**Estimated Duration:** 6-7 days (1-1.5 sprints)  
-**Team Size:** 2 developers  
+**Estimated Duration:** 8-10 days (2 sprints)  
+**Team Size:** 2-3 developers (1 backend + 1 scraping/Python + 1 frontend)  
 **Depends On:** Phase 2 ✓  
 **Blocking:** Phase 9, 14  
+
+### Source Strategy (locked)
+
+Jobs are ingested via **web scraping** from three India-friendly platforms. No paid APIs, no external SaaS dependencies. LinkedIn and Indeed are explicitly **out of scope** for this phase due to ToS hostility and anti-bot complexity — they may be added later behind a feature flag if/when residential proxies and authenticated sessions are available.
+
+| Source | Difficulty | Approach | Notes |
+|---|---|---|---|
+| **Internshala** | Easy | `httpx` + BeautifulSoup; JSON-LD parser | Public listings, structured data embedded in HTML |
+| **Unstop** | Easy-Medium | `httpx` against discovered internal JSON endpoints | Jobs + internships + hackathons; light anti-bot; India-focused |
+| **Naukri** | Medium | Playwright headless (JS-rendered) | Most listing data accessible without login |
+
+Each adapter implements the same `JobSourceAdapter` protocol so a fourth (LinkedIn/Indeed) can be added later without changing the ingestion pipeline.
 
 ### Risk Assessment
 | Risk | Impact | Mitigation |
 |------|--------|-----------|
-| External API rate limits / outages | High | Cache responses for 1h in Redis; degrade to last-known dataset |
-| Duplicate jobs across sources | Medium | Dedupe by canonical `sourceUrl`; unique index in DB |
-| Job descriptions contain HTML / XSS | Medium | Sanitize on ingest via `sanitize-html`; render as plain text in UI |
-| Full-text search slow on large tables | Medium | GIN index on tsvector; cap result page size to 50 |
+| Sites change HTML layout → scrapers break silently | High | Per-adapter smoke test on every run; alert if zero results for 2 consecutive runs |
+| Aggressive scraping triggers IP ban | High | Hard rate limit (≥3s between requests per host); honor `Retry-After`; exponential backoff on 429/503 |
+| ToS violations / cease-and-desist | High | Personal/dev use only; document risk; honor `robots.txt` where ambiguous; do not bypass paywalls or auth |
+| Playwright instability in CI | Medium | Pin Playwright + browser version; cache browser binaries; retry once on `TimeoutError` |
+| Duplicate jobs across sources | Medium | Dedupe by canonical `sourceUrl`; secondary fuzzy dedupe on (title, company, location) within 7 days |
+| Job descriptions contain HTML / XSS | Medium | Sanitize with `bleach` on ingest; render as plain text in UI |
+| Memory spikes from full HTML parse | Medium | Stream parse, drop raw HTML after extraction, cap description length to 16 KB |
 
 ### Tasks
 
-1. **Job Source Adapters**
-   - [ ] Adapter interface: `fetchJobs(params) -> NormalizedJob[]`
-   - [ ] Remotive adapter (no key, free): pull tech category
-   - [ ] Optional: Adzuna adapter (requires API key)
-   - [ ] Seed dataset (~200 hand-curated jobs covering all enums) as fallback
+1. **Scraping Framework (`apps/ai/services/scrapers/`)**
+   - [ ] `base.py` — `JobSourceAdapter` ABC with `fetch_listing(query, page) -> list[JobListing]` and `fetch_detail(url) -> JobDetail`
+   - [ ] `NormalizedJob` Pydantic model matching the Prisma `Job` shape
+   - [ ] `rate_limit.py` — async token-bucket per host (default 1 req / 3 s)
+   - [ ] `http.py` — shared `httpx.AsyncClient` with realistic User-Agent rotation + retry/backoff
+   - [ ] `playwright_pool.py` — single-instance Playwright browser, contexts per adapter
+   - [ ] `skill_extractor.py` — reuse `parser.SKILL_PATTERNS` to populate `requiredSkills` / `niceToHaveSkills`
+   - [ ] `bleach` HTML sanitization helper
+   - [ ] Each adapter ships with one frozen HTML fixture for unit tests
 
-2. **Ingestion Pipeline**
-   - [ ] Background job (Bull queue) running every 6h
-   - [ ] Normalize: map source fields → `Job` model
-   - [ ] Dedupe by `sourceUrl` (unique constraint)
-   - [ ] Skill extraction on description → `requiredSkills`, `niceToHaveSkills`
+2. **Site Adapters**
+   - [ ] `InternshalaAdapter` — list page parse via JSON-LD; detail page parse for stipend / duration
+   - [ ] `UnstopAdapter` — internal `/api/public/opportunity/search-result` JSON endpoint where available; HTML fallback
+   - [ ] `NaukriAdapter` — Playwright-rendered listing pages; extract via embedded `__NEXT_DATA__` / JSON-LD
+   - [ ] Each maps source → `JobType` and `ExperienceLevel` enums; default to `FULL_TIME` / `ENTRY` when ambiguous
 
-3. **Search API**
-   - [ ] `GET /api/jobs` with query params: `q`, `location`, `remote`, `jobType`, `experienceLevel`, `salaryMin`, `salaryMax`, `skills[]`, `page`, `pageSize`
+3. **Ingestion Pipeline**
+   - [ ] FastAPI endpoint: `POST /api/scrape/run` (internal-secret guarded) accepting `{ source, queries[], pages }`
+   - [ ] Node.js Bull queue worker triggers `/api/scrape/run` on schedule (every 6h)
+   - [ ] Normalize → upsert by unique `sourceUrl` (already on `Job` model)
+   - [ ] Skill extraction populates `requiredSkills` + `niceToHaveSkills`
+   - [ ] Per-run summary: `{ source, fetched, inserted, updated, skipped, durationMs }` logged + persisted to Redis for dashboard
+   - [ ] Seed dataset (~80 hand-curated jobs) loaded once for tests and local dev when scrapers blocked
+
+4. **Search API (`apps/api/`)**
+   - [ ] `GET /api/jobs` with query params: `q`, `location`, `remote`, `jobType`, `experienceLevel`, `salaryMin`, `salaryMax`, `skills[]`, `source`, `page`, `pageSize`
    - [ ] Pagination (default 20, max 50) with `total` count
-   - [ ] Postgres full-text (`tsvector`) over title + company + description
+   - [ ] Postgres `ILIKE` + indexed filters for v1; tsvector + GIN index as v1.1 if needed
    - [ ] Indexed filters via existing `@@index([remote, jobType, experienceLevel])`
-   - [ ] Cache popular queries in Redis (5 min TTL)
+   - [ ] Cache popular query keys in Redis (5 min TTL)
 
-4. **Save / Unsave**
+5. **Save / Unsave**
    - [ ] `POST /api/jobs/:id/save` — upserts `SavedJob`
    - [ ] `DELETE /api/jobs/:id/save` — removes `SavedJob`
    - [ ] `GET /api/jobs/saved` — list user's saved jobs
-   - [ ] Recent-searches stored per user (cap 20)
+   - [ ] Recent-searches stored per user in Redis (capped at 20)
 
-5. **Web UI**
+6. **Web UI**
    - [ ] `/dashboard/jobs` search page: search input + filter pills + results table
-   - [ ] Job detail drawer / page with full description
+   - [ ] Source filter chip (Internshala / Unstop / Naukri)
+   - [ ] Job detail drawer / page with full description + "Apply on source" outbound link
    - [ ] Save / unsave heart button (optimistic update)
    - [ ] Saved-jobs tab
    - [ ] `useJobs` hook with TanStack Query + URL search params
 
-6. **Testing**
-   - [ ] Vitest: search filters (q, remote, salary range), pagination boundaries
+7. **Testing**
+   - [ ] Pytest per adapter against frozen HTML/JSON fixtures (no live network calls)
+   - [ ] Pytest: rate limiter respects N req / window
+   - [ ] Pytest: skill extraction populated correctly from real descriptions
+   - [ ] Vitest: search filters (q, remote, salary range, source), pagination boundaries
    - [ ] Vitest: save / unsave / saved list ownership
-   - [ ] Pytest (if AI-side): skill extraction from job descriptions
-   - [ ] Coverage on `job.service.ts` ≥85%
+   - [ ] Coverage on `job.service.ts` and adapters ≥85%
 
-7. **Docs + Perf**
-   - [ ] ADR 0002 — ingestion strategy + search backend choice
-   - [ ] OpenAPI entries for `/api/jobs`, `/api/jobs/saved`, `/api/jobs/:id/save`
+8. **Operational Guardrails**
+   - [ ] Per-source kill switch via env (`SCRAPER_INTERNSHALA_ENABLED=false`)
+   - [ ] Global request-count budget per scraper run (e.g. max 200 detail fetches / source / run)
+   - [ ] Failure alarm: if a source returns zero results across 2 consecutive runs, log error + Redis flag for ops dashboard
+   - [ ] `robots.txt` check helper (advisory; not a hard block)
+
+9. **Docs + Perf**
+   - [ ] ADR 0002 — scraping strategy: chosen sources, rate-limit policy, fragility budget, escape hatches
+   - [ ] OpenAPI entries for `/api/jobs`, `/api/jobs/saved`, `/api/jobs/:id/save`, `/api/scrape/run`
+   - [ ] Document "how to add a new adapter" runbook
    - [ ] Benchmark: search p95 against 10k jobs
 
 ### Completion Checklist
 
-- [ ] ≥1,000 real or seeded jobs in DB after first sync
-- [ ] Search returns relevant results in <100ms p95
+- [ ] ≥1,000 real jobs in DB after first multi-source scrape run
+- [ ] Each adapter has a passing fixture-based unit test
+- [ ] Search returns relevant results in <100ms p95 against 10k jobs
 - [ ] Save / unsave reflected immediately in UI
-- [ ] Background ingestion runs on schedule and dedupes
+- [ ] Bull worker runs every 6h, persists per-run summary
+- [ ] Kill switches and rate limits enforced
 - [ ] All tests green; OpenAPI + ADR committed
+- [ ] Failure alarm tested by simulating zero-result run
 
 ---
 
