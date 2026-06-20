@@ -1,0 +1,66 @@
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+const ENDPOINT  = process.env.S3_ENDPOINT;   // set in dev: http://localhost:9000
+const BUCKET    = process.env.AWS_S3_BUCKET ?? "axiom-resumes";
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION ?? "us-east-1",
+  credentials: {
+    accessKeyId:     process.env.AWS_ACCESS_KEY_ID     ?? "minioadmin",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "minioadmin",
+  },
+  // MinIO requires a custom endpoint + path-style addressing
+  ...(ENDPOINT && {
+    endpoint:         ENDPOINT,
+    forcePathStyle:   true,
+  }),
+});
+
+export async function uploadToS3(
+  key: string,
+  buffer: Buffer,
+  mimeType: string,
+): Promise<string> {
+  await s3.send(
+    new PutObjectCommand({
+      Bucket:      BUCKET,
+      Key:         key,
+      Body:        buffer,
+      ContentType: mimeType,
+    }),
+  );
+
+  // In dev (MinIO) return a path-style URL; in prod return S3 virtual-hosted URL
+  if (ENDPOINT) {
+    return `${ENDPOINT}/${BUCKET}/${key}`;
+  }
+  return `https://${BUCKET}.s3.amazonaws.com/${key}`;
+}
+
+export async function deleteFromS3(key: string): Promise<void> {
+  await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+}
+
+export async function getPresignedUrl(key: string, expiresIn = 3600): Promise<string> {
+  return getSignedUrl(
+    s3,
+    new GetObjectCommand({ Bucket: BUCKET, Key: key }),
+    { expiresIn },
+  );
+}
+
+/** Extract the S3 key from a stored file URL */
+export function keyFromUrl(url: string): string {
+  if (ENDPOINT) {
+    // http://localhost:9000/axiom-resumes/resumes/uid/file.pdf → resumes/uid/file.pdf
+    return url.split(`/${BUCKET}/`)[1] ?? url;
+  }
+  // https://axiom-resumes.s3.amazonaws.com/resumes/uid/file.pdf → resumes/uid/file.pdf
+  return url.split(".amazonaws.com/")[1] ?? url;
+}

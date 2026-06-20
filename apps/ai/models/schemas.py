@@ -8,8 +8,8 @@ class ResumeParseRequest(BaseModel):
 
 
 class ATSAnalyzeRequest(BaseModel):
-    resume_id: str
-    job_description: Optional[str] = None
+    parsed_data: dict        # ParsedResume as JSON
+    job_description: str
 
 
 class JobMatchRequest(BaseModel):

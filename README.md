@@ -67,6 +67,30 @@ docker/           Infrastructure (PostgreSQL, Redis, Kafka, ES)
 | `pnpm db:generate` | Regenerate Prisma client |
 | `make -C apps/ai dev` | Start Python AI service |
 
+## ATS Resume Analyzer (Phase 7)
+
+Scores a parsed resume against a job description and persists the result on
+`Resume.atsScore`. Pure heuristic — no LLM, fully deterministic.
+
+```
+POST /api/resumes/:id/analyze
+Authorization: Bearer <jwt>
+Content-Type: application/json
+{ "jobDescription": "We are hiring a Senior Backend Engineer with ..." }
+```
+
+Returns `{ resume: { ..., atsScore: { overall, keywordMatch, completeness,
+readability, formatting, strengths, missingSkills, suggestions } } }`.
+
+- **Architecture:** [docs/adr/0001-ats-resume-analyzer.md](docs/adr/0001-ats-resume-analyzer.md)
+- **API spec:** [apps/api/docs/openapi.yaml](apps/api/docs/openapi.yaml)
+- **Scoring implementation:** [apps/ai/services/ats.py](apps/ai/services/ats.py)
+- **Tests:**
+  - `cd apps/api && pnpm test` — 50 vitest cases (upload, list, get, delete, analyze with 7 scenarios)
+  - `cd apps/ai && make test` — 33 pytest cases on `services/ats.py` (89%) and `services/parser.py` (75%)
+- **Benchmark:** `cd apps/api && ACCESS_TOKEN=… RESUME_ID=… pnpm tsx scripts/bench-ats.ts --n=100`
+  - Local p50 ≈ 8 ms, p95 ≈ 13 ms, p99 ≈ 16 ms over 80 sequential requests (full stack: Postgres + Redis + Express + FastAPI)
+
 ## Development Phases
 
 See [Development.md](Development.md) for the full 18-phase roadmap.

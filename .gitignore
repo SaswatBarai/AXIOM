@@ -58,6 +58,9 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+.coverage
+.coverage.*
+htmlcov/
 
 # Docker
 docker/volumes/

@@ -1,0 +1,315 @@
+openapi: 3.1.0
+info:
+  title: AXIOM API
+  version: 0.7.0
+  description: |
+    AXIOM REST API.
+
+    Phase 7 covers the resume lifecycle:
+      1. Upload (`POST /api/resumes`) — stores PDF/DOCX in S3/MinIO and kicks off background parsing.
+      2. List / read (`GET /api/resumes`, `GET /api/resumes/{id}`) — returns resumes with short-lived presigned URLs.
+      3. Delete (`DELETE /api/resumes/{id}`) — removes the resume and its S3 object.
+      4. ATS analyze (`POST /api/resumes/{id}/analyze`) — scores a parsed resume against a job description.
+servers:
+  - url: http://localhost:4000
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: Resumes
+    description: Resume upload, retrieval, and ATS analysis.
+
+paths:
+  /api/resumes:
+    post:
+      tags: [Resumes]
+      summary: Upload a resume (PDF or DOCX, max 5 MB)
+      operationId: uploadResume
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [resume]
+              properties:
+                resume:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Resume created; parsing runs in the background.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resume: { $ref: "#/components/schemas/Resume" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413":
+          description: File too large (>5 MB).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "415":
+          description: Unsupported media type (only PDF / DOCX accepted).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    get:
+      tags: [Resumes]
+      summary: List the authenticated user's resumes
+      operationId: listResumes
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resumes:
+                    type: array
+                    items: { $ref: "#/components/schemas/Resume" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/resumes/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResumeId"
+    get:
+      tags: [Resumes]
+      summary: Fetch a single resume by ID
+      operationId: getResume
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resume: { $ref: "#/components/schemas/Resume" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Resumes]
+      summary: Delete a resume (also removes the S3 object)
+      operationId: deleteResume
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Resume deleted" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/resumes/{id}/analyze:
+    parameters:
+      - $ref: "#/components/parameters/ResumeId"
+    post:
+      tags: [Resumes]
+      summary: Run ATS analysis against a job description (Phase 7)
+      description: |
+        Scores the parsed resume against a job description using keyword match,
+        completeness, readability, and formatting heuristics. The result is
+        persisted on `Resume.atsScore` and returned in the response.
+
+        Requires the resume to already be parsed — if parsing hasn't completed
+        yet, returns 422 and the client should retry after a short delay.
+      operationId: analyzeResume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobDescription]
+              properties:
+                jobDescription:
+                  type: string
+                  minLength: 20
+                  maxLength: 10000
+                  description: Plain-text job description to analyze against.
+                  example: |
+                    We are hiring a Senior Backend Engineer with strong Python and
+                    FastAPI experience to build production-grade APIs. Must have
+                    PostgreSQL, Redis, Kafka, and AWS experience.
+      responses:
+        "200":
+          description: ATS analysis complete.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resume: { $ref: "#/components/schemas/Resume" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: Validation failed or resume not yet parsed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+        "503":
+          description: AI service unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+components:
+  parameters:
+    ResumeId:
+      name: id
+      in: path
+      required: true
+      description: Resume CUID.
+      schema: { type: string, example: cmqmk6ho00002tyi0w4hl2pph }
+
+  responses:
+    BadRequest:
+      description: Bad request (e.g. missing file).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing or invalid access token.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Authenticated user does not own this resource.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string, example: "Resume not found" }
+      required: [error]
+
+    ValidationError:
+      type: object
+      properties:
+        error: { type: string, example: "Validation failed" }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:   { type: string, example: jobDescription }
+              message: { type: string, example: "Job description must be at least 20 characters" }
+      required: [error]
+
+    Resume:
+      type: object
+      required: [id, userId, fileName, fileUrl, fileType, version, createdAt, updatedAt]
+      properties:
+        id:          { type: string, example: cmqmk6ho00002tyi0w4hl2pph }
+        userId:      { type: string }
+        fileName:    { type: string, example: cv.pdf }
+        fileUrl:     { type: string, format: uri }
+        fileType:    { type: string, enum: [pdf, docx] }
+        version:     { type: integer, example: 1 }
+        parsedData:
+          oneOf:
+            - { $ref: "#/components/schemas/ParsedResume" }
+            - { type: "null" }
+        atsScore:
+          oneOf:
+            - { $ref: "#/components/schemas/ATSScore" }
+            - { type: "null" }
+        downloadUrl: { type: string, format: uri, description: Presigned download URL (short-lived). }
+        createdAt:   { type: string, format: date-time }
+        updatedAt:   { type: string, format: date-time }
+
+    ParsedResume:
+      type: object
+      properties:
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              name:        { type: string }
+              proficiency:
+                oneOf:
+                  - { type: string, enum: [beginner, intermediate, advanced, expert] }
+                  - { type: "null" }
+        experience:
+          type: array
+          items:
+            type: object
+            properties:
+              company:     { type: string }
+              title:       { type: string }
+              startDate:   { type: string }
+              endDate:     { type: string }
+              current:     { type: boolean }
+              description: { type: string }
+              skills:
+                type: array
+                items: { type: string }
+        education:
+          type: array
+          items:
+            type: object
+            properties:
+              institution: { type: string }
+              degree:      { type: string }
+              field:       { type: string }
+              startYear:   { type: integer }
+              endYear:     { oneOf: [{ type: integer }, { type: "null" }] }
+              gpa:         { oneOf: [{ type: number }, { type: "null" }] }
+        projects:
+          type: array
+          items: { type: object }
+        certifications:
+          type: array
+          items: { type: string }
+        summary:  { oneOf: [{ type: string }, { type: "null" }] }
+        email:    { oneOf: [{ type: string }, { type: "null" }] }
+        phone:    { oneOf: [{ type: string }, { type: "null" }] }
+        location: { oneOf: [{ type: string }, { type: "null" }] }
+
+    ATSScore:
+      type: object
+      required: [overall, keywordMatch, completeness, readability, formatting, strengths, missingSkills, suggestions]
+      properties:
+        overall:       { type: integer, minimum: 0, maximum: 100, example: 79 }
+        keywordMatch:  { type: integer, minimum: 0, maximum: 100, example: 76 }
+        completeness:  { type: integer, minimum: 0, maximum: 100, example: 100 }
+        readability:   { type: integer, minimum: 0, maximum: 100, example: 90 }
+        formatting:    { type: integer, minimum: 0, maximum: 100, example: 100 }
+        strengths:
+          type: array
+          items: { type: string }
+          example: ["Strong keyword alignment (13 matched terms)"]
+        missingSkills:
+          type: array
+          items: { type: string }
+          example: ["kafka", "rabbitmq"]
+        suggestions:
+          type: array
+          items: { type: string }
+          example: ["Add a projects section to showcase practical experience"]

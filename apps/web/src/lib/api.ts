@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
+  baseURL: "/api",
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
@@ -23,16 +23,15 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        const { data } = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
+        const refreshToken = localStorage.getItem("refreshToken");
+        const { data } = await axios.post("/api/auth/refresh", { refreshToken });
         localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(original);
       } catch {
         localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         window.location.href = "/login";
       }
     }
