@@ -1,0 +1,43 @@
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from routes import resume, jobs, skills, genai, chat, interview, roadmap
+from utils.logger import logger
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("AXIOM AI service starting up")
+    yield
+    logger.info("AXIOM AI service shutting down")
+
+
+app = FastAPI(
+    title="AXIOM AI Service",
+    description="AI/ML backend for resume analysis, job matching, and GenAI features",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:4000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Routers ──────────────────────────────────────────────────
+app.include_router(resume.router,    prefix="/api/resume",    tags=["Resume"])
+app.include_router(jobs.router,      prefix="/api/jobs",      tags=["Jobs"])
+app.include_router(skills.router,    prefix="/api/skills",    tags=["Skills"])
+app.include_router(genai.router,     prefix="/api/genai",     tags=["GenAI"])
+app.include_router(chat.router,      prefix="/api/chat",      tags=["Chat"])
+app.include_router(interview.router, prefix="/api/interview", tags=["Interview"])
+app.include_router(roadmap.router,   prefix="/api/roadmap",   tags=["Roadmap"])
+
+
+@app.get("/health", tags=["Health"])
+def health():
+    return {"status": "ok", "service": "axiom-ai"}

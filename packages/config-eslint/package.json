@@ -1,0 +1,12 @@
+{
+  "name": "@axiom/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "files": ["index.js", "next.js", "node.js"],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0"
+  }
+}

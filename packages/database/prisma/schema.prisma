@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  PREMIUM
+  ADMIN
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum ExperienceLevel {
+  ENTRY
+  MID
+  SENIOR
+  LEAD
+  EXECUTIVE
+}
+
+enum ApplicationStatus {
+  SAVED
+  APPLIED
+  OA_RECEIVED
+  INTERVIEW_SCHEDULED
+  OFFER_RECEIVED
+  REJECTED
+  WITHDRAWN
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id    String   @id @default(cuid())
+  email String   @unique
+  name  String
+  password String?
+  role  UserRole @default(USER)
+
+  // Profile
+  avatarUrl    String?
+  bio          String?
+  location     String?
+  linkedinUrl  String?
+  githubUrl    String?
+  portfolioUrl String?
+  currentTitle String?
+  yearsOfExp   Int?
+
+  // Auth
+  emailVerified    Boolean   @default(false)
+  googleId         String?   @unique
+  refreshToken     String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  // Relations
+  preferences  UserPreferences?
+  resumes      Resume[]
+  applications Application[]
+  savedJobs    SavedJob[]
+  chatHistory  ChatMessage[]
+  roadmaps     CareerRoadmap[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@map("users")
+}
+
+model UserPreferences {
+  id                 String  @id @default(cuid())
+  userId             String  @unique
+  theme              String  @default("dark")
+  emailNotifications Boolean @default(true)
+  jobAlerts          Boolean @default(true)
+  weeklyDigest       Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model Resume {
+  id       String @id @default(cuid())
+  userId   String
+  fileName String
+  fileUrl  String
+  fileType String
+
+  parsedData Json?
+  atsScore   Json?
+  version    Int   @default(1)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("resumes")
+}
+
+model Job {
+  id              String          @id @default(cuid())
+  title           String
+  company         String
+  companyLogoUrl  String?
+  location        String
+  remote          Boolean         @default(false)
+  jobType         JobType         @default(FULL_TIME)
+  experienceLevel ExperienceLevel @default(ENTRY)
+  salaryMin       Int?
+  salaryMax       Int?
+  currency        String?         @default("USD")
+
+  description      String
+  requiredSkills   String[]
+  niceToHaveSkills String[]
+
+  source    String
+  sourceUrl String @unique
+
+  postedAt  DateTime
+  expiresAt DateTime?
+
+  applications Application[]
+  savedByUsers SavedJob[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([title, company])
+  @@index([remote, jobType, experienceLevel])
+  @@map("jobs")
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  userId      String
+  jobId       String
+  status      ApplicationStatus @default(SAVED)
+  coverLetter String?
+  notes       String?
+  appliedAt   DateTime?
+  timeline    Json              @default("[]")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, jobId])
+  @@index([userId, status])
+  @@map("applications")
+}
+
+model SavedJob {
+  id     String @id @default(cuid())
+  userId String
+  jobId  String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jobId])
+  @@map("saved_jobs")
+}
+
+model ChatMessage {
+  id        String @id @default(cuid())
+  userId    String
+  role      String
+  content   String
+  sessionId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, sessionId])
+  @@map("chat_messages")
+}
+
+model CareerRoadmap {
+  id      String @id @default(cuid())
+  userId  String
+  title   String
+  content Json
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("career_roadmaps")
+}
