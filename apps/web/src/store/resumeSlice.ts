@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Resume } from "@axiom/shared-types";
 
-interface ResumeState {
+export interface ResumeState {
   resumes: Resume[];
   activeResume: Resume | null;
   isUploading: boolean;

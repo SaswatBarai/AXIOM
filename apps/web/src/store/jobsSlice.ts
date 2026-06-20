@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Job, JobMatch } from "@axiom/shared-types";
 
-interface JobsState {
+export interface JobsState {
   jobs: Job[];
   matches: JobMatch[];
   savedJobIds: string[];

@@ -1,6 +1,6 @@
-import { Router } from "express";
+import { Router, type IRouter } from "express";
 
-const router = Router();
+const router: IRouter = Router();
 
 // TODO: implement notification routes in Phase 3+
 router.get("/", (_req, res) => res.json({ route: "notification", status: "scaffold" }));

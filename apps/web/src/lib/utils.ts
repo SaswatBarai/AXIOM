@@ -1,9 +1,4 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn } from "@axiom/ui";
 
 export function formatSalary(min?: number, max?: number, currency = "USD"): string {
   if (!min && !max) return "Not disclosed";

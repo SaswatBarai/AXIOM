@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express from "express";
+import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -12,7 +12,7 @@ import jobRoutes from "./routes/job.routes";
 import applicationRoutes from "./routes/application.routes";
 import { errorHandler } from "./middleware/errorHandler.middleware";
 
-const app = express();
+const app: Application = express();
 const PORT = process.env.API_PORT ?? 4000;
 
 // ── Security ────────────────────────────────────────────────
