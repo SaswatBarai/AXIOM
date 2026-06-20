@@ -68,3 +68,4 @@ docker/volumes/
 # Misc
 *.pem
 *.key
+.vscode/
