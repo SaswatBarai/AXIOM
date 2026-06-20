@@ -17,6 +17,11 @@ vi.mock("@axiom/database", () => ({
   },
 }));
 
+// Bypass rate limiting in tests
+vi.mock("express-rate-limit", () => ({
+  rateLimit: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 // Mock redis service globally
 vi.mock("../services/redis.service", () => ({
   redis: {

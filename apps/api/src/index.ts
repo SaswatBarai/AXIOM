@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { rateLimit } from "express-rate-limit";
+import { xss } from "express-xss-sanitizer";
 
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
@@ -36,9 +37,10 @@ app.use(
   })
 );
 
-// ── Parsing ─────────────────────────────────────────────────
+// ── Parsing & sanitization ──────────────────────────────────
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(xss()); // strip XSS payloads from req.body / req.query / req.params
 app.use(morgan("dev"));
 
 // ── Health check ────────────────────────────────────────────
