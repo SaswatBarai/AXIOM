@@ -76,6 +76,8 @@ class InternshalaAdapter(JobSourceAdapter):
 
     def _listing_url(self, query: str, page: int) -> str:
         slug = re.sub(r"\s+", "-", query.strip().lower()) or "computer-science"
+        if not slug.endswith("-internship") and not slug.endswith("-internships"):
+            slug = f"{slug}-internship"
         suffix = f"/page-{page}" if page > 1 else ""
         return f"{BASE_URL}{LIST_PATH}/{slug}{suffix}"
 

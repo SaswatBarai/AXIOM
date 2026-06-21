@@ -42,3 +42,26 @@ export async function analyzeResumeATS(
     return null;
   }
 }
+
+export interface MatchResult {
+  job_id: string;
+  score: number;
+  matched_skills: string[];
+  missing_skills: string[];
+}
+
+export async function matchJobs(
+  resumeId: string,
+  jobIds?: string[],
+): Promise<MatchResult[] | null> {
+  try {
+    const { data } = await aiClient.post<{ success: boolean; data: MatchResult[] }>(
+      "/api/resume/match",
+      { resume_id: resumeId, job_ids: jobIds || [] },
+    );
+    return data.data;
+  } catch (err) {
+    logger.warn(`AI matching failed for resume ${resumeId}: ${(err as Error).message}`);
+    return null;
+  }
+}

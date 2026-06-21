@@ -25,7 +25,7 @@ const router: IRouter = Router();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: process.env.NODE_ENV === "development" ? 1000 : 5,
   message: { error: "Too many attempts, please try again in 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,

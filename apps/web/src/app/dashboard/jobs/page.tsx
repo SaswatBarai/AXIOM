@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Heart, MapPin, Building2, ExternalLink, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useJobs, type JobFilters } from "@/hooks/useJobs";
+import { useApplications } from "@/hooks/useApplications";
 
 const SOURCES = [
   { value: undefined,    label: "All sources" },
@@ -49,9 +50,38 @@ function FilterPill({
   );
 }
 
+function MatchBadge({ score }: { score?: number | null }) {
+  if (score == null) return null;
+  let color = "bg-zinc-800/80 text-zinc-400 border-zinc-700";
+  if (score >= 90) color = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+  else if (score >= 75) color = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+  return (
+    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${color}`}>
+      {score}% Match
+    </span>
+  );
+}
+
 export default function JobsPage() {
   const { jobs, savedJobIds, total, isLoading, error, filters, search, toggleSave } = useJobs();
+  const { applications, createApplication, fetchApplications } = useApplications();
   const [q, setQ] = useState("");
+  const [trackingLoadingId, setTrackingLoadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchApplications();
+  }, [fetchApplications]);
+
+  async function handleTrackJob(jobId: string) {
+    setTrackingLoadingId(jobId);
+    try {
+      await createApplication(jobId, "SAVED");
+    } catch (err: any) {
+      alert(err.message || "Failed to track job");
+    } finally {
+      setTrackingLoadingId(null);
+    }
+  }
 
   async function submitSearch() {
     await search({ q, page: 1 });
@@ -79,7 +109,17 @@ export default function JobsPage() {
             Search across Internshala, Unstop, and Naukri.
           </p>
         </div>
-        <span className="text-xs text-zinc-500">{total.toLocaleString()} jobs</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-zinc-500">{total.toLocaleString()} jobs</span>
+          <select
+            value={filters.sortBy || "match"}
+            onChange={(e) => applyFilter({ sortBy: e.target.value as "date" | "match" })}
+            className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700 font-medium"
+          >
+            <option value="match">Sort by Match</option>
+            <option value="date">Sort by Date</option>
+          </select>
+        </div>
       </div>
 
       {/* Search row */}
@@ -162,6 +202,7 @@ export default function JobsPage() {
         <ul className="space-y-2.5">
           {jobs.map((job) => {
             const saved = savedJobIds.includes(job.id);
+            const isTracked = applications.some((app) => app.jobId === job.id);
             const salary = fmtSalary(job.salaryMin ?? null, job.salaryMax ?? null, job.currency ?? "INR");
             return (
               <li
@@ -187,7 +228,10 @@ export default function JobsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-white truncate">{job.title}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-semibold text-white truncate">{job.title}</h3>
+                          <MatchBadge score={(job as any).matchScore} />
+                        </div>
                         <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-zinc-400">
                           <span className="flex items-center gap-1.5">
                             <Building2 className="w-3.5 h-3.5" /> {job.company}
@@ -204,7 +248,7 @@ export default function JobsPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => toggleSave(job.id)}
@@ -217,6 +261,26 @@ export default function JobsPage() {
                         >
                           <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
                         </button>
+                        
+                        {/* Track button */}
+                        <Button
+                          disabled={isTracked || trackingLoadingId === job.id}
+                          onClick={() => handleTrackJob(job.id)}
+                          className={`text-xs font-medium px-3 py-1.5 h-auto transition-colors ${
+                            isTracked
+                              ? "bg-zinc-850 text-zinc-500 hover:bg-zinc-850 border-zinc-850 cursor-not-allowed"
+                              : "bg-white text-black hover:bg-zinc-200"
+                          }`}
+                        >
+                          {trackingLoadingId === job.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : isTracked ? (
+                            "Tracked"
+                          ) : (
+                            "Track"
+                          )}
+                        </Button>
+
                         <a
                           href={job.sourceUrl}
                           target="_blank"

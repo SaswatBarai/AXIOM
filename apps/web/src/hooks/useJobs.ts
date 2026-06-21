@@ -19,6 +19,7 @@ export interface JobFilters {
   skills?: string[];
   page?: number;
   pageSize?: number;
+  sortBy?: "date" | "match";
 }
 
 interface SearchResponse {
@@ -37,7 +38,7 @@ export function useJobs() {
   const [pageSize, setPageSize]   = useState(20);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError]         = useState<string | null>(null);
-  const [filters, setFilters]     = useState<JobFilters>({});
+  const [filters, setFilters]     = useState<JobFilters>({ sortBy: "match" });
 
   const search = useCallback(async (next: JobFilters = {}) => {
     setIsLoading(true);
@@ -53,7 +54,7 @@ export function useJobs() {
     });
 
     try {
-      const { data } = await api.get<SearchResponse>(`/api/jobs?${params.toString()}`);
+      const { data } = await api.get<SearchResponse>(`/jobs?${params.toString()}`);
       dispatch(setJobs({ jobs: data.jobs, total: data.total }));
       setTotal(data.total);
       setPage(data.page);
@@ -78,9 +79,9 @@ export function useJobs() {
     dispatch(toggleSavedJob(jobId));
     try {
       if (isSaved) {
-        await api.delete(`/api/jobs/${jobId}/save`);
+        await api.delete(`/jobs/${jobId}/save`);
       } else {
-        await api.post(`/api/jobs/${jobId}/save`);
+        await api.post(`/jobs/${jobId}/save`);
       }
     } catch {
       // Revert on failure
@@ -91,7 +92,7 @@ export function useJobs() {
 
   async function loadSaved() {
     try {
-      const { data } = await api.get<SearchResponse>("/api/jobs/saved");
+      const { data } = await api.get<SearchResponse>("/jobs/saved");
       // Reflect in Redux so the UI can show what's saved server-side
       data.jobs.forEach((j) => {
         if (!savedJobIds.includes(j.id)) dispatch(toggleSavedJob(j.id));

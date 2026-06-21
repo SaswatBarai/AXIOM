@@ -18,8 +18,8 @@ class JobMatchRequest(BaseModel):
 
 
 class SkillGapRequest(BaseModel):
-    resume_id: str
-    target_role: str
+    parsed_data: dict   # ParsedResume as JSON (AI service stays stateless w.r.t. Postgres)
+    role_id: str        # must match a key in target_roles.json
 
 
 class CoverLetterRequest(BaseModel):

@@ -1081,7 +1081,7 @@ Each adapter implements the same `JobSourceAdapter` protocol so a fourth (Linked
 
 ---
 
-## Phase 9: Job Matching Engine
+## Phase 9: Job Matching Engine ✅
 
 **Estimated Duration:** 7-8 days (1.5 sprints)  
 **Team Size:** 2 developers (1 ML + 1 backend)  
@@ -1099,56 +1099,56 @@ Each adapter implements the same `JobSourceAdapter` protocol so a fourth (Linked
 ### Tasks
 
 1. **Embedding Model Setup**
-   - [ ] Install `sentence-transformers`, choose `all-MiniLM-L6-v2` (fast, 384-dim)
-   - [ ] Add `embed_text(text) -> list[float]` helper
-   - [ ] Warm-up endpoint to preload model
+   - [x] Install `sentence-transformers`, choose `all-MiniLM-L6-v2` (fast, 384-dim)
+   - [x] Add `embed_text(text) -> list[float]` helper
+   - [x] Warm-up endpoint to preload model
 
 2. **Vector Storage**
-   - [ ] Enable `pgvector` extension via Prisma migration
-   - [ ] Add `embedding vector(384)` to `Job` model and `Resume` model
-   - [ ] Backfill embeddings for existing rows via batch job
-   - [ ] Index: `CREATE INDEX ON jobs USING ivfflat (embedding vector_cosine_ops)`
+   - [x] Enable `pgvector` extension via Prisma migration
+   - [x] Add `embedding vector(384)` to `Job` model and `Resume` model
+   - [x] Backfill embeddings for existing rows via batch job
+   - [x] Index: `CREATE INDEX ON jobs USING ivfflat (embedding vector_cosine_ops)`
 
 3. **Match Endpoint**
-   - [ ] `POST /api/resume/match` taking `{ resume_id, job_ids? }` (Python)
-   - [ ] Cosine similarity → 0-100 match score
-   - [ ] Matched skills = intersection; missing = JD skills not in resume
-   - [ ] Return ranked list with score, matched, missing
+   - [x] `POST /api/resume/match` taking `{ resume_id, job_ids? }` (Python)
+   - [x] Cosine similarity → 0-100 match score
+   - [x] Matched skills = intersection; missing = JD skills not in resume
+   - [x] Return ranked list with score, matched, missing
 
 4. **Node.js Wiring**
-   - [ ] `ai.service.ts: matchJobs(resumeId, jobIds?)`
-   - [ ] `GET /api/jobs/:id/match` — single job match
-   - [ ] `GET /api/jobs/recommended` — top-K personalized (defaults to 20)
-   - [ ] Cache per-resume top-K in Redis (10 min TTL)
+   - [x] `ai.service.ts: matchJobs(resumeId, jobIds?)`
+   - [x] `GET /api/jobs/:id/match` — single job match
+   - [x] `GET /api/jobs/recommended` — top-K personalized (defaults to 20)
+   - [x] Cache per-resume top-K in Redis (10 min TTL)
 
 5. **Search Integration**
-   - [ ] Add "Sort by Match" option to search results
-   - [ ] Show match badge (90+ green, 75+ orange, else gray) per result
+   - [x] Add "Sort by Match" option to search results
+   - [x] Show match badge (90+ green, 75+ orange, else gray) per result
 
 6. **Web UI**
-   - [ ] Match Score gauge on job detail page
-   - [ ] Matched / missing skills chips
-   - [ ] "Recommended for you" carousel on dashboard home
-   - [ ] Trigger re-match after resume update
+   - [x] Match Score gauge on job detail page
+   - [x] Matched / missing skills chips
+   - [x] "Recommended for you" carousel on dashboard home
+   - [x] Trigger re-match after resume update
 
 7. **Testing**
-   - [ ] Pytest: cosine similarity on synthetic vectors
-   - [ ] Pytest: matched / missing skills correctness
-   - [ ] Vitest: match endpoint integration
-   - [ ] Coverage on matching service ≥85%
+   - [x] Pytest: cosine similarity on synthetic vectors
+   - [x] Pytest: matched / missing skills correctness
+   - [x] Vitest: match endpoint integration
+   - [x] Coverage on matching service ≥85%
 
 8. **Docs + Perf**
-   - [ ] ADR 0003 — pgvector vs FAISS, blended score rationale
-   - [ ] OpenAPI: match + recommended endpoints
-   - [ ] Benchmark: match against 10k jobs <300ms p95
+   - [x] ADR 0003 — pgvector vs FAISS, blended score rationale
+   - [x] OpenAPI: match + recommended endpoints
+   - [x] Benchmark: match against 10k jobs <300ms p95
 
 ### Completion Checklist
 
-- [ ] Resume + job embeddings persisted in pgvector
-- [ ] `/api/jobs/recommended` returns 20 jobs sorted by match
-- [ ] Match score visible in UI for every job
-- [ ] Re-match runs when resume updated
-- [ ] All tests + bench targets met
+- [x] Resume + job embeddings persisted in pgvector
+- [x] `/api/jobs/recommended` returns 20 jobs sorted by match
+- [x] Match score visible in UI for every job
+- [x] Re-match runs when resume updated
+- [x] All tests + bench targets met
 
 ---
 

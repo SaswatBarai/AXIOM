@@ -1,4 +1,8 @@
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,9 +10,15 @@ from routes import resume, jobs, skills, genai, chat, interview, roadmap
 from utils.logger import logger
 
 
+from services.embedding import preload_model
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("AXIOM AI service starting up")
+    try:
+        preload_model()
+    except Exception as e:
+        logger.error(f"Failed to preload model: {e}")
     yield
     logger.info("AXIOM AI service shutting down")
 

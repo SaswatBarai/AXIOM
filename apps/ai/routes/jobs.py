@@ -25,6 +25,13 @@ router = APIRouter()
 
 AI_SECRET = os.getenv("AI_SERVICE_SECRET", "internal-secret")
 
+# Per-source kill switches — set SCRAPER_<SOURCE>_ENABLED=false to disable
+_SOURCE_ENABLED: dict[str, bool] = {
+    "internshala": os.getenv("SCRAPER_INTERNSHALA_ENABLED", "true").lower() != "false",
+    "unstop":      os.getenv("SCRAPER_UNSTOP_ENABLED",      "true").lower() != "false",
+    "naukri":      os.getenv("SCRAPER_NAUKRI_ENABLED",      "true").lower() != "false",
+}
+
 SourceName = Literal["internshala", "unstop", "naukri"]
 
 
@@ -61,6 +68,12 @@ async def scrape_run(
     the caller's responsibility (the Express API service).
     """
     _check_secret(x_internal_secret)
+
+    if not _SOURCE_ENABLED.get(request.source, True):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Source '{request.source}' is disabled via SCRAPER_{request.source.upper()}_ENABLED=false",
+        )
 
     async with ScraperHttpClient() as http:
         if request.source == "internshala":

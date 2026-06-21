@@ -190,6 +190,7 @@ paths:
         - { in: query, name: skills,          schema: { type: string }, description: "Comma-separated list of skill names." }
         - { in: query, name: page,            schema: { type: integer, minimum: 1, default: 1 } }
         - { in: query, name: pageSize,        schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+        - { in: query, name: sortBy,          schema: { type: string, enum: [date, match], default: date } }
       responses:
         "200":
           description: OK
@@ -202,6 +203,43 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /api/jobs/recommended:
+    get:
+      tags: [Jobs]
+      summary: Get recommended jobs based on user's active resume
+      operationId: getRecommendedJobs
+      parameters:
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, default: 20 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Job" }
+        "400":
+          description: Resume not uploaded or active.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/jobs/{id}/match:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    get:
+      tags: [Jobs]
+      summary: Get match score and details for a single job against user's active resume
+      operationId: matchSingleJob
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+        "400":
+          description: Resume not uploaded or active.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/jobs/saved:
     get:
@@ -314,6 +352,180 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+
+  /api/applications:
+    post:
+      tags: [Applications]
+      summary: Track a new job application
+      description: Create a tracker entry for a specific job with initial status.
+      operationId: createApplication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobId]
+              properties:
+                jobId:  { type: string, example: cmq111j0000001tyi0aaaaaaa1 }
+                status: { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN], default: SAVED }
+                note:   { type: string, maxLength: 1000, example: "Bookmarked this job" }
+      responses:
+        "201":
+          description: Tracker entry created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application: { $ref: "#/components/schemas/Application" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+    get:
+      tags: [Applications]
+      summary: List user applications
+      description: Retrieve user applications with status and date filters.
+      operationId: listApplications
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+        - name: dateFrom
+          in: query
+          required: false
+          schema: { type: string, example: "2026-01-01" }
+        - name: dateTo
+          in: query
+          required: false
+          schema: { type: string, example: "2026-06-01" }
+      responses:
+        "200":
+          description: Applications list returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  applications:
+                    type: array
+                    items: { $ref: "#/components/schemas/Application" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /api/applications/stats:
+    get:
+      tags: [Applications]
+      summary: Retrieve applications analytics
+      description: Get metrics including application counts per status, success rate, and average days to interview.
+      operationId: getStats
+      responses:
+        "200":
+          description: Aggregated analytics stats returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats: { $ref: "#/components/schemas/ApplicationStats" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/applications/{id}:
+    get:
+      tags: [Applications]
+      summary: Get application details
+      description: Retrieve details of a specific application with its full transition timeline history.
+      operationId: getApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Application detail returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application: { $ref: "#/components/schemas/Application" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    patch:
+      tags: [Applications]
+      summary: Update application details or transition status
+      description: Change application status, update cover letter or general notes. State machine checks will reject illegal transitions.
+      operationId: updateApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:      { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+                notes:       { type: string, maxLength: 5000, example: "Spoke to recruiter" }
+                coverLetter: { type: string, maxLength: 15000 }
+                note:        { type: string, maxLength: 1000, example: "Scheduled HR screen" }
+      responses:
+        "200":
+          description: Application updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application: { $ref: "#/components/schemas/Application" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: Invalid status transition or parameter limit violation.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+    delete:
+      tags: [Applications]
+      summary: Delete an application tracker
+      description: Remove an application entry.
+      operationId: deleteApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Application deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Application deleted successfully" }
+                  id:      { type: string, example: cmaaaa0000000000000000000 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
 components:
   parameters:
@@ -525,3 +737,46 @@ components:
         skipped:    { type: integer, example: 0 }
         errors:     { type: integer, example: 0 }
         durationMs: { type: integer, example: 4321 }
+
+    Application:
+      type: object
+      required: [id, userId, jobId, status, timeline, createdAt, updatedAt]
+      properties:
+        id:          { type: string, example: cmaaaa0000000000000000000 }
+        userId:      { type: string }
+        jobId:       { type: string }
+        status:      { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+        coverLetter: { type: string }
+        notes:       { type: string }
+        appliedAt:   { oneOf: [{ type: string, format: date-time }, { type: "null" }] }
+        timeline:
+          type: array
+          items: { $ref: "#/components/schemas/ApplicationTimelineEntry" }
+        job:         { $ref: "#/components/schemas/Job" }
+        createdAt:   { type: string, format: date-time }
+        updatedAt:   { type: string, format: date-time }
+
+    ApplicationTimelineEntry:
+      type: object
+      required: [status, at, note]
+      properties:
+        status: { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+        at:     { type: string, format: date-time }
+        note:   { type: string }
+
+    ApplicationStats:
+      type: object
+      required: [counts, successRate, avgTimeToInterviewDays]
+      properties:
+        counts:
+          type: object
+          properties:
+            SAVED:               { type: integer }
+            APPLIED:             { type: integer }
+            OA_RECEIVED:         { type: integer }
+            INTERVIEW_SCHEDULED: { type: integer }
+            OFFER_RECEIVED:      { type: integer }
+            REJECTED:            { type: integer }
+            WITHDRAWN:           { type: integer }
+        successRate:            { type: number, format: float, example: 12.5 }
+        avgTimeToInterviewDays: { type: number, format: float, example: 8.3 }

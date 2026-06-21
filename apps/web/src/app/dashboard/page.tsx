@@ -1,11 +1,13 @@
 "use client";
 
-import { FileText, Briefcase, ClipboardList, TrendingUp, ArrowRight, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileText, Briefcase, ClipboardList, TrendingUp, ArrowRight, Sparkles, ExternalLink } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { useResume } from "@/hooks/useResume";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { api } from "@/lib/api";
 
 const QUICK_ACTIONS = [
   { href: "/dashboard/resume",       label: "Upload Resume",    description: "Add or update your resume",        icon: FileText },
@@ -28,6 +30,39 @@ export default function DashboardOverviewPage() {
   const { user }                        = useAuth();
   const { profile, isLoading }          = useProfile();
   const { resumes, isLoading: resumeLoading } = useResume();
+
+  const [recommendedJobs, setRecommendedJobs] = useState<any[]>([]);
+  const [recLoading, setRecLoading] = useState(false);
+  const [appsCount, setAppsCount] = useState<number | string>("—");
+
+  useEffect(() => {
+    async function loadRecommended() {
+      setRecLoading(true);
+      try {
+        const { data } = await api.get<any[]>("/jobs/recommended?limit=5");
+        setRecommendedJobs(data);
+      } catch (err) {
+        console.error("Failed to load recommended jobs", err);
+      } finally {
+        setRecLoading(false);
+      }
+    }
+    if (resumes.length > 0) {
+      void loadRecommended();
+    }
+  }, [resumes]);
+
+  useEffect(() => {
+    async function loadAppsCount() {
+      try {
+        const { data } = await api.get("/applications");
+        if (data.applications) setAppsCount(data.applications.length);
+      } catch (err) {
+        console.error("Failed to load applications count", err);
+      }
+    }
+    void loadAppsCount();
+  }, []);
 
   const completionPct = profile?.profileCompletionPct ?? 0;
   const greeting      = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
@@ -84,7 +119,7 @@ export default function DashboardOverviewPage() {
         className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"
       >
         <StatCard label="Resumes" value={resumeLoading ? "…" : resumes.length} sub={resumes.length === 0 ? "Upload to get started" : `${resumes.length} uploaded`} color="text-white" />
-        <StatCard label="Applications"   value="—"   sub="Track your pipeline"     color="text-white" />
+        <StatCard label="Applications"   value={appsCount}   sub={appsCount === 0 ? "No active applications" : `${appsCount} tracking pipeline`}     color="text-white" />
         <StatCard label="Job Matches"    value="—"   sub="Connect to see matches"  color="text-white" />
         <StatCard label="Profile"        value={`${completionPct}%`} sub="Complete" color={completionPct === 100 ? "text-green-400" : "text-white"} />
       </motion.div>
@@ -116,11 +151,66 @@ export default function DashboardOverviewPage() {
         </div>
       </motion.div>
 
+      {/* Recommended Jobs */}
+      {!resumeLoading && resumes.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mt-8"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider font-mono">Recommended for you</h2>
+            <Link href="/dashboard/jobs?sortBy=match" className="text-xs font-medium text-zinc-450 hover:text-white transition-colors flex items-center gap-1">
+              View all <ArrowRight size={12} />
+            </Link>
+          </div>
+
+          {recLoading ? (
+            <div className="text-zinc-600 text-xs py-4">Loading recommendations...</div>
+          ) : recommendedJobs.length === 0 ? (
+            <div className="text-zinc-650 text-xs py-4">No recommendations found yet. Try completing your resume parsing first.</div>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+              {recommendedJobs.map((job) => (
+                <div
+                  key={job.id}
+                  className="shrink-0 w-72 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 flex flex-col justify-between hover:border-zinc-700 transition-colors"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        {job.matchScore}% Match
+                      </span>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{job.source}</span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-white truncate">{job.title}</h3>
+                    <p className="text-xs text-zinc-400 truncate mt-0.5">{job.company}</p>
+                    <p className="text-xs text-zinc-500 mt-1.5 line-clamp-2">{job.description}</p>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-xs">
+                    <span className="text-[10px] text-zinc-500">{job.location}</span>
+                    <a
+                      href={job.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-medium text-white hover:underline flex items-center gap-0.5"
+                    >
+                      Apply <ExternalLink size={10} />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* Coming soon placeholder */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.35 }}
         className="mt-8 rounded-xl border border-dashed border-zinc-800 p-8 text-center"
       >
         <TrendingUp size={28} className="mx-auto text-zinc-700 mb-3" />

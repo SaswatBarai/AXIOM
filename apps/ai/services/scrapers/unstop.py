@@ -42,13 +42,14 @@ class UnstopAdapter(JobSourceAdapter):
         max_pages: int = 3,
     ) -> AsyncIterator[NormalizedJob]:
         for page in range(1, max_pages + 1):
-            params = {
-                "opportunity": "jobs,internships",
-                "searchTerm": query or "engineer",
-                "page": page,
-                "per_page": 20,
-            }
-            qs = "&".join(f"{k}={v}" for k, v in params.items())
+            params = [
+                ("opportunity", "jobs"),
+                ("opportunity", "internships"),
+                ("searchTerm", query or "engineer"),
+                ("page", str(page)),
+                ("per_page", "20"),
+            ]
+            qs = "&".join(f"{k}={v}" for k, v in params)
             url = f"{SEARCH_URL}?{qs}"
             try:
                 payload = await self._http.fetch_json(url)

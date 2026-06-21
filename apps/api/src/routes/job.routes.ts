@@ -9,14 +9,18 @@ import {
   unsaveJobHandler,
   listSavedJobsHandler,
   runScrapeHandler,
+  getRecommendedJobsHandler,
+  matchSingleJobHandler,
 } from "../controllers/job.controller";
 
 const router: IRouter = Router();
 
 // Listing / detail — auth required (so user can be served personalised data later)
-router.get(   "/",       requireAuth, validateQuery(jobSearchSchema), searchJobsHandler);
-router.get(   "/saved",  requireAuth,                                  listSavedJobsHandler);
-router.get(   "/:id",    requireAuth,                                  getJobHandler);
+router.get(   "/",           requireAuth, validateQuery(jobSearchSchema), searchJobsHandler);
+router.get(   "/recommended", requireAuth,                                  getRecommendedJobsHandler);
+router.get(   "/saved",      requireAuth,                                  listSavedJobsHandler);
+router.get(   "/:id/match",   requireAuth,                                  matchSingleJobHandler);
+router.get(   "/:id",        requireAuth,                                  getJobHandler);
 
 // Save / unsave
 router.post(  "/:id/save",   requireAuth, saveJobHandler);

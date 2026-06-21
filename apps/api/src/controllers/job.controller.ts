@@ -6,7 +6,7 @@ import type { JobSearchInput, ScrapeRunInput } from "../utils/schemas";
 export async function searchJobsHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const input = res.locals["validatedQuery"] as JobSearchInput;
-    const result = await jobService.searchJobs(input);
+    const result = await jobService.searchJobs(input, req.userId);
     res.json(result);
   } catch (err) { next(err); }
 }
@@ -46,5 +46,20 @@ export async function runScrapeHandler(req: AuthRequest, res: Response, next: Ne
     const input = req.body as ScrapeRunInput;
     const summary = await jobService.runScrape(input);
     res.json({ summary });
+  } catch (err) { next(err); }
+}
+
+export async function getRecommendedJobsHandler(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const limit = Number(req.query["limit"]) || 20;
+    const recommended = await jobService.getRecommendedJobs(req.userId!, limit);
+    res.json(recommended);
+  } catch (err) { next(err); }
+}
+
+export async function matchSingleJobHandler(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const match = await jobService.matchSingleJob(req.userId!, req.params["id"] as string);
+    res.json(match);
   } catch (err) { next(err); }
 }

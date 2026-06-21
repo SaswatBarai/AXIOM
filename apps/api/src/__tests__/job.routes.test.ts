@@ -5,12 +5,14 @@ import jobRoutes from "../routes/job.routes";
 import { errorHandler, AppError } from "../middleware/errorHandler.middleware";
 
 vi.mock("../services/job.service", () => ({
-  searchJobs:     vi.fn(),
-  getJob:         vi.fn(),
-  saveJob:        vi.fn(),
-  unsaveJob:      vi.fn(),
-  listSavedJobs:  vi.fn(),
-  runScrape:      vi.fn(),
+  searchJobs:         vi.fn(),
+  getJob:             vi.fn(),
+  saveJob:            vi.fn(),
+  unsaveJob:          vi.fn(),
+  listSavedJobs:      vi.fn(),
+  runScrape:          vi.fn(),
+  getRecommendedJobs: vi.fn(),
+  matchSingleJob:     vi.fn(),
 }));
 
 // requireAuth → inject userId "user-1"; default role to USER for save/search tests
@@ -115,7 +117,9 @@ describe("GET /api/jobs", () => {
         skills: ["python", "fastapi"],
         page: 2,
         pageSize: 10,
+        sortBy: "match",
       }),
+      "user-1",
     );
   });
 
@@ -140,6 +144,7 @@ describe("GET /api/jobs", () => {
     await request(app).get("/api/jobs").query({ skills: "react,typescript,nextjs" });
     expect(jobService.searchJobs).toHaveBeenCalledWith(
       expect.objectContaining({ skills: ["react", "typescript", "nextjs"] }),
+      "user-1",
     );
   });
 });
@@ -265,5 +270,39 @@ describe("POST /api/jobs/scrape", () => {
       .post("/api/jobs/scrape")
       .send({ source: "internshala", maxPages: 99 });
     expect(res.status).toBe(422);
+  });
+});
+
+// ── GET /api/jobs/recommended ──────────────────────────────────────────────────
+
+describe("GET /api/jobs/recommended", () => {
+  it("200 — returns recommended jobs", async () => {
+    vi.mocked(jobService.getRecommendedJobs).mockResolvedValue([
+      { ...MOCK_JOB, matchScore: 85.5, matchedSkills: ["python"], missingSkills: ["fastapi"] }
+    ] as any);
+
+    const res = await request(app).get("/api/jobs/recommended");
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].matchScore).toBe(85.5);
+    expect(jobService.getRecommendedJobs).toHaveBeenCalledWith("user-1", 20);
+  });
+});
+
+// ── GET /api/jobs/:id/match ──────────────────────────────────────────────────
+
+describe("GET /api/jobs/:id/match", () => {
+  it("200 — returns match score for single job", async () => {
+    vi.mocked(jobService.matchSingleJob).mockResolvedValue({
+      ...MOCK_JOB,
+      matchScore: 92.0,
+      matchedSkills: ["python", "fastapi"],
+      missingSkills: []
+    } as any);
+
+    const res = await request(app).get("/api/jobs/job-1/match");
+    expect(res.status).toBe(200);
+    expect(res.body.matchScore).toBe(92.0);
+    expect(jobService.matchSingleJob).toHaveBeenCalledWith("user-1", "job-1");
   });
 });

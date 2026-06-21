@@ -66,6 +66,9 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
+  // Phase 11 — most-recent skill gap report
+  latestGapReport Json?
+
   // Relations
   preferences  UserPreferences?
   resumes      Resume[]
@@ -104,6 +107,7 @@ model Resume {
   parsedData Json?
   atsScore   Json?
   version    Int   @default(1)
+  embedding  Unsupported("vector(384)")?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -133,6 +137,7 @@ model Job {
 
   source    String
   sourceUrl String @unique
+  embedding Unsupported("vector(384)")?
 
   postedAt  DateTime
   expiresAt DateTime?

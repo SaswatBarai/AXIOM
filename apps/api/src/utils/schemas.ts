@@ -93,6 +93,7 @@ export const jobSearchSchema = z.object({
     }),
   page:     z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(20),
+  sortBy:   z.enum(["date", "match"]).default("match"),
 });
 
 export const scrapeRunSchema = z.object({
@@ -113,3 +114,82 @@ export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
 export type AnalyzeResumeInput   = z.infer<typeof analyzeResumeSchema>;
 export type JobSearchInput       = z.infer<typeof jobSearchSchema>;
 export type ScrapeRunInput       = z.infer<typeof scrapeRunSchema>;
+
+// ── Phase 10: Application Tracker ─────────────────────────────────────────────
+
+const APPLICATION_STATUSES = [
+  "SAVED",
+  "APPLIED",
+  "OA_RECEIVED",
+  "INTERVIEW_SCHEDULED",
+  "OFFER_RECEIVED",
+  "REJECTED",
+  "WITHDRAWN",
+] as const;
+
+export const createApplicationSchema = z.object({
+  jobId: z.string().min(1, "Job ID is required"),
+  status: z.enum(APPLICATION_STATUSES).optional(),
+  note: z.string().max(1000).optional(),
+});
+
+export const updateApplicationSchema = z.object({
+  status: z.enum(APPLICATION_STATUSES).optional(),
+  notes: z.string().max(5000).optional(),
+  coverLetter: z.string().max(15000).optional(),
+  note: z.string().max(1000).optional(),
+});
+
+export const listApplicationsSchema = z.object({
+  status: z.enum(APPLICATION_STATUSES).optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+});
+
+export type CreateApplicationInput = z.infer<typeof createApplicationSchema>;
+export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
+export type ListApplicationsInput = z.infer<typeof listApplicationsSchema>;
+
+// ── Phase 11: Skill Gap Detection ─────────────────────────────────────────────
+
+export const skillGapSchema = z.object({
+  roleId: z.string().min(1, "Role ID is required"),
+});
+
+export type SkillGapInput = z.infer<typeof skillGapSchema>;
+
+// ── Phase 12: AI Career Chatbot ────────────────────────────────────────────────
+
+export const chatMessageSchema = z.object({
+  message:      z.string().min(1, "Message cannot be empty").max(4000),
+  sessionId:    z.string().uuid().optional(),
+  resumeParsed: z.record(z.unknown()).optional(),
+  savedJobs:    z.array(z.record(z.unknown())).optional(),
+});
+
+export type ChatMessageInput = z.infer<typeof chatMessageSchema>;
+
+// ── Phase 13: Cover Letter Generator ──────────────────────────────────────────
+
+export const coverLetterGenerateSchema = z.object({
+  resumeId:       z.string().min(1),
+  jobDescription: z.string().min(10),
+  companyName:    z.string().min(1),
+  jobTitle:       z.string().min(1),
+  tone:           z.enum(["formal", "friendly", "direct"]).default("formal"),
+});
+
+export const coverLetterExportSchema = z.object({
+  letterBody:    z.string().min(10),
+  candidateName: z.string().optional(),
+  jobTitle:      z.string().optional(),
+  companyName:   z.string().optional(),
+});
+
+export const coverLetterSaveSchema = z.object({
+  letter: z.string().min(1),
+});
+
+export type CoverLetterGenerateInput = z.infer<typeof coverLetterGenerateSchema>;
+export type CoverLetterExportInput   = z.infer<typeof coverLetterExportSchema>;
+

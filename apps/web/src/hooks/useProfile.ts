@@ -22,8 +22,8 @@ export function useProfile() {
     try {
       setIsLoading(true);
       const [profileRes, prefsRes] = await Promise.all([
-        api.get("/api/users/me", { headers: authHeader() }),
-        api.get("/api/users/me/preferences", { headers: authHeader() }),
+        api.get("/users/me", { headers: authHeader() }),
+        api.get("/users/me/preferences", { headers: authHeader() }),
       ]);
       setProfile(profileRes.data.user);
       setPrefs(prefsRes.data.preferences);
@@ -37,7 +37,7 @@ export function useProfile() {
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
   async function updateProfile(data: Partial<UserProfile>) {
-    const res = await api.put("/api/users/me", data, { headers: authHeader() });
+    const res = await api.put("/users/me", data, { headers: authHeader() });
     const updated = res.data.user;
     setProfile(updated);
     // keep Redux user in sync
@@ -47,17 +47,17 @@ export function useProfile() {
   }
 
   async function changePassword(currentPassword: string, newPassword: string) {
-    await api.patch("/api/users/me/password", { currentPassword, newPassword }, { headers: authHeader() });
+    await api.patch("/users/me/password", { currentPassword, newPassword }, { headers: authHeader() });
   }
 
   async function updatePreferences(data: Partial<UserPreferences>) {
-    const res = await api.put("/api/users/me/preferences", data, { headers: authHeader() });
+    const res = await api.put("/users/me/preferences", data, { headers: authHeader() });
     setPrefs(res.data.preferences);
     return res.data.preferences;
   }
 
   async function deleteAccount() {
-    await api.delete("/api/users/me", { headers: authHeader() });
+    await api.delete("/users/me", { headers: authHeader() });
   }
 
   return { profile, prefs, isLoading, error, updateProfile, changePassword, updatePreferences, deleteAccount, refetch: fetchProfile };

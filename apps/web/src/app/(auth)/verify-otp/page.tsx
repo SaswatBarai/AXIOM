@@ -60,7 +60,7 @@ function VerifyOtpForm() {
     setResending(true);
     setError("");
     try {
-      await api.post("/api/auth/forgot-password", { email });
+      await api.post("/auth/forgot-password", { email });
       setCountdown(RESEND_SECONDS);
     } catch {
       setError("Failed to resend code.");
@@ -78,7 +78,7 @@ function VerifyOtpForm() {
       if (mode === "reset") {
         router.push(`/reset-password?email=${encodeURIComponent(email)}&otp=${otp}`);
       } else {
-        await api.post("/api/auth/verify-email", { email, otp });
+        await api.post("/auth/verify-email", { email, otp });
         setSuccess(true);
         setTimeout(() => router.push("/login?verified=1"), 1500);
       }

@@ -11,6 +11,9 @@ import userRoutes from "./routes/user.routes";
 import resumeRoutes from "./routes/resume.routes";
 import jobRoutes from "./routes/job.routes";
 import applicationRoutes from "./routes/application.routes";
+import skillRoutes from "./routes/skill.routes";
+import chatRoutes from "./routes/chat.routes";
+import coverLetterRoutes from "./routes/coverLetter.routes";
 import { errorHandler } from "./middleware/errorHandler.middleware";
 import { prisma } from "@axiom/database";
 import { redis } from "./services/redis.service";
@@ -32,10 +35,11 @@ app.use(
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: process.env.NODE_ENV === "development" ? 10000 : 100,
     message: { error: "Too many requests, please try again later." },
   })
 );
+
 
 // ── Parsing & sanitization ──────────────────────────────────
 app.use(express.json({ limit: "10mb" }));
@@ -63,6 +67,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/skills", skillRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/cover-letter", coverLetterRoutes);
 
 // ── Error handler ───────────────────────────────────────────
 app.use(errorHandler);

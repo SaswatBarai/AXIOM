@@ -23,7 +23,7 @@ export function useAuth() {
       return;
     }
     api
-      .get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+      .get("/auth/me", { headers: { Authorization: `Bearer ${token}` } })
       .then(({ data }) => {
         dispatch(setCredentials({ user: data.user, accessToken: token }));
       })
@@ -39,7 +39,7 @@ export function useAuth() {
     const token = localStorage.getItem("accessToken");
     if (token) {
       api
-        .post("/api/auth/logout", {}, { headers: { Authorization: `Bearer ${token}` } })
+        .post("/auth/logout", {}, { headers: { Authorization: `Bearer ${token}` } })
         .catch(() => {});
     }
     localStorage.removeItem("accessToken");

@@ -2,9 +2,10 @@ import os
 
 from fastapi import APIRouter, HTTPException, Header
 
-from models.schemas import ResumeParseRequest, ATSAnalyzeRequest
+from models.schemas import ResumeParseRequest, ATSAnalyzeRequest, JobMatchRequest
 from services.parser import parse_resume
 from services.ats import analyze_resume
+from services.recommendation import match_resume_jobs
 from utils.logger import logger
 
 router = APIRouter()
@@ -45,3 +46,19 @@ def analyze_resume_endpoint(
     except Exception as e:
         logger.error(f"ATS analysis failed: {e}")
         raise HTTPException(status_code=500, detail="Analysis failed — check AI service logs")
+
+
+@router.post("/match")
+def match_resume_endpoint(
+    request: JobMatchRequest,
+    x_internal_secret: str = Header(...),
+):
+    _check_secret(x_internal_secret)
+    try:
+        results = match_resume_jobs(request.resume_id, request.job_ids)
+        return {"success": True, "data": results}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Job matching failed: {e}")
+        raise HTTPException(status_code=500, detail="Matching failed — check AI service logs")

@@ -40,7 +40,7 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      await api.post("/api/auth/register", form);
+      await api.post("/auth/register", form);
       router.push(`/verify-otp?email=${encodeURIComponent(form.email)}`);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;

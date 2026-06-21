@@ -4,6 +4,8 @@ import axios from "axios";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { logger } from "../utils/logger";
 import type { JobSearchInput, ScrapeRunInput } from "../utils/schemas";
+import { matchJobs } from "./ai.service";
+import { redis } from "./redis.service";
 
 const AI_URL    = process.env.AI_SERVICE_URL    ?? "http://localhost:8000";
 const AI_SECRET = process.env.AI_SERVICE_SECRET ?? "internal-secret";
@@ -23,8 +25,51 @@ export interface JobSearchResult {
   pageSize: number;
 }
 
-export async function searchJobs(input: JobSearchInput): Promise<JobSearchResult> {
+export async function searchJobs(input: JobSearchInput, userId?: string): Promise<JobSearchResult> {
   const where = buildWhere(input);
+
+  if (input.sortBy === "match" && userId) {
+    const resume = await prisma.resume.findFirst({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (resume) {
+      const allJobs = await prisma.job.findMany({ where });
+      if (allJobs.length === 0) {
+        return { jobs: [], total: 0, page: input.page, pageSize: input.pageSize };
+      }
+
+      const jobIds = allJobs.map((j) => j.id);
+      const matches = await matchJobs(resume.id, jobIds);
+      if (!matches) {
+        throw new AppError(500, "Failed to compute job matches from AI service");
+      }
+
+      const decoratedJobs = matches
+        .map((match) => {
+          const job = allJobs.find((j) => j.id === match.job_id);
+          if (!job) return null;
+          return {
+            ...job,
+            matchScore: match.score,
+            matchedSkills: match.matched_skills,
+            missingSkills: match.missing_skills,
+          } as any;
+        })
+        .filter((item) => item !== null);
+
+      const skip = (input.page - 1) * input.pageSize;
+      const paginatedJobs = decoratedJobs.slice(skip, skip + input.pageSize);
+
+      return {
+        jobs: paginatedJobs,
+        total: decoratedJobs.length,
+        page: input.page,
+        pageSize: input.pageSize,
+      };
+    }
+  }
+
   const skip  = (input.page - 1) * input.pageSize;
 
   const [jobs, total] = await Promise.all([
@@ -37,7 +82,7 @@ export async function searchJobs(input: JobSearchInput): Promise<JobSearchResult
     prisma.job.count({ where }),
   ]);
 
-  return { jobs, total, page: input.page, pageSize: input.pageSize };
+  return { jobs: jobs as any, total, page: input.page, pageSize: input.pageSize };
 }
 
 export async function getJob(id: string) {
@@ -217,6 +262,13 @@ export async function runScrape(input: ScrapeRunInput) {
 
   const durationMs = Date.now() - started;
 
+  if (aiResp.summary.fetched === 0) {
+    logger.error(
+      `[SCRAPER ALARM] Zero results from source=${input.source} query="${input.query}" — adapter may be broken`,
+    );
+    await redis.set(`scraper:alarm:${input.source}`, "1", 86_400);
+  }
+
   return {
     source:    input.source,
     fetched:   aiResp.summary.fetched,
@@ -225,5 +277,77 @@ export async function runScrape(input: ScrapeRunInput) {
     skipped:   aiResp.summary.skipped,
     errors:    aiResp.summary.errors,
     durationMs,
+  };
+}
+
+export async function getRecommendedJobs(userId: string, limit = 20) {
+  const resume = await prisma.resume.findFirst({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+  });
+  if (!resume) {
+    throw new AppError(400, "Please upload a resume first");
+  }
+
+  const cacheKey = `recommended_jobs:${resume.id}:${limit}`;
+  const cached = await redis.getJson<any[]>(cacheKey);
+  if (cached) {
+    logger.info(`Serving cached recommended jobs for resume ${resume.id}`);
+    return cached;
+  }
+
+  const matches = await matchJobs(resume.id);
+  if (!matches) {
+    throw new AppError(500, "Failed to compute job matches from AI service");
+  }
+
+  const topMatches = matches.slice(0, limit);
+  const jobIds = topMatches.map((m) => m.job_id);
+  const jobs = await prisma.job.findMany({
+    where: { id: { in: jobIds } },
+  });
+
+  const recommended = topMatches
+    .map((match) => {
+      const job = jobs.find((j) => j.id === match.job_id);
+      if (!job) return null;
+      return {
+        ...job,
+        matchScore: match.score,
+        matchedSkills: match.matched_skills,
+        missingSkills: match.missing_skills,
+      };
+    })
+    .filter((item) => item !== null);
+
+  await redis.setJson(cacheKey, recommended, 600); // 10 minutes cache
+  return recommended;
+}
+
+export async function matchSingleJob(userId: string, jobId: string) {
+  const resume = await prisma.resume.findFirst({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+  });
+  if (!resume) {
+    throw new AppError(400, "Please upload a resume first");
+  }
+
+  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  if (!job) {
+    throw new AppError(404, "Job not found");
+  }
+
+  const matches = await matchJobs(resume.id, [jobId]);
+  if (!matches || matches.length === 0) {
+    throw new AppError(500, "Failed to compute job match from AI service");
+  }
+
+  const match = matches[0]!;
+  return {
+    ...job,
+    matchScore: match.score,
+    matchedSkills: match.matched_skills,
+    missingSkills: match.missing_skills,
   };
 }
