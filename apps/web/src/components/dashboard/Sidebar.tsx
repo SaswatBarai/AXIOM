@@ -16,7 +16,6 @@ import {
   LogOut,
   ChevronRight,
   PanelLeftClose,
-  PanelLeftOpen,
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -53,7 +52,7 @@ export function Sidebar() {
         collapsed ? "w-[68px]" : "w-64"
       )}
     >
-      {/* ─── Header: Logo ─── */}
+      {/* ─── Header: Logo + Collapse ─── */}
       <div className="flex items-center h-14 border-b border-zinc-800/80 px-3 shrink-0">
         <div
           className={cn(
@@ -61,10 +60,9 @@ export function Sidebar() {
             collapsed ? "justify-center" : "justify-between"
           )}
         >
-          {/* Logo */}
           <div
             className={cn(
-              "flex items-center gap-2.5",
+              "flex items-center gap-2.5 min-w-0",
               collapsed && "cursor-pointer hover:opacity-80 transition-opacity"
             )}
             onClick={collapsed ? () => setCollapsed(false) : undefined}
@@ -79,6 +77,16 @@ export function Sidebar() {
               </span>
             )}
           </div>
+
+          {!collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="flex items-center justify-center h-8 w-8 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-all duration-150 shrink-0"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose size={18} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -142,73 +150,55 @@ export function Sidebar() {
           collapsed ? "px-2 py-3" : "px-3 py-3"
         )}
       >
-        {/* Collapse Toggle */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn(
-            "flex items-center rounded-lg text-[13px] font-medium text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-all duration-150 group cursor-pointer mb-2",
-            collapsed
-              ? "h-10 w-10 justify-center mx-auto"
-              : "h-10 w-full gap-3 px-3"
+        {/* User info + Logout */}
+        <div>
+          {user && (
+            <div
+              className={cn(
+                "flex items-center rounded-lg transition-all duration-200 mb-1.5",
+                collapsed ? "h-10 w-10 justify-center mx-auto" : "gap-3 px-3 py-1"
+              )}
+            >
+              <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0">
+                <span className="text-xs font-semibold text-zinc-300 uppercase">
+                  {user.name?.charAt(0) ?? user.email.charAt(0)}
+                </span>
+              </div>
+              {!collapsed && (
+                <div className="min-w-0 flex flex-col justify-center transition-opacity duration-200">
+                  <p className="text-xs font-semibold text-white truncate leading-none">
+                    {user.name ?? "User"}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 truncate leading-none mt-0.5">
+                    {user.email}
+                  </p>
+                </div>
+              )}
+            </div>
           )}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? (
-            <PanelLeftOpen size={18} className="shrink-0 text-zinc-500 group-hover:text-zinc-300" />
-          ) : (
-            <>
-              <PanelLeftClose size={18} className="shrink-0 text-zinc-500 group-hover:text-zinc-300" />
-              <span className="transition-opacity duration-150">Collapse Sidebar</span>
-            </>
-          )}
-        </button>
 
-        {/* User info */}
-        {user && (
-          <div
+          <button
+            onClick={handleLogout}
+            title={collapsed ? "Log out" : undefined}
             className={cn(
-              "flex items-center rounded-lg transition-all duration-200 mb-1.5",
-              collapsed ? "h-10 w-10 justify-center mx-auto" : "gap-3 px-3 h-10"
+              "flex items-center rounded-lg text-[13px] font-medium text-zinc-500 hover:text-red-400 hover:bg-red-500/[0.08] transition-all duration-150 group cursor-pointer",
+              collapsed
+                ? "h-10 w-10 justify-center mx-auto"
+                : "h-10 w-full gap-3 px-3"
             )}
           >
-            <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0">
-              <span className="text-xs font-semibold text-zinc-300 uppercase">
-                {user.name?.charAt(0) ?? user.email.charAt(0)}
-              </span>
-            </div>
+            <span className="w-8 h-8 flex items-center justify-center shrink-0">
+              <LogOut
+                size={18}
+                strokeWidth={1.75}
+                className="text-zinc-500 group-hover:text-red-400 transition-colors"
+              />
+            </span>
             {!collapsed && (
-              <div className="min-w-0 transition-opacity duration-200">
-                <p className="text-xs font-semibold text-white truncate leading-tight">
-                  {user.name ?? "User"}
-                </p>
-                <p className="text-[10px] text-zinc-500 truncate leading-tight">
-                  {user.email}
-                </p>
-              </div>
+              <span className="transition-opacity duration-150">Log out</span>
             )}
-          </div>
-        )}
-
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          title={collapsed ? "Log out" : undefined}
-          className={cn(
-            "flex items-center rounded-lg text-[13px] font-medium text-zinc-500 hover:text-red-400 hover:bg-red-500/[0.08] transition-all duration-150 group cursor-pointer",
-            collapsed
-              ? "h-10 w-10 justify-center mx-auto"
-              : "h-10 w-full gap-3 px-3"
-          )}
-        >
-          <LogOut
-            size={18}
-            strokeWidth={1.75}
-            className="shrink-0 text-zinc-500 group-hover:text-red-400 transition-colors"
-          />
-          {!collapsed && (
-            <span className="transition-opacity duration-150">Log out</span>
-          )}
-        </button>
+          </button>
+        </div>
       </div>
     </aside>
   );

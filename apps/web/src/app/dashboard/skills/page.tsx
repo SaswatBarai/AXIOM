@@ -7,6 +7,7 @@ import { useSkillGap, type GapReport, type TargetRole } from "@/hooks/useSkillGa
 import { useResume } from "@/hooks/useResume";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { SkillGapPageSkeleton } from "@/components/dashboard/SkillsSkeleton";
 
 const TIER_LABELS: Record<string, string> = {
   must_have: "Must Have Skills",
@@ -220,6 +221,8 @@ export default function SkillsPage() {
       setSelectedResume(resumes[0].id);
     }
   }, [resumes, selectedResume]);
+
+  if (loading && !roles.length) return <SkillGapPageSkeleton />;
 
   async function handleAnalyze() {
     if (!selectedRole || !selectedResume) return;

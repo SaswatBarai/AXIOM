@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import {
   Sparkles, ChevronDown, ChevronUp, Trash2, Loader2,
-  BookOpen, CheckCircle2, XCircle, Clock, AlertCircle, HelpCircle,
+  BookOpen, CheckCircle2, Clock, AlertCircle, HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInterview, type Difficulty, type Mark, type InterviewQuestion } from "@/hooks/useInterview";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { InterviewPageSkeleton } from "@/components/dashboard/InterviewSkeleton";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

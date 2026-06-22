@@ -1,24 +1,19 @@
 "use client";
 
 import { useApplications, type Application, type TimelineEntry } from "@/hooks/useApplications";
+import { ApplicationPageSkeleton } from "@/components/dashboard/ApplicationsSkeleton";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Briefcase,
-  Calendar,
   MapPin,
-  Building,
   Trash2,
-  Edit,
   X,
   ExternalLink,
   TrendingUp,
   FileText,
   AlertCircle,
   Clock,
-  Sparkles,
   Search,
-  Plus
 } from "lucide-react";
 
 const COLUMNS = [
@@ -36,9 +31,6 @@ export default function ApplicationsPage() {
     applications,
     stats,
     isLoading,
-    loadingStats,
-    error,
-    statsError,
     fetchApplications,
     fetchStats,
     updateApplication,
@@ -70,6 +62,8 @@ export default function ApplicationsPage() {
     void fetchApplications();
     void fetchStats();
   }, [fetchApplications, fetchStats]);
+
+  if (isLoading) return <ApplicationPageSkeleton />;
 
   // Handle Drag Over
   const handleDragStart = (e: React.DragEvent, appId: string) => {

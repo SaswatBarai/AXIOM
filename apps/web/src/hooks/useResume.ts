@@ -10,12 +10,13 @@ import type { Resume } from "@axiom/shared-types";
 export function useResume() {
   const dispatch = useDispatch();
   const { resumes, activeResume, isUploading } = useSelector((s: RootState) => s.resume);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => resumes.length === 0);
   const [error, setError]         = useState<string | null>(null);
 
   const fetchResumes = useCallback(async () => {
+    const hasCache = resumes.length > 0;
     try {
-      setIsLoading(true);
+      if (!hasCache) setIsLoading(true);
       const { data } = await api.get("/resumes");
       dispatch(setResumes(data.resumes));
     } catch {
@@ -23,7 +24,7 @@ export function useResume() {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch]);
+  }, [dispatch, resumes.length]);
 
   useEffect(() => { fetchResumes(); }, [fetchResumes]);
 

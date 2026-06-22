@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useResume } from "@/hooks/useResume";
 import type { Resume, ParsedResume, ATSScore } from "@axiom/shared-types";
+import { DashboardResumeSkeleton } from "@/components/dashboard/DashboardResumeSkeleton";
 
 const ACCEPTED = ".pdf,.docx";
 const MAX_MB   = 5;
@@ -29,6 +30,149 @@ function ScoreRing({ score, size = 88 }: { score: number; size?: number }) {
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={8}
         strokeDasharray={`${fill} ${circ}`} strokeLinecap="round" />
     </svg>
+  );
+}
+
+// ── Parsed data panel ─────────────────────────────────────────────────────────
+
+function ParsedPanel({ data }: { data: ParsedResume }) {
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 space-y-4 text-sm">
+      {data.skills && data.skills.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
+            <Cpu size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Skills detected</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {data.skills.map((s) => (
+              <span key={s.name} className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-xs text-zinc-350">{s.name}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {data.experience && data.experience.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
+            <Briefcase size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Experience</span>
+          </div>
+          <div className="space-y-1.5">
+            {data.experience.map((e, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-600 mt-2 shrink-0" />
+                <p className="text-xs text-zinc-450">
+                  <span className="text-zinc-200 font-semibold">{e.title}</span>
+                  {e.company && <span className="text-zinc-400 font-medium"> · {e.company}</span>}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {data.education && data.education.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
+            <GraduationCap size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Education</span>
+          </div>
+          <div className="space-y-1.5">
+            {data.education.map((e, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-600 mt-2 shrink-0" />
+                <p className="text-xs text-zinc-450">
+                  <span className="text-zinc-200 font-semibold">{e.institution}</span>
+                  {e.endYear && <span className="text-zinc-400 font-medium"> · {e.endYear}</span>}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ATS Score panel ───────────────────────────────────────────────────────────
+
+function ATSPanel({ score }: { score: ATSScore }) {
+  const label =
+    score.overall >= 75 ? { text: "Excellent",  cls: "text-green-400 bg-green-950/40 border-green-800/40" } :
+    score.overall >= 50 ? { text: "Good",        cls: "text-amber-400 bg-amber-950/40 border-amber-800/40" } :
+                          { text: "Needs work",  cls: "text-red-400 bg-red-950/40 border-red-800/40" };
+
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5 space-y-5">
+      {/* Score ring + breakdown */}
+      <div className="flex items-center gap-5">
+        <div className="relative shrink-0">
+          <ScoreRing score={score.overall} />
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-white">{score.overall}</span>
+            <span className="text-xs text-zinc-400">/ 100</span>
+          </div>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-white mb-1">ATS Score</p>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full border text-xs font-medium ${label.cls}`}>{label.text}</span>
+          <div className="mt-3 space-y-1.5">
+            {[
+              { label: "Keywords",     val: score.keywordMatch },
+              { label: "Completeness", val: score.completeness },
+              { label: "Readability",  val: score.readability },
+            ].map((s) => (
+              <div key={s.label} className="flex items-center gap-2">
+                <span className="text-xs text-zinc-400 w-24 shrink-0 font-medium">{s.label}</span>
+                <div className="flex-1 h-1.5 bg-zinc-800 rounded-full">
+                  <div className="h-full rounded-full bg-brand/70" style={{ width: `${s.val}%` }} />
+                </div>
+                <span className="text-xs text-zinc-355 w-8 text-right shrink-0 font-semibold">{s.val}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {score.strengths && score.strengths.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
+            <CheckCircle2 size={12} className="text-green-500" /> Strengths
+          </p>
+          <ul className="space-y-1">
+            {score.strengths.map((s, i) => (
+              <li key={i} className="text-xs text-zinc-300 flex items-start gap-2 font-medium">
+                <span className="w-1 h-1 rounded-full bg-green-500 mt-1.5 shrink-0" />{s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {score.missingSkills && score.missingSkills.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
+            <XCircle size={12} className="text-amber-500" /> Missing keywords
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {score.missingSkills.map((s) => (
+              <span key={s} className="px-2 py-0.5 rounded-full bg-amber-950/30 border border-amber-800/40 text-xs text-amber-300 font-semibold">{s}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {score.suggestions && score.suggestions.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
+            <Lightbulb size={12} className="text-blue-400" /> Suggestions
+          </p>
+          <ul className="space-y-1">
+            {score.suggestions.map((s, i) => (
+              <li key={i} className="text-xs text-zinc-300 flex items-start gap-2 font-medium">
+                <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />{s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -62,152 +206,9 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
         </div>
         <div>
           <p className="text-sm font-semibold text-white">Drop your resume here</p>
-          <p className="text-xs text-zinc-500 mt-1">or click to browse — PDF or DOCX, max {MAX_MB} MB</p>
+          <p className="text-xs text-zinc-400 mt-1">or click to browse — PDF or DOCX, max {MAX_MB} MB</p>
         </div>
       </div>
-    </div>
-  );
-}
-
-// ── Parsed data panel ─────────────────────────────────────────────────────────
-
-function ParsedPanel({ data }: { data: ParsedResume }) {
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 space-y-4 text-sm">
-      {data.skills.length > 0 && (
-        <div>
-          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
-            <Cpu size={13} /><span className="text-xs font-semibold uppercase tracking-wider">Skills detected</span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {data.skills.map((s) => (
-              <span key={s.name} className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-xs text-zinc-300">{s.name}</span>
-            ))}
-          </div>
-        </div>
-      )}
-      {data.experience.length > 0 && (
-        <div>
-          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
-            <Briefcase size={13} /><span className="text-xs font-semibold uppercase tracking-wider">Experience</span>
-          </div>
-          <div className="space-y-1.5">
-            {data.experience.slice(0, 3).map((e, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-zinc-600 mt-2 shrink-0" />
-                <p className="text-xs text-zinc-400">
-                  <span className="text-zinc-200">{e.title}</span>
-                  {e.company && <span className="text-zinc-500"> · {e.company}</span>}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {data.education.length > 0 && (
-        <div>
-          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
-            <GraduationCap size={13} /><span className="text-xs font-semibold uppercase tracking-wider">Education</span>
-          </div>
-          <div className="space-y-1.5">
-            {data.education.map((e, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-zinc-600 mt-2 shrink-0" />
-                <p className="text-xs text-zinc-400">
-                  <span className="text-zinc-200">{e.institution}</span>
-                  {e.endYear && <span className="text-zinc-500"> · {e.endYear}</span>}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── ATS Score panel ───────────────────────────────────────────────────────────
-
-function ATSPanel({ score }: { score: ATSScore }) {
-  const label =
-    score.overall >= 75 ? { text: "Excellent",  cls: "text-green-400 bg-green-950/40 border-green-800/40" } :
-    score.overall >= 50 ? { text: "Good",        cls: "text-amber-400 bg-amber-950/40 border-amber-800/40" } :
-                          { text: "Needs work",  cls: "text-red-400 bg-red-950/40 border-red-800/40" };
-
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5 space-y-5">
-      {/* Score ring + breakdown */}
-      <div className="flex items-center gap-5">
-        <div className="relative shrink-0">
-          <ScoreRing score={score.overall} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-white">{score.overall}</span>
-            <span className="text-xs text-zinc-500">/ 100</span>
-          </div>
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-white mb-1">ATS Score</p>
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full border text-xs font-medium ${label.cls}`}>{label.text}</span>
-          <div className="mt-3 space-y-1.5">
-            {[
-              { label: "Keywords",     val: score.keywordMatch },
-              { label: "Completeness", val: score.completeness },
-              { label: "Readability",  val: score.readability },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500 w-24 shrink-0">{s.label}</span>
-                <div className="flex-1 h-1.5 bg-zinc-800 rounded-full">
-                  <div className="h-full rounded-full bg-brand/70" style={{ width: `${s.val}%` }} />
-                </div>
-                <span className="text-xs text-zinc-400 w-8 text-right shrink-0">{s.val}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {score.strengths.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-            <CheckCircle2 size={12} className="text-green-500" /> Strengths
-          </p>
-          <ul className="space-y-1">
-            {score.strengths.map((s, i) => (
-              <li key={i} className="text-xs text-zinc-300 flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-green-500 mt-1.5 shrink-0" />{s}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {score.missingSkills.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-            <XCircle size={12} className="text-amber-500" /> Missing keywords
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {score.missingSkills.map((s) => (
-              <span key={s} className="px-2 py-0.5 rounded-full bg-amber-950/30 border border-amber-800/40 text-xs text-amber-300">{s}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {score.suggestions.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-            <Lightbulb size={12} className="text-blue-400" /> Suggestions
-          </p>
-          <ul className="space-y-1">
-            {score.suggestions.map((s, i) => (
-              <li key={i} className="text-xs text-zinc-300 flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />{s}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
@@ -256,9 +257,9 @@ function AnalyzeModal({
             <p className="text-sm font-semibold text-white flex items-center gap-2">
               <Zap size={14} className="text-amber-400" /> ATS Analyzer
             </p>
-            <p className="text-xs text-zinc-500 mt-0.5 truncate max-w-xs">{resume.fileName}</p>
+            <p className="text-xs text-zinc-400 mt-0.5 truncate max-w-xs">{resume.fileName}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer">
             <X size={16} />
           </button>
         </div>
@@ -272,9 +273,9 @@ function AnalyzeModal({
                 onChange={(e) => setJd(e.target.value)}
                 placeholder="Paste the full job description here…"
                 rows={8}
-                className="w-full rounded-xl bg-zinc-800 border border-zinc-700 text-sm text-white placeholder-zinc-600 p-3 resize-none focus:outline-none focus:border-zinc-500 transition-colors"
+                className="w-full rounded-xl bg-zinc-800 border border-zinc-700 text-sm text-white placeholder-zinc-550 p-3 resize-none focus:outline-none focus:border-zinc-500 transition-colors"
               />
-              <p className="text-xs text-zinc-600">{jd.length} / 10 000 chars</p>
+              <p className="text-xs text-zinc-450 font-medium">{jd.length} / 10 000 chars</p>
             </div>
           )}
 
@@ -290,17 +291,17 @@ function AnalyzeModal({
             {result ? (
               <>
                 <button onClick={() => { setResult(null); setJd(""); }}
-                  className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors">
+                  className="flex-1 py-2.5 rounded-xl border border-zinc-705 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
                   Re-analyze
                 </button>
                 <button onClick={onClose}
-                  className="flex-1 py-2.5 rounded-xl bg-zinc-50 text-zinc-950 text-sm font-semibold hover:bg-zinc-200 transition-colors">
+                  className="flex-1 py-2.5 rounded-xl bg-zinc-50 text-zinc-950 text-sm font-semibold hover:bg-zinc-200 transition-colors cursor-pointer">
                   Done
                 </button>
               </>
             ) : (
               <button onClick={handleRun} disabled={loading || jd.trim().length < 20}
-                className="flex-1 py-2.5 rounded-xl bg-zinc-50 text-zinc-950 text-sm font-semibold hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
+                className="flex-1 py-2.5 rounded-xl bg-zinc-50 text-zinc-950 text-sm font-semibold hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer">
                 {loading ? <><Loader2 size={14} className="animate-spin" /> Analyzing…</> : "Run ATS Analysis"}
               </button>
             )}
@@ -342,47 +343,47 @@ function ResumeCard({
     <>
       <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
         className="rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-colors">
-        <div className="flex items-center gap-4 p-4 group">
+        <div className="flex items-center gap-4 p-4 group relative">
           <div className="w-10 h-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
             <FileText size={18} className="text-zinc-300" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">{resume.fileName}</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs text-zinc-500 uppercase font-mono">{resume.fileType}</span>
+            <p className="text-sm font-medium text-white truncate pr-16 md:pr-0">{resume.fileName}</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+              <span className="text-xs text-zinc-450 uppercase font-mono">{resume.fileType}</span>
               <span className="text-zinc-700">·</span>
-              <span className="text-xs text-zinc-500">v{resume.version}</span>
+              <span className="text-xs text-zinc-450">v{resume.version}</span>
               <span className="text-zinc-700">·</span>
-              <Clock size={11} className="text-zinc-600" />
-              <span className="text-xs text-zinc-500">{date}</span>
+              <Clock size={11} className="text-zinc-500 shrink-0" />
+              <span className="text-xs text-zinc-450">{date}</span>
             </div>
           </div>
 
           {/* Status badge */}
           {atsScore ? (
-            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700">
+            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 mr-2 md:mr-0">
               <span className={`text-xs font-bold ${atsScore.overall >= 75 ? "text-green-400" : atsScore.overall >= 50 ? "text-amber-400" : "text-red-400"}`}>
                 {atsScore.overall}
               </span>
-              <span className="text-xs text-zinc-500">ATS</span>
+              <span className="text-xs text-zinc-450">ATS</span>
             </div>
           ) : hasParsed ? (
-            <div className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-950/40 border border-green-800/40">
+            <div className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-950/40 border border-green-800/40 mr-2 md:mr-0">
               <CheckCircle2 size={11} className="text-green-400" />
               <span className="text-xs text-green-400 font-medium">Parsed</span>
             </div>
           ) : (
-            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700">
-              <Loader2 size={11} className="text-zinc-500 animate-spin" />
-              <span className="text-xs text-zinc-500">Parsing…</span>
+            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 mr-2 md:mr-0">
+              <Loader2 size={11} className="text-zinc-450 animate-spin" />
+              <span className="text-xs text-zinc-450 font-medium">Parsing…</span>
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Action buttons - Opacity: 100% by default on mobile touch viewports, hover hidden on desktop */}
+          <div className="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             {hasParsed && (
               <button onClick={() => setAnalyzeOpen(true)}
-                className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 transition-colors" title="ATS Analyze">
+                className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer" title="ATS Analyze">
                 <Zap size={15} />
               </button>
             )}
@@ -394,20 +395,20 @@ function ResumeCard({
             )}
             {hasParsed && (
               <button onClick={() => setExpanded((v) => !v)}
-                className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                 title={expanded ? "Hide details" : "Show parsed data"}>
                 {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
               </button>
             )}
             <button onClick={handleDelete} disabled={deleting}
-              className={`p-2 rounded-lg transition-colors ${confirming ? "bg-red-600/20 text-red-400 hover:bg-red-600/30" : "hover:bg-zinc-800 text-zinc-400 hover:text-red-400"}`}
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${confirming ? "bg-red-600/20 text-red-400 hover:bg-red-600/30" : "hover:bg-zinc-800 text-zinc-400 hover:text-red-400"}`}
               title={confirming ? "Click again to confirm" : "Delete"}>
               {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
             </button>
           </div>
 
           {confirming && (
-            <button onClick={() => setConfirming(false)} className="text-xs text-zinc-500 hover:text-zinc-300 shrink-0">
+            <button onClick={() => setConfirming(false)} className="text-xs text-zinc-400 hover:text-zinc-200 shrink-0 cursor-pointer">
               Cancel
             </button>
           )}
@@ -440,14 +441,20 @@ export default function ResumePage() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [polling,       setPolling]       = useState(false);
 
+  // Background polling bugfix: Poll if *any* resume is currently missing parsed data, 
+  // regardless of immediate uploadSuccess state, to recover gracefully from refreshes.
   useEffect(() => {
     const unparsed = resumes.some((r) => !r.parsedData);
-    if (!unparsed || !uploadSuccess) { setPolling(false); return; }
+    if (!unparsed) { 
+      setPolling(false); 
+      return; 
+    }
     setPolling(true);
-    const interval = setInterval(() => { refetch(); }, 3000);
-    const timeout  = setTimeout(() => { clearInterval(interval); setPolling(false); }, 30_000);
-    return () => { clearInterval(interval); clearTimeout(timeout); };
-  }, [resumes, uploadSuccess, refetch]);
+    const interval = setInterval(() => { 
+      void refetch(); 
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [resumes, refetch]);
 
   async function handleFile(file: File) {
     setUploadError(null);
@@ -455,18 +462,22 @@ export default function ResumePage() {
     try {
       await uploadResume(file);
       setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 30_000);
+      setTimeout(() => setUploadSuccess(false), 20_000);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
       setUploadError(msg ?? "Upload failed. Please try again.");
     }
   }
 
+  if (isLoading) {
+    return <DashboardResumeSkeleton />;
+  }
+
   return (
     <div className="p-6 md:p-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Resume</h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-zinc-400 mt-1 font-medium">
           Upload your resume — it will be parsed automatically, then you can run ATS analysis against any job description.
         </p>
       </div>
@@ -475,7 +486,7 @@ export default function ResumePage() {
         {isUploading ? (
           <div className="rounded-2xl border-2 border-dashed border-zinc-700 p-10 flex flex-col items-center gap-3">
             <Loader2 size={28} className="text-zinc-400 animate-spin" />
-            <p className="text-sm text-zinc-400">Uploading…</p>
+            <p className="text-sm text-zinc-400 font-medium">Uploading and reading file layers…</p>
           </div>
         ) : (
           <UploadZone onFile={handleFile} />
@@ -485,15 +496,15 @@ export default function ResumePage() {
       <AnimatePresence>
         {uploadSuccess && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-green-950/40 border border-green-800/50 text-green-400 text-sm">
+            className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-green-950/40 border border-green-800/50 text-green-400 text-sm font-medium">
             <CheckCircle2 size={15} />
-            Uploaded! Parsing in the background
+            Uploaded successfully! Parsing document in background
             {polling && <Loader2 size={13} className="ml-1 animate-spin" />}
           </motion.div>
         )}
         {uploadError && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-950/40 border border-red-800/50 text-red-400 text-sm">
+            className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-950/40 border border-red-800/50 text-red-400 text-sm font-medium">
             <AlertCircle size={15} />
             {uploadError}
           </motion.div>
@@ -503,26 +514,20 @@ export default function ResumePage() {
       <div className="mt-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-            Your resumes {!isLoading && resumes.length > 0 && `(${resumes.length})`}
+            Your resumes {resumes.length > 0 && `(${resumes.length})`}
           </h2>
-          {!isLoading && resumes.some((r) => r.parsedData) && (
-            <p className="text-xs text-zinc-600 flex items-center gap-1">
-              <Zap size={11} className="text-amber-500/70" />
+          {resumes.some((r) => r.parsedData) && (
+            <p className="text-xs text-zinc-400 flex items-center gap-1 font-medium">
+              <Zap size={11} className="text-amber-500" />
               Hover a card to run ATS analysis
             </p>
           )}
         </div>
 
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-[68px] rounded-xl bg-zinc-900/50 border border-zinc-800 animate-pulse" />
-            ))}
-          </div>
-        ) : resumes.length === 0 ? (
+        {resumes.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <FileX size={32} className="text-zinc-700" />
-            <p className="text-sm text-zinc-500">No resumes yet — upload one above to get started.</p>
+            <p className="text-sm text-zinc-400 font-medium">No resumes yet — upload one above to get started.</p>
           </div>
         ) : (
           <motion.div layout className="space-y-2">

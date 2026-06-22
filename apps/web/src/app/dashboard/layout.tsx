@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <header className="flex items-center justify-end px-6 py-3 border-b border-gray-800 bg-[#09090B]/80 backdrop-blur-sm flex-shrink-0">
             <NotificationBell />
           </header>
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          <main className="flex-1 overflow-hidden">{children}</main>
         </div>
       </div>
     </ProtectedRoute>

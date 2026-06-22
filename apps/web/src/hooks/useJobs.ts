@@ -37,12 +37,12 @@ interface SearchResponse {
 
 export function useJobs() {
   const dispatch = useDispatch();
-  const { jobs, savedJobIds } = useSelector((s: RootState) => s.jobs);
+  const { jobs, savedJobIds, totalCount } = useSelector((s: RootState) => s.jobs);
 
-  const [total, setTotal]         = useState(0);
+  const [total, setTotal]         = useState(totalCount);
   const [page, setPage]           = useState(1);
   const [pageSize, setPageSize]   = useState(20);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => jobs.length === 0);
   const [error, setError]         = useState<string | null>(null);
   const [filters, setFilters]     = useState<JobFilters>({ sortBy: "match" });
   const [recommendedJobs, setRecommendedJobs] = useState<RecommendedJob[]>([]);

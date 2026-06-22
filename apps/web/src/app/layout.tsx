@@ -78,15 +78,6 @@ export const metadata: Metadata = {
     creator: "@axiomcareers",
   },
 
-  icons: {
-    icon: [
-      { url: "/icon", type: "image/png", sizes: "32x32" },
-    ],
-    apple: [
-      { url: "/apple-icon", type: "image/png", sizes: "180x180" },
-    ],
-  },
-
   manifest: "/site.webmanifest",
 
   category: "technology",

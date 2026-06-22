@@ -103,6 +103,12 @@ html.lenis body {
   animation: float-slow-2 28s ease-in-out infinite;
 }
 
+/* Skeleton shimmer — premium linear sweep, replaces aggressive pulse */
+@keyframes skeleton-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%);  }
+}
+
 /* Utility: hide scrollbar */
 .scrollbar-none {
   -ms-overflow-style: none;
