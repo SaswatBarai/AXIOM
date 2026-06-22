@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { ChevronDown } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
@@ -14,103 +13,127 @@ interface FAQItem {
 const faqs: FAQItem[] = [
   {
     question: "How accurate is the ATS score analyzer?",
-    answer: "Our parser is trained on standard layouts and matching parameters used by modern applicant tracking systems (such as Workday, Greenhouse, and Lever). We check formatting elements, keyword density, section header naming, and skill matches to provide a scoring assessment that correlates heavily with screen success rates."
+    answer:
+      "Our parser is trained on standard layouts used by modern ATS platforms — Workday, Greenhouse, and Lever. We check formatting compliance, keyword density, section header naming, and skill matches to produce a score that correlates strongly with real screen-pass rates.",
   },
   {
     question: "How does the Job Matching Engine recommend jobs?",
-    answer: "Instead of simplistic exact keyword checks, our matching engine employs semantic vector embeddings. It analyzes the context of your achievements, project definitions, and past roles, matching them against scraped requirements and responsibilities of thousands of real-time listings to yield a high-precision percentage score."
+    answer:
+      "We use semantic vector embeddings — not keyword matching. The engine analyzes the context of your achievements, project definitions, and past roles, then matches them against live job requirements to yield a high-precision percentage score.",
   },
   {
-    question: "Is my personal data/resume data secure?",
-    answer: "Absolutely. AXIOM prioritizes user privacy. All uploaded resumes and profile information are encrypted in transit and at rest. We never sell your personal data or profile information to third-party advertisers."
+    question: "Is my resume data secure?",
+    answer:
+      "Yes. All uploaded resumes and profile data are encrypted in transit and at rest. We never sell your personal information to third-party advertisers or data brokers.",
   },
   {
     question: "Can I cancel my Pro subscription at any time?",
-    answer: "Yes, you can cancel your subscription from your Account settings at any time. Once canceled, you will still retain access to all Pro features until the end of your current billing cycle."
-  }
+    answer:
+      "Absolutely. Cancel from Account Settings at any time. You keep full Pro access until the end of your current billing period — no questions asked.",
+  },
+  {
+    question: "Does AXIOM work for international job markets?",
+    answer:
+      "Yes. The job matching engine queries listings across major international boards. ATS scoring is calibrated against global formatting standards, though some region-specific norms may vary.",
+  },
 ];
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } }
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.04
-    }
-  }
-};
-
 export function FAQ() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
     <section id="faq" className="py-24 px-6 bg-[#09090b]">
-      <div className="max-w-4xl mx-auto space-y-16">
-        
-        {/* Header */}
+      <div className="max-w-3xl mx-auto space-y-16">
+
+        {/* Header — left-aligned, consistent with rest of page */}
         <ScrollReveal>
-          <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <Badge variant="outline" className="border-zinc-800 text-zinc-400 px-3 py-1 font-medium bg-zinc-900/30">
+          <div className="space-y-4">
+            <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.15em]">
               FAQ
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
-              Frequently Asked Questions
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.06]">
+              Common questions
             </h2>
-            <p className="text-base text-zinc-400 font-normal">
-              Have questions? We have compiled answers to help you navigate AXIOM.
+            <p className="text-base text-zinc-400 leading-relaxed max-w-lg">
+              Everything you need to know before getting started with AXIOM.
             </p>
           </div>
         </ScrollReveal>
 
-        {/* Collapsible Accordion Grid */}
-        <div className="space-y-4">
+        {/* Accordion */}
+        <div className="space-y-2">
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
             return (
-              <ScrollReveal
-                key={index}
-                className="border border-zinc-800 rounded-2xl bg-zinc-900/10 hover:border-zinc-700 transition-all duration-300 overflow-hidden"
-              >
-                {/* Trigger Button */}
-                <button
-                  onClick={() => toggleFAQ(index)}
-                  className="w-full px-6 py-5 flex items-center justify-between text-left text-white font-medium text-base focus:outline-none"
+              <ScrollReveal key={index}>
+                <div
+                  className={`rounded-xl border transition-all duration-200 overflow-hidden ${
+                    isOpen
+                      ? "border-zinc-700/80 bg-zinc-900/30"
+                      : "border-zinc-800/60 bg-zinc-900/10 hover:border-zinc-800 hover:bg-zinc-900/20"
+                  }`}
                 >
-                  <span>{faq.question}</span>
-                  <ChevronDown
-                    className={`w-5 h-5 text-zinc-400 transition-transform duration-300 ${
-                      isOpen ? "transform rotate-180 text-white" : ""
-                    }`}
-                  />
-                </button>
-
-                {/* Content Panel */}
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                  {/* Trigger */}
+                  <button
+                    onClick={() => setOpenIndex(isOpen ? null : index)}
+                    className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 group focus-visible:outline-none"
+                    aria-expanded={isOpen}
+                  >
+                    <span
+                      className={`text-sm font-semibold leading-snug transition-colors duration-200 ${
+                        isOpen ? "text-white" : "text-zinc-300 group-hover:text-white"
+                      }`}
                     >
-                      <div className="px-6 pb-6 text-sm text-zinc-400 leading-relaxed font-normal border-t border-zinc-800/40 pt-4">
-                        {faq.answer}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      {faq.question}
+                    </span>
+                    {/* +/− icon — cleaner than chevron for accordions */}
+                    <span className={`shrink-0 w-5 h-5 flex items-center justify-center rounded-full border transition-all duration-200 ${
+                      isOpen
+                        ? "border-zinc-600 text-white bg-zinc-800"
+                        : "border-zinc-700 text-zinc-500 group-hover:border-zinc-600 group-hover:text-zinc-300"
+                    }`}>
+                      {isOpen
+                        ? <Minus className="w-3 h-3" />
+                        : <Plus className="w-3 h-3" />
+                      }
+                    </span>
+                  </button>
+
+                  {/* Answer panel */}
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        key="content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <p className="px-6 pb-6 pt-0 text-sm text-zinc-400 leading-relaxed border-t border-zinc-800/40 pt-4">
+                          {faq.answer}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </ScrollReveal>
             );
           })}
         </div>
+
+        {/* Bottom CTA — surface a contact option */}
+        <ScrollReveal>
+          <div className="flex items-center gap-4 pt-2">
+            <span className="text-sm text-zinc-500">Still have questions?</span>
+            <a
+              href="mailto:support@axiom.ai"
+              className="text-sm font-medium text-zinc-300 hover:text-white underline underline-offset-4 decoration-zinc-700 hover:decoration-zinc-400 transition-all duration-200"
+            >
+              Contact support →
+            </a>
+          </div>
+        </ScrollReveal>
+
       </div>
     </section>
   );

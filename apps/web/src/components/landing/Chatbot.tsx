@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Sparkles, User, ShieldAlert } from "lucide-react";
+import { Send, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
@@ -15,248 +13,243 @@ interface Message {
   text: string;
 }
 
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.18
-    }
-  }
-};
+const INITIAL_MESSAGES: Message[] = [
+  {
+    id: 1,
+    sender: "ai",
+    text: "Hi! Ask me anything — resume improvements, cover letter drafts, salary negotiation tactics, or interview prep.",
+  },
+  {
+    id: 2,
+    sender: "user",
+    text: "How do I highlight my Next.js experience for a Senior role?",
+  },
+  {
+    id: 3,
+    sender: "ai",
+    text: "Lead with outcomes, not tools. Instead of 'Used Next.js', write: 'Migrated to Next.js App Router, improving Lighthouse performance score by 35% and reducing TTFB by 200ms.' Metrics make seniority legible to both ATS and hiring managers.",
+  },
+];
 
-const messageVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] }
-  }
-};
-
-const promptContainerVariants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.06
-    }
-  }
-};
-
-const promptItemVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] }
-  }
-};
+const SUGGESTED_PROMPTS = [
+  "How do I pass an ATS screen for a PM role?",
+  "Draft a cover letter for a Principal Designer role",
+  "Simulate a salary negotiation conversation",
+  "How do I structure achievements on my resume?",
+];
 
 export function Chatbot() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      sender: "ai",
-      text: "Hello! I am your AXIOM Career Copilot. Ask me anything about matching job requirements, interview prep advice, cover letter tailoring, or resume improvements!"
-    },
-    {
-      id: 2,
-      sender: "user",
-      text: "How can I highlight my Next.js and Tailwind experience on my resume for a Senior role?"
-    },
-    {
-      id: 3,
-      sender: "ai",
-      text: "For a Senior role, focus on outcomes rather than just listing technologies. Mention specific metrics, e.g., 'Optimized image loading and page routing using Next.js App Router, boosting Lighthouse speed performance score by 35%.' or 'Engineered reusable utility layouts using Tailwind CSS, streamlining frontend development speed by 25%.'"
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
 
-  const [coords, setCoords] = useState({ x: 0, y: 0 });
-  const cardRef = useRef<HTMLDivElement>(null);
-  const isCardInView = useInView(cardRef, { once: true, margin: "-80px" });
+  // Auto-scroll to bottom on new message
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, isTyping]);
 
-  const promptsRef = useRef<HTMLDivElement>(null);
-  const isPromptsInView = useInView(promptsRef, { once: true, margin: "-80px" });
+  const handleSend = (text: string) => {
+    if (!text.trim()) return;
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    setCoords({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
-  };
-
-  const handleSendMessage = (textToSend: string) => {
-    if (!textToSend.trim()) return;
-
-    const userMsg: Message = {
-      id: Date.now(),
-      sender: "user",
-      text: textToSend
-    };
-
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { id: Date.now(), sender: "user", text }]);
     setInputText("");
     setIsTyping(true);
 
-    // Simulate AI response delay
     setTimeout(() => {
-      const aiResponseText = `That is a great question regarding "${textToSend}". Under a production context, AXIOM analyzes target job specs to tailor standard resumes with precise alignment parameters. Try checking your Skill Gap page in the main dashboard.`;
-      
-      const aiMsg: Message = {
-        id: Date.now() + 1,
-        sender: "ai",
-        text: aiResponseText
-      };
-      
-      setMessages(prev => [...prev, aiMsg]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "ai",
+          text: `Great question. In a production environment, AXIOM cross-references your resume against target job specs and surfaces precise alignment gaps. Try the Skill Gap page in your dashboard for a full breakdown.`,
+        },
+      ]);
       setIsTyping(false);
-    }, 1500);
+      inputRef.current?.focus();
+    }, 1400);
   };
 
   return (
     <section id="chatbot" className="py-24 px-6 bg-[#09090b]">
-      <div className="max-w-7xl mx-auto space-y-16">
-        {/* Header */}
-        <ScrollReveal>
-          <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <Badge variant="outline" className="border-zinc-800 text-zinc-400 px-3 py-1 font-medium bg-zinc-900/30">
-              AI Companion
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
-              Meet your AI Career Copilot
-            </h2>
-            <p className="text-base sm:text-lg text-zinc-400 font-normal">
-              Ask resume improvement suggestions, draft cover letters, simulate salary conversations, and check job alignment levels live.
-            </p>
-          </div>
-        </ScrollReveal>
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-start">
 
-        {/* Chat window structure */}
-        <ScrollReveal className="max-w-3xl mx-auto">
-          <div
-            ref={cardRef}
-            onMouseMove={handleMouseMove}
-            className="relative overflow-hidden group border border-zinc-850 bg-zinc-900/20 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col h-[520px] transition-all duration-300 hover:border-zinc-700/50"
-          >
-            {/* Dynamic Cursor Spotlight Overlay */}
-            <div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"
-              style={{
-                background: `radial-gradient(350px circle at ${coords.x}px ${coords.y}px, rgba(255,255,255,0.035), transparent 80%)`
-              }}
-            />
-            
-            {/* Chat header */}
-            <div className="relative z-10 border-b border-zinc-800 px-6 py-4 flex items-center justify-between bg-zinc-900/50">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center font-bold text-sm">
-                  C
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white text-sm">AXIOM Assistant</h3>
-                  <p className="text-xs text-zinc-500 font-medium">Always online</p>
+          {/* Left: static copy — 2 cols */}
+          <div className="lg:col-span-2 lg:sticky lg:top-28 space-y-6">
+            <ScrollReveal>
+              <div className="space-y-5">
+                <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.15em]">
+                  AI Companion
+                </span>
+                <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.06]">
+                  Your career<br />copilot,<br />always on
+                </h2>
+                <p className="text-sm text-zinc-400 leading-relaxed max-w-xs">
+                  Draft cover letters, negotiate salary, prep for interviews, and fix your resume — all through a single chat interface powered by GPT-4o.
+                </p>
+              </div>
+            </ScrollReveal>
+
+            {/* Suggested prompts — now in the left column */}
+            <ScrollReveal delay={0.1}>
+              <div className="space-y-3 pt-2">
+                <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-[0.12em]">
+                  Try asking
+                </p>
+                <div className="flex flex-col gap-2">
+                  {SUGGESTED_PROMPTS.map((prompt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSend(prompt)}
+                      className="group flex items-center justify-between gap-3 text-left px-4 py-3 rounded-xl border border-zinc-800/60 bg-zinc-900/20 hover:border-zinc-700 hover:bg-zinc-900/40 text-xs text-zinc-400 hover:text-zinc-200 transition-all duration-200"
+                    >
+                      <span className="leading-snug">{prompt}</span>
+                      <ArrowRight className="w-3 h-3 shrink-0 text-zinc-700 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all duration-200" />
+                    </button>
+                  ))}
                 </div>
               </div>
-              <Badge variant="outline" className="border-zinc-800 text-zinc-400">
-                GPT-4o Engine
-              </Badge>
-            </div>
+            </ScrollReveal>
+          </div>
 
-            {/* Chat body containing scroll messages */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate={isCardInView ? "visible" : "hidden"}
-              className="relative z-10 flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-zinc-800"
-            >
-              <AnimatePresence initial={false}>
-                {messages.map(msg => (
-                  <motion.div
-                    key={msg.id}
-                    variants={messageVariants}
-                    className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[85%] rounded-2xl p-4 text-sm leading-relaxed ${
-                        msg.sender === "user"
-                          ? "bg-white text-black rounded-tr-none"
-                          : "bg-zinc-800 text-zinc-100 rounded-tl-none border border-zinc-700/50"
-                      }`}
-                    >
-                      <p>{msg.text}</p>
+          {/* Right: chat window — 3 cols */}
+          <div ref={sectionRef} className="lg:col-span-3">
+            <ScrollReveal>
+              <div className="border border-zinc-800/70 bg-zinc-900/10 rounded-2xl overflow-hidden flex flex-col h-[560px] shadow-2xl">
+
+                {/* Chat header */}
+                <div className="border-b border-zinc-900 px-5 py-4 flex items-center justify-between bg-zinc-950/60 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+                        <path d="M10 23L16 9L22 23" stroke="#09090b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="#09090b" strokeWidth="3" strokeLinecap="round" />
+                      </svg>
                     </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-
-              {/* Typing indicator */}
-              {isTyping && (
-                <div className="flex justify-start pt-2">
-                  <div className="flex gap-1.5 p-3 rounded-2xl bg-zinc-800 text-zinc-100 rounded-tl-none border border-zinc-700/50">
-                    <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div>
+                      <p className="text-xs font-bold text-white leading-none">AXIOM Copilot</p>
+                      <p className="text-[10px] text-zinc-600 mt-0.5">GPT-4o · Always online</p>
+                    </div>
+                  </div>
+                  {/* Live indicator */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] text-zinc-500 font-medium">Live</span>
                   </div>
                 </div>
-              )}
-            </motion.div>
 
-            {/* Chat footer input bar */}
-            <div className="relative z-10 border-t border-zinc-800 px-6 py-4 bg-zinc-900/30">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendMessage(inputText);
-                }}
-                className="flex gap-2"
-              >
-                <Input
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Ask your career copilot a question..."
-                  className="flex-1 bg-zinc-950 border-zinc-850 focus:border-zinc-800"
-                />
-                <Button type="submit" size="icon" className="bg-white hover:bg-zinc-200 text-black hover:scale-105 active:scale-95 transition-transform duration-200">
-                  <Send className="w-4 h-4" />
-                </Button>
-              </form>
-            </div>
-          </div>
-        </ScrollReveal>
+                {/* Messages */}
+                <motion.div
+                  ref={scrollRef}
+                  initial="hidden"
+                  animate={isInView ? "visible" : "hidden"}
+                  variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }}
+                  className="flex-1 overflow-y-auto px-5 py-5 space-y-4 scroll-smooth"
+                  style={{ scrollbarWidth: "none" }}
+                >
+                  <AnimatePresence initial={false}>
+                    {messages.map((msg) => (
+                      <motion.div
+                        key={msg.id}
+                        variants={{
+                          hidden: { opacity: 0, y: 8 },
+                          visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+                        }}
+                        className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                      >
+                        {/* AI avatar dot */}
+                        {msg.sender === "ai" && (
+                          <div className="w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 shrink-0 mr-2 mt-1 flex items-center justify-center">
+                            <svg width="8" height="8" viewBox="0 0 32 32" fill="none">
+                              <path d="M10 23L16 9L22 23" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+                            </svg>
+                          </div>
+                        )}
+                        <div
+                          className={`max-w-[82%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
+                            msg.sender === "user"
+                              ? "bg-white text-black rounded-tr-sm font-medium"
+                              : "bg-zinc-900/80 text-zinc-200 rounded-tl-sm border border-zinc-800/60"
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
 
-        {/* Prompt suggestions layout */}
-        <ScrollReveal delay={0.15} className="max-w-3xl mx-auto mt-8">
-          <motion.div
-            ref={promptsRef}
-            variants={promptContainerVariants}
-            initial="hidden"
-            animate={isPromptsInView ? "visible" : "hidden"}
-            className="space-y-4"
-          >
-            <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider text-center">Suggested prompts to try</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                "How do I optimize my resume ATS format?",
-                "Draft a cover letter for a Principal Designer role",
-                "Simulate a salary negotiation conversation",
-                "How do I structure my achievements on my resume?"
-              ].map((prompt, idx) => (
-                <motion.div key={idx} variants={promptItemVariants}>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleSendMessage(prompt)}
-                    className="w-full text-left justify-start px-4 py-5 bg-zinc-900/60 border-zinc-800 hover:bg-zinc-800/80 text-zinc-300 text-xs font-normal hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
-                  >
-                    {prompt}
-                  </Button>
+                  {/* Typing indicator */}
+                  <AnimatePresence>
+                    {isTyping && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex justify-start items-end gap-2"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 shrink-0 flex items-center justify-center">
+                          <svg width="8" height="8" viewBox="0 0 32 32" fill="none">
+                            <path d="M10 23L16 9L22 23" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <div className="bg-zinc-900/80 border border-zinc-800/60 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center">
+                          {[0, 150, 300].map((delay) => (
+                            <span
+                              key={delay}
+                              className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce"
+                              style={{ animationDelay: `${delay}ms` }}
+                            />
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </ScrollReveal>
+
+                {/* Input bar */}
+                <div className="border-t border-zinc-900 px-4 py-3.5 bg-zinc-950/40 shrink-0">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSend(inputText);
+                    }}
+                    className="flex gap-2.5"
+                  >
+                    <Input
+                      ref={inputRef}
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
+                      placeholder="Ask your copilot anything..."
+                      className="flex-1 bg-zinc-900/60 border-zinc-800 text-sm h-9 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:bg-zinc-900"
+                      disabled={isTyping}
+                      aria-label="Message input"
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={isTyping || !inputText.trim()}
+                      className="bg-white hover:bg-zinc-100 text-black h-9 w-9 shrink-0 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 hover:scale-[1.04] active:scale-95"
+                      aria-label="Send message"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </Button>
+                  </form>
+                </div>
+
+              </div>
+            </ScrollReveal>
+          </div>
+
+        </div>
       </div>
     </section>
   );

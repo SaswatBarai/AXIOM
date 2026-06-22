@@ -26,63 +26,62 @@ const plans: PricingPlan[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Essential tools to help you get started on your job search journey.",
+    description: "Essential tools to get your job search moving.",
     features: [
       "Upload up to 3 resumes",
       "Basic ATS compatibility score",
       "5 automated job matches per day",
-      "Standard application tracking Kanban board"
+      "Standard application tracking board",
     ],
     missingFeatures: [
-      "AI Career Copilot chat suggestions",
-      "Automated interview prep simulation",
+      "AI Career Copilot chat",
+      "Interview prep simulation",
       "Skill gap detection audits",
-      "Tailored cover letter generator"
+      "Cover letter generator",
     ],
     ctaText: "Get Started Free",
     ctaLink: "/signup",
-    highlighted: false
+    highlighted: false,
   },
   {
     name: "Pro",
     price: "$9",
     period: "per month",
-    description: "Full access to our AI career copilot suite and deep analysis engines.",
+    description: "Full access to all AI engines and deep analysis tools.",
     features: [
       "Unlimited resume uploads & analytics",
-      "Full ATS compatibility score breakdowns",
+      "Full ATS score breakdowns",
       "Unlimited automated job matches",
       "Interactive AI Career Copilot chat",
       "Automated interview prep question lists",
       "Dynamic skill gap detection audits",
-      "Tailored cover letter generator"
+      "Tailored cover letter generator",
     ],
     missingFeatures: [],
     ctaText: "Start Free Trial",
     ctaLink: "/signup",
-    highlighted: true
+    highlighted: true,
   },
   {
     name: "Enterprise",
     price: "Custom",
     period: "yearly billing",
-    description: "Bespoke tools and integration APIs for university campuses and recruiting agencies.",
+    description: "Bespoke APIs and portals for campuses and recruiting agencies.",
     features: [
-      "Everything in Pro plan",
-      "University portal / Agency multi-seat dashboards",
+      "Everything in Pro",
+      "University / agency multi-seat dashboards",
       "Custom ATS parsing engine integrations",
-      "API integrations for bulk candidate exports",
+      "API for bulk candidate exports",
       "Dedicated account success manager",
-      "Priority customer service support"
+      "Priority support",
     ],
     missingFeatures: [],
     ctaText: "Contact Sales",
     ctaLink: "mailto:sales@axiom.ai",
-    highlighted: false
-  }
+    highlighted: false,
+  },
 ];
 
-// Reusable premium animated Pricing Card component
 function PricingCard({ plan, delay }: { plan: PricingPlan; delay: number }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, margin: "-80px" });
@@ -91,110 +90,92 @@ function PricingCard({ plan, delay }: { plan: PricingPlan; delay: number }) {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
-    setCoords({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
+    setCoords({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
   const containerVariants = {
     hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.05,
-        delayChildren: delay + 0.1
-      }
-    }
+    visible: { transition: { staggerChildren: 0.05, delayChildren: delay + 0.1 } },
   };
-
   const featureVariants = {
-    hidden: { opacity: 0, x: -6 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.35, ease: "easeOut" }
-    }
+    hidden: { opacity: 0, x: -5 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" } },
   };
 
   return (
     <motion.div
       ref={cardRef}
-      initial={{ opacity: 0, y: 15 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay }}
+      initial={{ opacity: 0, y: 14 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay }}
       className="h-full flex w-full"
     >
       <div
         onMouseMove={handleMouseMove}
         className={`border rounded-2xl p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 w-full group ${
           plan.highlighted
-            ? "border-zinc-200 bg-zinc-900/60 shadow-2xl lg:scale-105 z-10 hover:lg:scale-[1.07] hover:shadow-[0_0_30px_rgba(255,255,255,0.05)]"
-            : "border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:-translate-y-1"
+            ? "border-zinc-500/60 bg-zinc-900/50 shadow-2xl lg:scale-[1.03] z-10 hover:lg:scale-[1.05]"
+            : "border-zinc-800/70 bg-zinc-900/20 hover:border-zinc-700 hover:-translate-y-1"
         }`}
       >
-        {/* Dynamic Cursor Spotlight Overlay */}
+        {/* Cursor spotlight */}
         <div
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"
           style={{
-            background: plan.highlighted
-              ? `radial-gradient(350px circle at ${coords.x}px ${coords.y}px, rgba(255,255,255,0.045), transparent 80%)`
-              : `radial-gradient(350px circle at ${coords.x}px ${coords.y}px, rgba(255,255,255,0.025), transparent 80%)`
+            background: `radial-gradient(320px circle at ${coords.x}px ${coords.y}px, rgba(255,255,255,${plan.highlighted ? "0.04" : "0.02"}), transparent 80%)`,
           }}
         />
 
         {plan.highlighted && (
           <div className="absolute top-6 right-6 z-10">
-            <Badge className="bg-white text-black font-semibold border-white hover:bg-zinc-200">
+            <Badge className="bg-white text-black font-semibold text-[10px] px-2.5 py-1 hover:bg-zinc-100">
               MOST POPULAR
             </Badge>
           </div>
         )}
 
-        {/* Top Details */}
         <div className="relative z-10 space-y-6">
           <div>
-            <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-            <p className="text-sm text-zinc-400 leading-relaxed font-normal min-h-[40px]">{plan.description}</p>
+            <h3 className="text-lg font-bold text-white mb-1.5">{plan.name}</h3>
+            <p className="text-sm text-zinc-500 leading-relaxed min-h-[40px]">{plan.description}</p>
           </div>
 
-          <div className="flex items-baseline gap-2 py-4 border-y border-zinc-800/60">
-            <span className="text-5xl font-bold text-white tracking-tight">{plan.price}</span>
-            <span className="text-xs text-zinc-500 font-medium uppercase tracking-wider">/ {plan.period}</span>
+          <div className="flex items-baseline gap-2 py-4 border-y border-zinc-800/50">
+            <span className="text-4xl font-bold text-white tracking-tight">{plan.price}</span>
+            <span className="text-xs text-zinc-600 font-medium uppercase tracking-wider">/ {plan.period}</span>
           </div>
 
-          {/* Features List */}
-          <div className="space-y-4 pt-2">
-            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">What's included</p>
+          <div className="space-y-4 pt-1">
+            <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">What's included</p>
             <motion.ul
               variants={containerVariants}
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
-              className="space-y-3"
+              className="space-y-2.5"
             >
-              {plan.features.map((feature, fIdx) => (
-                <motion.li key={fIdx} variants={featureVariants} className="flex items-start gap-3 text-sm text-zinc-300">
-                  <Check className="w-4.5 h-4.5 text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="leading-normal">{feature}</span>
+              {plan.features.map((feature, i) => (
+                <motion.li key={i} variants={featureVariants} className="flex items-start gap-2.5 text-sm text-zinc-300">
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span className="leading-snug">{feature}</span>
                 </motion.li>
               ))}
-              {plan.missingFeatures.map((feature, fIdx) => (
-                <motion.li key={fIdx} variants={featureVariants} className="flex items-start gap-3 text-sm text-zinc-600">
-                  <X className="w-4.5 h-4.5 text-zinc-800 shrink-0 mt-0.5" />
-                  <span className="leading-normal">{feature}</span>
+              {plan.missingFeatures.map((feature, i) => (
+                <motion.li key={i} variants={featureVariants} className="flex items-start gap-2.5 text-sm text-zinc-700">
+                  <X className="w-4 h-4 text-zinc-800 shrink-0 mt-0.5" />
+                  <span className="leading-snug">{feature}</span>
                 </motion.li>
               ))}
             </motion.ul>
           </div>
         </div>
 
-        {/* CTA Action Button */}
         <div className="relative z-10 pt-8 mt-auto">
           <Link href={plan.ctaLink} className="w-full">
             <Button
-              className={`w-full font-semibold py-6 text-sm hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200 ${
+              className={`w-full font-semibold py-5 text-sm transition-all duration-200 ${
                 plan.highlighted
-                  ? "bg-white hover:bg-zinc-200 text-black shadow-lg"
-                  : "bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700"
+                  ? "bg-white hover:bg-zinc-100 text-black shadow-lg"
+                  : "bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-zinc-700/60"
               }`}
             >
               {plan.ctaText}
@@ -209,28 +190,23 @@ function PricingCard({ plan, delay }: { plan: PricingPlan; delay: number }) {
 export function Pricing() {
   return (
     <section id="pricing" className="py-24 px-6 bg-[#09090b] relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.015)_0%,transparent_60%)] pointer-events-none" />
-
       <div className="max-w-7xl mx-auto space-y-16">
-        
-        {/* Header */}
         <ScrollReveal>
-          <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <Badge variant="outline" className="border-zinc-800 text-zinc-400 px-3 py-1 font-medium bg-zinc-900/30">
+          <div className="space-y-4 max-w-2xl">
+            <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.15em]">
               Pricing Plans
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white animate-pulse-slow">
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.06]">
               Simple, transparent pricing
             </h2>
-            <p className="text-base sm:text-lg text-zinc-400 font-normal">
-              Choose the plan that fits your career aspirations. Cancel anytime.
+            <p className="text-base text-zinc-400 leading-relaxed">
+              Pick the plan that fits your career goals. Upgrade or cancel any time.
             </p>
           </div>
         </ScrollReveal>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl items-stretch">
           {plans.map((plan, idx) => (
-            <PricingCard key={idx} plan={plan} delay={idx * 0.1} />
+            <PricingCard key={idx} plan={plan} delay={idx * 0.08} />
           ))}
         </div>
       </div>
