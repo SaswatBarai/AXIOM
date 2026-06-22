@@ -35,7 +35,7 @@ const navLinks = {
 
 export function Footer() {
   return (
-    <footer className="border-t border-zinc-900 bg-[#09090b] pt-16 pb-10 px-6">
+    <footer id="footer" className="border-t border-zinc-900 bg-[#09090b] pt-16 pb-10 px-6">
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
 
