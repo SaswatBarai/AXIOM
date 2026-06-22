@@ -41,7 +41,7 @@ function FilterPill({
       onClick={onClick}
       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
         active
-          ? "bg-white text-black border-white"
+          ? "bg-brand text-black border-brand"
           : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-white"
       }`}
     >
@@ -137,7 +137,7 @@ export default function JobsPage() {
         </div>
         <Button
           onClick={submitSearch}
-          className="bg-white text-black hover:bg-zinc-200 h-11 px-5 font-medium"
+          className="bg-brand text-black hover:bg-brand-hover h-11 px-5 font-medium"
         >
           Search
         </Button>
@@ -269,7 +269,7 @@ export default function JobsPage() {
                           className={`text-xs font-medium px-3 py-1.5 h-auto transition-colors ${
                             isTracked
                               ? "bg-zinc-850 text-zinc-500 hover:bg-zinc-850 border-zinc-850 cursor-not-allowed"
-                              : "bg-white text-black hover:bg-zinc-200"
+                              : "bg-brand text-black hover:bg-brand-hover"
                           }`}
                         >
                           {trackingLoadingId === job.id ? (

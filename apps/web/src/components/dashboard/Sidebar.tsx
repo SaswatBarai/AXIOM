@@ -16,7 +16,6 @@ import {
   LogOut,
   ChevronRight,
   PanelLeftClose,
-  PanelLeft,
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,7 +69,7 @@ export function Sidebar() {
             onClick={collapsed ? () => setCollapsed(false) : undefined}
             title={collapsed ? "Expand sidebar" : undefined}
           >
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center font-bold text-sm text-black shrink-0">
+            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center font-bold text-sm text-black shrink-0">
               A
             </div>
             {!collapsed && (
@@ -138,7 +137,7 @@ export function Sidebar() {
 
                 {/* Active indicator dot for collapsed mode */}
                 {active && collapsed && (
-                  <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-white rounded-full" />
+                  <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-brand rounded-full" />
                 )}
               </Link>
             );

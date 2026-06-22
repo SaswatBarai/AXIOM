@@ -153,7 +153,7 @@ function MessageBubble({ role, content, streaming }: { role: string; content: st
         <div className={cn(
           "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs shadow-xs transition-all",
           isUser
-            ? "bg-white border-zinc-200 text-zinc-950 font-bold"
+            ? "bg-brand border-brand/30 text-black font-bold"
             : "bg-zinc-900 border-zinc-850 text-zinc-400",
         )}>
           {isUser ? <User size={12} /> : <Bot size={12} className="text-zinc-300" />}
@@ -425,7 +425,7 @@ export default function CopilotPage() {
                   size="icon"
                   onClick={handleSend}
                   disabled={!input.trim()}
-                  className="h-8 w-8 shrink-0 bg-white hover:bg-zinc-150 text-zinc-950 transition-all rounded-xl disabled:opacity-40 disabled:hover:bg-white"
+                  className="h-8 w-8 shrink-0 bg-brand hover:bg-brand-hover text-black transition-all rounded-xl disabled:opacity-40 disabled:hover:bg-brand"
                 >
                   <Send size={12} />
                 </Button>

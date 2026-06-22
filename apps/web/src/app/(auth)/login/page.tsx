@@ -60,7 +60,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <Link href="/" className="relative z-10 flex items-center gap-2.5 w-fit group">
-          <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
+          <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
           <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
         </Link>
 
@@ -191,7 +191,7 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden flex items-center justify-center gap-2.5 mb-8 group">
-            <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center font-bold text-xl text-black">A</div>
+            <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black">A</div>
             <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
           </Link>
 
@@ -251,7 +251,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-white hover:bg-zinc-100 text-black h-11 font-semibold transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 group"
+              className="w-full bg-brand hover:bg-brand-hover text-black h-11 font-semibold transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 group"
             >
               {loading ? (
                 <span className="flex items-center gap-2">

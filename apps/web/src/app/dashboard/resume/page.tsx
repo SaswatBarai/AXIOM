@@ -157,7 +157,7 @@ function ATSPanel({ score }: { score: ATSScore }) {
               <div key={s.label} className="flex items-center gap-2">
                 <span className="text-xs text-zinc-500 w-24 shrink-0">{s.label}</span>
                 <div className="flex-1 h-1.5 bg-zinc-800 rounded-full">
-                  <div className="h-full rounded-full bg-white/60" style={{ width: `${s.val}%` }} />
+                  <div className="h-full rounded-full bg-brand/70" style={{ width: `${s.val}%` }} />
                 </div>
                 <span className="text-xs text-zinc-400 w-8 text-right shrink-0">{s.val}%</span>
               </div>

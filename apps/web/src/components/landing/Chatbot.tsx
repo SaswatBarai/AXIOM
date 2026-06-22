@@ -237,7 +237,7 @@ export function Chatbot() {
                       type="submit"
                       size="icon"
                       disabled={isTyping || !inputText.trim()}
-                      className="bg-white hover:bg-zinc-100 text-black h-9 w-9 shrink-0 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 hover:scale-[1.04] active:scale-95"
+                      className="bg-brand hover:bg-brand-hover text-black h-9 w-9 shrink-0 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 hover:scale-[1.04] active:scale-95"
                       aria-label="Send message"
                     >
                       <Send className="w-3.5 h-3.5" />

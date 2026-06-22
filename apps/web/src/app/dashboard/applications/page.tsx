@@ -310,7 +310,7 @@ export default function ApplicationsPage() {
           {/* Buttons */}
           <button
             onClick={handleApplyFilters}
-            className="text-xs bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-zinc-200 transition-colors"
+            className="text-xs bg-brand text-black px-4 py-2 rounded-lg font-medium hover:bg-brand-hover transition-colors"
           >
             Apply Filters
           </button>
@@ -467,7 +467,7 @@ export default function ApplicationsPage() {
                         onClick={() => handleManualStatusChange(col.id)}
                         className={`text-[10px] font-medium px-2.5 py-1 rounded transition-all ${
                           isActive
-                            ? "bg-white text-black font-semibold"
+                            ? "bg-brand text-black font-semibold"
                             : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-850"
                         }`}
                       >

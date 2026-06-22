@@ -9,10 +9,10 @@ html {
   --font-sans: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", "Courier New", monospace;
 
-  /* ── Brand colors (Shadcn Black & White) ──────── */
-  --color-brand:        #ffffff; /* primary */
-  --color-brand-hover:  #e4e4e7; /* zinc-200 */
-  --color-brand-active: #d4d4d8; /* zinc-300 */
+  /* ── Brand colors (Orange Theme) ──────── */
+  --color-brand:        #f97316;
+  --color-brand-hover:  #ea580c;
+  --color-brand-active: #c2410c;
 
   /* ── Background scale ──────────────────────────── */
   --color-bg-base:      #09090b; /* zinc-950 */
@@ -80,7 +80,7 @@ html.lenis body {
   position: absolute;
   border-radius: 9999px;
   filter: blur(130px);
-  background: radial-gradient(circle, rgba(167, 139, 250, 0.08) 0%, rgba(99, 102, 241, 0.03) 50%, transparent 70%);
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.05) 0%, rgba(234, 88, 12, 0.02) 50%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }

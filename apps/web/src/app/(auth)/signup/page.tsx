@@ -60,7 +60,7 @@ export default function SignupPage() {
         <div className="absolute top-[-10%] left-[30%] w-[500px] h-[500px] bg-white/4 rounded-full blur-[130px] pointer-events-none" />
 
         <Link href="/" className="relative z-10 flex items-center gap-2.5 w-fit group">
-          <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
+          <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
           <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
         </Link>
 
@@ -143,7 +143,7 @@ export default function SignupPage() {
           className="w-full max-w-sm relative"
         >
           <Link href="/" className="lg:hidden flex items-center justify-center gap-2.5 mb-8 group">
-            <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center font-bold text-xl text-black">A</div>
+            <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black">A</div>
             <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
           </Link>
 
@@ -228,7 +228,7 @@ export default function SignupPage() {
 
             <Button
               type="submit" disabled={loading}
-              className="w-full bg-white hover:bg-zinc-100 text-black h-11 font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
+              className="w-full bg-brand hover:bg-brand-hover text-black h-11 font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
             >
               {loading ? (
                 <span className="flex items-center gap-2">

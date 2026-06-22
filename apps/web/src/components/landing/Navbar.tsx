@@ -15,7 +15,7 @@ function AxiomLogo({ size = 32 }: { size?: number }) {
       aria-label="AXIOM"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect x="1" y="1" width="30" height="30" rx="7" fill="white" />
+      <rect x="1" y="1" width="30" height="30" rx="7" fill="var(--color-brand)" />
       <path
         d="M10 23L16 9L22 23"
         stroke="#09090b"
@@ -74,7 +74,7 @@ export function Navbar() {
             </Button>
           </Link>
           <Link href="/signup">
-            <Button className="bg-white hover:bg-zinc-100 text-black font-semibold text-sm h-9 px-4 shadow-sm">
+            <Button className="bg-brand hover:bg-brand-hover text-black font-semibold text-sm h-9 px-4 shadow-sm">
               Get Started
             </Button>
           </Link>
@@ -112,7 +112,7 @@ export function Navbar() {
               </Button>
             </Link>
             <Link href="/signup" className="w-full">
-              <Button className="w-full bg-white hover:bg-zinc-100 text-black font-semibold justify-center h-10">
+              <Button className="w-full bg-brand hover:bg-brand-hover text-black font-semibold justify-center h-10">
                 Get Started
               </Button>
             </Link>

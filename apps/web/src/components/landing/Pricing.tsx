@@ -128,7 +128,7 @@ function PricingCard({ plan, delay }: { plan: PricingPlan; delay: number }) {
 
         {plan.highlighted && (
           <div className="absolute top-6 right-6 z-10">
-            <Badge className="bg-white text-black font-semibold text-[10px] px-2.5 py-1 hover:bg-zinc-100">
+            <Badge className="bg-brand text-black font-semibold text-[10px] px-2.5 py-1 hover:bg-brand-hover">
               MOST POPULAR
             </Badge>
           </div>
@@ -174,7 +174,7 @@ function PricingCard({ plan, delay }: { plan: PricingPlan; delay: number }) {
             <Button
               className={`w-full font-semibold py-5 text-sm transition-all duration-200 ${
                 plan.highlighted
-                  ? "bg-white hover:bg-zinc-100 text-black shadow-lg"
+                  ? "bg-brand hover:bg-brand-hover text-black shadow-lg"
                   : "bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-zinc-700/60"
               }`}
             >

@@ -378,7 +378,7 @@ export default function InterviewPage() {
                 <Button
                   onClick={handleGenerate}
                   disabled={loading || !jobTitle.trim()}
-                  className="w-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-xl h-[38px] transition-all text-xs cursor-pointer shadow-md disabled:opacity-40"
+                  className="w-full bg-brand hover:bg-brand-hover text-black font-semibold rounded-xl h-[38px] transition-all text-xs cursor-pointer shadow-md disabled:opacity-40"
                 >
                   {loading ? (
                     <>

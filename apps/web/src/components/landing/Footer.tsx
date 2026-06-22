@@ -8,7 +8,7 @@ import { Github, Twitter, Linkedin } from "lucide-react";
 function AxiomLogo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-label="AXIOM" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="1" width="30" height="30" rx="7" fill="white" />
+      <rect x="1" y="1" width="30" height="30" rx="7" fill="var(--color-brand)" />
       <path d="M10 23L16 9L22 23" stroke="#09090b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="#09090b" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
@@ -93,7 +93,7 @@ export function Footer() {
               className="bg-zinc-900/50 border-zinc-800 text-sm h-9 w-full sm:w-56 text-zinc-300 placeholder:text-zinc-600 focus:border-zinc-600"
               aria-label="Newsletter email"
             />
-            <Button className="bg-white hover:bg-zinc-100 text-black font-semibold h-9 px-5 text-sm shrink-0">
+            <Button className="bg-brand hover:bg-brand-hover text-black font-semibold h-9 px-5 text-sm shrink-0">
               Subscribe
             </Button>
           </div>

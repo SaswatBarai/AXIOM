@@ -49,7 +49,7 @@ function SaveButton({ loading, success }: { loading: boolean; success: boolean }
     <button
       type="submit"
       disabled={loading}
-      className="flex items-center gap-2 px-5 py-2 bg-white text-black text-sm font-semibold rounded-lg hover:bg-zinc-200 disabled:opacity-50 transition-colors"
+      className="flex items-center gap-2 px-5 py-2 bg-brand text-black text-sm font-semibold rounded-lg hover:bg-brand-hover disabled:opacity-50 transition-colors"
     >
       {loading ? <Loader2 size={14} className="animate-spin" /> : success ? <CheckCircle2 size={14} /> : null}
       {loading ? "Saving…" : success ? "Saved" : "Save changes"}
@@ -187,7 +187,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`relative w-10 h-5 rounded-full transition-colors ${checked ? "bg-white" : "bg-zinc-700"}`}
+      className={`relative w-10 h-5 rounded-full transition-colors ${checked ? "bg-brand" : "bg-zinc-700"}`}
     >
       <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform ${checked ? "translate-x-5 bg-black" : "bg-zinc-400"}`} />
     </button>
@@ -325,7 +325,7 @@ export default function SettingsPage() {
       {!isLoading && (
         <div className="mb-6 flex items-center gap-3">
           <div className="flex-1 h-1 rounded-full bg-zinc-800 overflow-hidden">
-            <div className="h-full bg-white rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
+            <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
           </div>
           <span className="text-xs text-zinc-500 shrink-0">Profile {completionPct}% complete</span>
         </div>

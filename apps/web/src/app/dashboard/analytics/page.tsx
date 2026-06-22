@@ -214,7 +214,7 @@ export default function AnalyticsPage() {
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                     range === o.value
-                      ? "bg-white text-zinc-950 shadow-sm"
+                      ? "bg-brand text-black shadow-sm"
                       : "text-zinc-455 hover:text-white hover:bg-white/5"
                   )}
                 >
@@ -272,8 +272,8 @@ export default function AnalyticsPage() {
                 value={overview.totalApplications}
                 sub={`${overview.savedJobs} saved jobs`}
                 icon={Briefcase}
-                colorClass="group-hover:border-violet-500/20 group-hover:bg-violet-950/10"
-                borderGlowClass="bg-violet-500"
+                colorClass="group-hover:border-orange-500/20 group-hover:bg-orange-950/10"
+                borderGlowClass="bg-brand"
               />
               <KpiCard
                 label="Interviews"

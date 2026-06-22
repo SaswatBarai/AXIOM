@@ -288,9 +288,9 @@ function ResumeTab() {
             initial={{ opacity: 0, y: 8 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.4, delay: 0.3 }}
-            className="border border-amber-950/40 bg-amber-500/[0.03] rounded-xl p-4 space-y-3"
+            className="border border-orange-950/40 bg-orange-500/[0.03] rounded-xl p-4 space-y-3"
           >
-            <div className="flex items-center gap-2 text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-orange-400 text-[10px] font-bold uppercase tracking-widest">
               <AlertCircle className="w-3.5 h-3.5" /> Missing
             </div>
             <motion.div
@@ -301,7 +301,7 @@ function ResumeTab() {
             >
               {["Docker", "GraphQL"].map((s) => (
                 <motion.span key={s} variants={badgeVariant}>
-                  <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px]">
+                  <Badge className="bg-orange-500/10 text-orange-400 border border-orange-500/20 text-[10px]">
                     {s}
                   </Badge>
                 </motion.span>
@@ -331,7 +331,7 @@ function JobsTab() {
               className="pl-10 bg-zinc-950/80 border-zinc-900 h-10 text-zinc-200 text-sm"
             />
           </div>
-          <Button className="bg-white hover:bg-zinc-100 text-black h-10 px-6 font-semibold text-sm flex gap-2 shrink-0">
+          <Button className="bg-brand hover:bg-brand-hover text-black h-10 px-6 font-semibold text-sm flex gap-2 shrink-0">
             <Search className="w-3.5 h-3.5" />
             Search
           </Button>

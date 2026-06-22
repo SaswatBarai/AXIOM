@@ -103,7 +103,7 @@ export default function CoverLetterPage() {
                 onClick={() => setTone(t.value)}
                 className={`flex-1 rounded-lg border px-3 py-2 text-xs text-left transition-colors
                   ${tone === t.value
-                    ? "border-violet-500 bg-violet-900/30 text-violet-200"
+                    ? "border-orange-500 bg-orange-900/30 text-orange-200"
                     : "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
                   }`}
               >
@@ -124,7 +124,7 @@ export default function CoverLetterPage() {
             onChange={(e) => setJobDesc(e.target.value)}
             placeholder="Paste the full job description here…"
             rows={3}
-            className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder:text-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder:text-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-orange-500"
           />
         </div>
 
@@ -133,7 +133,7 @@ export default function CoverLetterPage() {
           <Button
             onClick={handleGenerate}
             disabled={loading || !application || !resume}
-            className="flex-1 bg-violet-600 hover:bg-violet-700"
+            className="flex-1 bg-brand hover:bg-brand-hover text-black"
           >
             {loading ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating…</>
@@ -146,7 +146,7 @@ export default function CoverLetterPage() {
         </div>
 
         {!resume && (
-          <p className="text-xs text-yellow-400">Upload a resume first to generate a cover letter.</p>
+          <p className="text-xs text-orange-400">Upload a resume first to generate a cover letter.</p>
         )}
         {error && (
           <div className="flex items-center gap-2 text-sm text-red-400">
@@ -202,7 +202,7 @@ export default function CoverLetterPage() {
             ref={textareaRef}
             value={letter}
             onChange={(e) => { setLetter(e.target.value); setSaved(false); }}
-            className="w-full min-h-[320px] resize-none rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-sm text-gray-100 leading-relaxed focus:outline-none focus:ring-1 focus:ring-violet-500 font-sans"
+            className="w-full min-h-[320px] resize-none rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-sm text-gray-100 leading-relaxed focus:outline-none focus:ring-1 focus:ring-orange-500 font-sans"
           />
         </div>
       )}

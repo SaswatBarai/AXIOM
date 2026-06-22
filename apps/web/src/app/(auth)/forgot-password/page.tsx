@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2.5 mb-10 group">
-          <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
+          <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
           <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
         </Link>
 
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit" disabled={loading}
-                className="w-full bg-white hover:bg-zinc-100 text-black h-11 font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
+                className="w-full bg-brand hover:bg-brand-hover text-black h-11 font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -154,7 +154,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             <Link href={`/verify-otp?email=${encodeURIComponent(email)}&mode=reset`} className="block">
-              <Button className="w-full bg-white hover:bg-zinc-100 text-black h-11 font-semibold flex items-center justify-center gap-2 group">
+              <Button className="w-full bg-brand hover:bg-brand-hover text-black h-11 font-semibold flex items-center justify-center gap-2 group">
                 Enter Reset Code
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Button>

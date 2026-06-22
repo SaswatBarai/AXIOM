@@ -97,7 +97,7 @@ export default function DashboardOverviewPage() {
             </p>
             <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
               <div
-                className="h-full rounded-full bg-white transition-all duration-500"
+                className="h-full rounded-full bg-brand transition-all duration-500"
                 style={{ width: `${completionPct}%` }}
               />
             </div>

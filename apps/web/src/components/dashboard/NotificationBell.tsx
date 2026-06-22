@@ -20,11 +20,11 @@ function NotifItem({ n, onRead }: { n: AppNotification; onRead: () => void }) {
   return (
     <div
       className={`flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-700/50 transition-colors
-        ${!n.readAt ? "bg-violet-900/10 border-l-2 border-violet-500" : ""}`}
+        ${!n.readAt ? "bg-orange-900/10 border-l-2 border-orange-500" : ""}`}
       onClick={onRead}
     >
       <div className="flex-shrink-0 mt-0.5 p-1.5 rounded-lg bg-gray-700">
-        <Icon size={13} className="text-violet-400" />
+        <Icon size={13} className="text-orange-400" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-gray-300">{TYPE_LABEL[n.type] ?? n.type}</p>
@@ -36,7 +36,7 @@ function NotifItem({ n, onRead }: { n: AppNotification; onRead: () => void }) {
         </p>
       </div>
       {!n.readAt && (
-        <div className="flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-violet-500" />
+        <div className="flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-500" />
       )}
     </div>
   );
@@ -73,7 +73,7 @@ export function NotificationBell() {
       >
         <Bell size={18} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-violet-600 text-[10px] font-bold text-white flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-brand text-[10px] font-bold text-black flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -89,7 +89,7 @@ export function NotificationBell() {
                 <button
                   type="button"
                   onClick={markAllRead}
-                  className="flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300 transition-colors"
+                  className="flex items-center gap-1 text-[11px] text-orange-400 hover:text-orange-300 transition-colors"
                 >
                   <CheckCheck size={12} /> Mark all read
                 </button>

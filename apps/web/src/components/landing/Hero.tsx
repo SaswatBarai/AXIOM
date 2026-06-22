@@ -48,7 +48,7 @@ export function Hero() {
         >
           <Link href="/signup">
             <span className="inline-flex items-center gap-2.5 px-3.5 py-1.5 bg-zinc-900/70 border border-zinc-800/80 rounded-full text-xs font-medium text-zinc-300 backdrop-blur-sm hover:border-zinc-700 hover:bg-zinc-800/60 transition-all duration-200 cursor-pointer group">
-              <span className="bg-white text-black text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 leading-none">
+              <span className="bg-brand text-black text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 leading-none">
                 NEW
               </span>
               AXIOM 1.0 is now live
@@ -98,7 +98,7 @@ export function Hero() {
           <Link href="/signup" className="w-full sm:w-auto">
             <Button
               size="lg"
-              className="w-full sm:w-auto bg-white hover:bg-zinc-100 text-black font-semibold text-sm px-7 h-11 flex items-center gap-2 group shadow-lg transition-all duration-200"
+              className="w-full sm:w-auto bg-brand hover:bg-brand-hover text-black font-semibold text-sm px-7 h-11 flex items-center gap-2 group shadow-lg transition-all duration-200"
             >
               Get Started Free
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200" />
@@ -149,7 +149,7 @@ export function Hero() {
 
             {/* Sidebar */}
             <div className="w-14 border-r border-zinc-900 flex flex-col items-center py-6 gap-6 bg-zinc-950 shrink-0 hidden sm:flex">
-              <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center font-bold text-black text-sm">A</div>
+              <div className="w-8 h-8 rounded-md bg-brand flex items-center justify-center font-bold text-black text-sm">A</div>
               <div className="flex-1 flex flex-col gap-5 pt-8 text-zinc-600">
                 <Briefcase className="w-4 h-4 text-zinc-300" />
                 <FileText className="w-4 h-4" />
@@ -240,7 +240,7 @@ export function Hero() {
                   { time: "10:04:12", level: "INFO",   color: "text-zinc-400",  msg: "Initializing resume analysis..." },
                   { time: "10:04:13", level: "INFO",   color: "text-zinc-400",  msg: "Parsed metadata: John Doe" },
                   { time: "10:04:14", level: "SKILLS", color: "text-emerald-400", msg: "Found: React, TypeScript, Tailwind" },
-                  { time: "10:04:14", level: "WARN",   color: "text-amber-400", msg: "Missing Docker, GraphQL refs" },
+                  { time: "10:04:14", level: "WARN",   color: "text-orange-400", msg: "Missing Docker, GraphQL refs" },
                   { time: "10:04:15", level: "INFO",   color: "text-zinc-400",  msg: "Vector db query complete." },
                 ].map((log, i) => (
                   <div key={i}>
