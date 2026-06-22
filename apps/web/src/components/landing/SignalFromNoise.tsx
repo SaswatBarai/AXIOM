@@ -78,10 +78,6 @@ export function SignalFromNoise() {
   const boundsRef = useRef<[number, number]>([0, 10000]);
   const rafRef    = useRef(0);
 
-  const reducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
   const { scrollY } = useScroll();
 
   // Measure [heroTop, footerTop] in document pixels; re-measure on layout change
@@ -127,11 +123,16 @@ export function SignalFromNoise() {
     }
     window.addEventListener("resize", onResize);
 
-    // If user prefers reduced motion, skip to phase 3 immediately
+    // Resolve reduced-motion preference inside the effect to avoid SSR mismatch
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Skip to phase 3 immediately when reduced-motion is preferred
     const staticP = reducedMotion ? 0.75 : -1;
 
     function draw(ts: number) {
       rafRef.current = requestAnimationFrame(draw);
+      // Pause rendering when the tab is hidden — saves CPU/GPU on background tabs
+      if (document.hidden) return;
       const w = canvas!.width;
       const h = canvas!.height;
       if (!w || !h) return;

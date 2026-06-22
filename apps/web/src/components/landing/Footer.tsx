@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Github, Twitter, Linkedin } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 function AxiomLogo({ size = 28 }: { size?: number }) {
   return (
@@ -17,27 +18,51 @@ function AxiomLogo({ size = 28 }: { size?: number }) {
 
 const navLinks = {
   Product: [
-    { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "Changelog", href: "#" },
-  ],
-  Company: [
-    { label: "About Us", href: "#" },
-    { label: "Career Blog", href: "#" },
-    { label: "Careers", href: "#" },
+    { label: "Features",  href: "#features" },
+    { label: "Showcase",  href: "#showcase" },
+    { label: "Pricing",   href: "#pricing"  },
   ],
   Legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-    { label: "Support", href: "mailto:support@axiom.ai" },
+    { label: "Privacy Policy",   href: "/privacy" },
+    { label: "Terms of Service", href: "/terms"   },
+    { label: "Support",          href: "/support" },
   ],
 };
 
+type NewsletterStatus = "idle" | "loading" | "success" | "error";
+
 export function Footer() {
+  const [email,  setEmail]  = useState("");
+  const [status, setStatus] = useState<NewsletterStatus>("idle");
+  const [errMsg, setErrMsg] = useState("");
+
+  async function handleSubscribe(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus("loading");
+    setErrMsg("");
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Subscription failed.");
+      }
+      setStatus("success");
+      setEmail("");
+    } catch (err: unknown) {
+      setStatus("error");
+      setErrMsg(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  }
+
   return (
-    <footer id="footer" className="border-t border-zinc-900 bg-[#09090b] pt-16 pb-10 px-6">
+    <footer id="footer" className="border-t border-zinc-900 bg-bg-base pt-16 pb-10 px-6">
       <div className="max-w-7xl mx-auto space-y-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
 
           {/* Brand */}
           <div className="lg:col-span-2 space-y-5">
@@ -49,18 +74,6 @@ export function Footer() {
               AI-powered career copilot. Analyze resume compatibility, match jobs semantically,
               prep for interviews, and track every application — all in one place.
             </p>
-            <div className="flex items-center gap-4 pt-1">
-              {[
-                { href: "https://github.com", Icon: Github, label: "GitHub" },
-                { href: "https://twitter.com", Icon: Twitter, label: "Twitter" },
-                { href: "https://linkedin.com", Icon: Linkedin, label: "LinkedIn" },
-              ].map(({ href, Icon, label }) => (
-                <Link key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}
-                  className="text-zinc-600 hover:text-zinc-300 transition-colors duration-200">
-                  <Icon className="w-4 h-4" />
-                </Link>
-              ))}
-            </div>
           </div>
 
           {/* Nav columns */}
@@ -86,17 +99,48 @@ export function Footer() {
           <p className="text-xs text-zinc-600">
             © {new Date().getFullYear()} AXIOM. All rights reserved.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Input
-              type="email"
-              placeholder="Your email address"
-              className="bg-zinc-900/50 border-zinc-800 text-sm h-9 w-full sm:w-56 text-zinc-300 placeholder:text-zinc-600 focus:border-zinc-600"
-              aria-label="Newsletter email"
-            />
-            <Button className="bg-brand hover:bg-brand-hover text-black font-semibold h-9 px-5 text-sm shrink-0">
-              Subscribe
-            </Button>
-          </div>
+
+          {/* Newsletter */}
+          {status === "success" ? (
+            <div className="flex items-center gap-2 text-sm text-emerald-400">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              You&apos;re subscribed — we&apos;ll be in touch.
+            </div>
+          ) : (
+            <form
+              onSubmit={handleSubscribe}
+              className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto"
+              aria-label="Newsletter signup"
+            >
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  type="email"
+                  placeholder="Your email address"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setStatus("idle"); }}
+                  required
+                  disabled={status === "loading"}
+                  className="bg-zinc-900/50 border-zinc-800 text-sm h-9 w-full sm:w-56 text-zinc-300 placeholder:text-zinc-600 focus:border-zinc-600 disabled:opacity-50"
+                  aria-label="Newsletter email"
+                />
+                <Button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="bg-brand hover:bg-brand-hover text-black font-semibold h-9 px-5 text-sm shrink-0 disabled:opacity-50"
+                >
+                  {status === "loading" ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                      Subscribing…
+                    </span>
+                  ) : "Subscribe"}
+                </Button>
+              </div>
+              {status === "error" && (
+                <p className="text-xs text-red-400 sm:self-center">{errMsg}</p>
+              )}
+            </form>
+          )}
         </div>
       </div>
     </footer>

@@ -7,6 +7,12 @@ import { setJobs, toggleSavedJob } from "@/store/jobsSlice";
 import { api } from "@/lib/api";
 import type { Job } from "@axiom/shared-types";
 
+export interface RecommendedJob extends Job {
+  matchScore: number;
+  matchedSkills?: string[];
+  missingSkills?: string[];
+}
+
 export interface JobFilters {
   q?: string;
   location?: string;
@@ -39,6 +45,20 @@ export function useJobs() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError]         = useState<string | null>(null);
   const [filters, setFilters]     = useState<JobFilters>({ sortBy: "match" });
+  const [recommendedJobs, setRecommendedJobs] = useState<RecommendedJob[]>([]);
+  const [isLoadingRecommended, setIsLoadingRecommended] = useState(false);
+
+  const fetchRecommended = useCallback(async (limit: number = 5) => {
+    setIsLoadingRecommended(true);
+    try {
+      const { data } = await api.get<RecommendedJob[]>(`/jobs/recommended?limit=${limit}`);
+      setRecommendedJobs(data || []);
+    } catch {
+      setError("Failed to load recommended jobs");
+    } finally {
+      setIsLoadingRecommended(false);
+    }
+  }, []);
 
   const search = useCallback(async (next: JobFilters = {}) => {
     setIsLoading(true);
@@ -116,5 +136,8 @@ export function useJobs() {
     search,
     toggleSave,
     loadSaved,
+    recommendedJobs,
+    isLoadingRecommended,
+    fetchRecommended,
   };
 }

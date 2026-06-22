@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronRight,
   PanelLeftClose,
+  PanelLeftOpen,
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,7 +53,7 @@ export function Sidebar() {
         collapsed ? "w-[68px]" : "w-64"
       )}
     >
-      {/* ─── Header: Logo + Toggle ─── */}
+      {/* ─── Header: Logo ─── */}
       <div className="flex items-center h-14 border-b border-zinc-800/80 px-3 shrink-0">
         <div
           className={cn(
@@ -78,17 +79,6 @@ export function Sidebar() {
               </span>
             )}
           </div>
-
-          {/* Toggle */}
-          {!collapsed && (
-            <button
-              onClick={() => setCollapsed(true)}
-              className="flex items-center justify-center w-7 h-7 rounded-md text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
-              title="Collapse sidebar"
-            >
-              <PanelLeftClose size={14} />
-            </button>
-          )}
         </div>
       </div>
 
@@ -152,6 +142,27 @@ export function Sidebar() {
           collapsed ? "px-2 py-3" : "px-3 py-3"
         )}
       >
+        {/* Collapse Toggle */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={cn(
+            "flex items-center rounded-lg text-[13px] font-medium text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-all duration-150 group cursor-pointer mb-2",
+            collapsed
+              ? "h-10 w-10 justify-center mx-auto"
+              : "h-10 w-full gap-3 px-3"
+          )}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? (
+            <PanelLeftOpen size={18} className="shrink-0 text-zinc-500 group-hover:text-zinc-300" />
+          ) : (
+            <>
+              <PanelLeftClose size={18} className="shrink-0 text-zinc-500 group-hover:text-zinc-300" />
+              <span className="transition-opacity duration-150">Collapse Sidebar</span>
+            </>
+          )}
+        </button>
+
         {/* User info */}
         {user && (
           <div

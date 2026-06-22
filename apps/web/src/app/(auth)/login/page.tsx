@@ -284,7 +284,7 @@ export default function LoginPage() {
               { icon: FileText, label: "Resume AI" },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-xs text-zinc-400">
-                <Icon className="w-3 h-3" />
+                <Icon className="w-3.5 h-3.5" />
                 {label}
               </div>
             ))}

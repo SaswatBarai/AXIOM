@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, ArrowRight } from "lucide-react";
+import { Send, ArrowRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
@@ -76,7 +77,7 @@ export function Chatbot() {
   };
 
   return (
-    <section id="chatbot" className="py-24 px-6 bg-[#09090b]">
+    <section id="chatbot" className="py-24 px-6 bg-bg-base">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-start">
 
@@ -134,7 +135,7 @@ export function Chatbot() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-white leading-none">AXIOM Copilot</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">GPT-4o · Always online</p>
+                      <p className="text-[10px] text-zinc-600 mt-0.5">AXIOM AI · Always online</p>
                     </div>
                   </div>
                   {/* Live indicator */}
@@ -250,6 +251,27 @@ export function Chatbot() {
           </div>
 
         </div>
+
+        {/* Conversion CTA — after the demo interaction */}
+        <ScrollReveal>
+          <div className="mt-14 flex flex-col sm:flex-row items-center justify-between gap-6 p-6 sm:p-8 rounded-2xl border border-zinc-800/60 bg-zinc-900/20">
+            <div className="text-center sm:text-left space-y-1">
+              <div className="flex items-center justify-center sm:justify-start gap-2 mb-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-brand" />
+                <span className="text-[10px] font-semibold text-brand uppercase tracking-widest">Full access in your dashboard</span>
+              </div>
+              <h3 className="text-lg font-bold text-white">Ready to try the full copilot?</h3>
+              <p className="text-sm text-zinc-400">Ask anything. Get real answers. Land more interviews.</p>
+            </div>
+            <Link href="/signup" className="shrink-0 w-full sm:w-auto">
+              <Button className="w-full bg-brand hover:bg-brand-hover text-black font-semibold h-11 px-7 text-sm flex items-center justify-center gap-2 group shadow-[0_0_24px_rgba(249,115,22,0.2)] hover:shadow-[0_0_32px_rgba(249,115,22,0.35)] transition-all duration-200">
+                Start free — no credit card
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Button>
+            </Link>
+          </div>
+        </ScrollReveal>
+
       </div>
     </section>
   );
