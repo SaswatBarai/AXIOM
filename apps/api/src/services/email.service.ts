@@ -1,16 +1,23 @@
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
+import { logger } from "../utils/logger";
 
-// ── Transport (env-driven; swap SMTP_HOST for SES/Resend in prod) ─────────────
+// ── Transport (Resend for production, Nodemailer/SMTP for dev fallback) ───────
 
-const transporter = nodemailer.createTransport({
-  host:   process.env["SMTP_HOST"]     ?? "smtp.ethereal.email",
-  port:   Number(process.env["SMTP_PORT"]   ?? 587),
-  secure: process.env["SMTP_SECURE"]   === "true",
-  auth: {
-    user: process.env["SMTP_USER"]  ?? "",
-    pass: process.env["SMTP_PASS"]  ?? "",
-  },
-});
+const RESEND_API_KEY = process.env["RESEND_API_KEY"];
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
+const transporter = !resend
+  ? nodemailer.createTransport({
+      host:   process.env["SMTP_HOST"]     ?? "smtp.ethereal.email",
+      port:   Number(process.env["SMTP_PORT"]   ?? 587),
+      secure: process.env["SMTP_SECURE"]   === "true",
+      auth: {
+        user: process.env["SMTP_USER"]  ?? "",
+        pass: process.env["SMTP_PASS"]  ?? "",
+      },
+    })
+  : null;
 
 const FROM = process.env["EMAIL_FROM"] ?? "AXIOM <noreply@axiom.dev>";
 
@@ -113,5 +120,23 @@ export async function sendEmail(opts: {
   data:     TemplateData;
 }): Promise<void> {
   const { subject, html } = renderTemplate(opts.template, opts.data);
-  await transporter.sendMail({ from: FROM, to: opts.to, subject, html });
+  
+  if (resend) {
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: [opts.to],
+      subject,
+      html,
+    });
+    if (error) {
+      logger.error("Failed to send email via Resend", error);
+      throw error;
+    }
+    logger.info(`Email sent via Resend to ${opts.to} [Template: ${opts.template}]`);
+  } else if (transporter) {
+    await transporter.sendMail({ from: FROM, to: opts.to, subject, html });
+    logger.info(`Email sent via Nodemailer fallback to ${opts.to} [Template: ${opts.template}]`);
+  } else {
+    logger.warn(`No email provider configured. Skip sending email to ${opts.to}`);
+  }
 }

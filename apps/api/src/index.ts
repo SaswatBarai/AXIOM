@@ -102,8 +102,26 @@ function scheduleNightlyRefresh() {
   }, msUntilMidnight);
 }
 
+async function verifyPgVector() {
+  try {
+    const result = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT EXISTS (
+        SELECT 1 FROM pg_extension WHERE extname = 'vector'
+      ) as exists;
+    `;
+    if (!result[0]?.exists) {
+      logger.warn("⚠️ Warning: PostgreSQL 'vector' extension is not enabled. Job matching features may fail. Run 'CREATE EXTENSION IF NOT EXISTS vector;' on your database.");
+    } else {
+      logger.info("✅ PostgreSQL 'vector' extension verified.");
+    }
+  } catch (err) {
+    logger.warn("⚠️ Warning: Failed to query PostgreSQL extension list. pgvector availability could not be verified.", err);
+  }
+}
+
 async function bootstrap() {
   await redis.connect();
+  await verifyPgVector();
   const httpServer = http.createServer(app);
   initSocketIO(httpServer);
   httpServer.listen(PORT, () => {

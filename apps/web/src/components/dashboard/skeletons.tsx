@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // ── Shared pulse shimmer ──────────────────────────────────────────────────────
 
-function S({ className }: { className?: string }) {
-  return <Skeleton className={className} />;
+function S({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <Skeleton className={className} style={style} />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
