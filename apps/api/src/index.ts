@@ -1,4 +1,5 @@
 import "dotenv/config";
+import http from "http";
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -14,6 +15,13 @@ import applicationRoutes from "./routes/application.routes";
 import skillRoutes from "./routes/skill.routes";
 import chatRoutes from "./routes/chat.routes";
 import coverLetterRoutes from "./routes/coverLetter.routes";
+import { interviewRoutes }       from "./routes/interview.routes";
+import { roadmapRoutes }         from "./routes/roadmap.routes";
+import { analyticsRoutes }       from "./routes/analytics.routes";
+import { notificationRoutes }    from "./routes/notification.routes";
+import { refreshMaterializedViews } from "./services/analytics.service";
+import { scheduleWeeklyDigest }  from "./services/queue.service";
+import { initSocketIO }          from "./lib/socket";
 import { errorHandler } from "./middleware/errorHandler.middleware";
 import { prisma } from "@axiom/database";
 import { redis } from "./services/redis.service";
@@ -70,15 +78,39 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/cover-letter", coverLetterRoutes);
+app.use("/api/interview",    interviewRoutes);
+app.use("/api/roadmap",      roadmapRoutes);
+app.use("/api/analytics",      analyticsRoutes);
+app.use("/api/notifications",  notificationRoutes);
 
 // ── Error handler ───────────────────────────────────────────
 app.use(errorHandler);
 
+function scheduleNightlyRefresh() {
+  const now = new Date();
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+  const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+
+  setTimeout(async function tick() {
+    try {
+      await refreshMaterializedViews();
+      logger.info("Materialized views refreshed");
+    } catch (err) {
+      logger.error("Failed to refresh materialized views", err);
+    }
+    setTimeout(tick, 24 * 60 * 60 * 1000);
+  }, msUntilMidnight);
+}
+
 async function bootstrap() {
   await redis.connect();
-  app.listen(PORT, () => {
+  const httpServer = http.createServer(app);
+  initSocketIO(httpServer);
+  httpServer.listen(PORT, () => {
     logger.info(`API running on http://localhost:${PORT}`);
   });
+  scheduleNightlyRefresh();
+  await scheduleWeeklyDigest();
 }
 
 bootstrap().catch((err) => {

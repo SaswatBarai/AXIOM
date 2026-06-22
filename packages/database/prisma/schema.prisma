@@ -71,11 +71,14 @@ model User {
 
   // Relations
   preferences  UserPreferences?
-  resumes      Resume[]
-  applications Application[]
-  savedJobs    SavedJob[]
-  chatHistory  ChatMessage[]
-  roadmaps     CareerRoadmap[]
+  resumes           Resume[]
+  applications      Application[]
+  savedJobs         SavedJob[]
+  chatHistory       ChatMessage[]
+  roadmaps          CareerRoadmap[]
+  interviewSessions InterviewSession[]
+  notifications     Notification[]
+  jobAlerts         JobAlert[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -204,10 +207,14 @@ model ChatMessage {
 }
 
 model CareerRoadmap {
-  id      String @id @default(cuid())
-  userId  String
-  title   String
-  content Json
+  id         String @id @default(cuid())
+  userId     String
+  title      String
+  targetRole String @default("")
+  weeks      Int    @default(12)
+  version    Int    @default(1)
+  content    Json
+  progress   Json   @default("{}")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -216,4 +223,55 @@ model CareerRoadmap {
 
   @@index([userId])
   @@map("career_roadmaps")
+}
+
+model Notification {
+  id      String    @id @default(cuid())
+  userId  String
+  type    String
+  payload Json      @default("{}")
+  readAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model JobAlert {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  filters    Json      @default("{}")
+  frequency  String    @default("daily")
+  active     Boolean   @default(true)
+  lastSentAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([active, frequency])
+  @@map("job_alerts")
+}
+
+model InterviewSession {
+  id         String @id @default(cuid())
+  userId     String
+  jobTitle   String
+  difficulty String
+  sections   Json
+  questions  Json
+  marks      Json   @default("{}")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("interview_sessions")
 }

@@ -9,26 +9,26 @@ const password = z
 
 export const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(60),
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").transform((val) => val.toLowerCase()),
   password,
 });
 
 export const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").transform((val) => val.toLowerCase()),
   password: z.string().min(1, "Password is required"),
 });
 
 export const verifyEmailSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().transform((val) => val.toLowerCase()),
   otp: z.string().length(6, "OTP must be 6 digits"),
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").transform((val) => val.toLowerCase()),
 });
 
 export const resetPasswordSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().transform((val) => val.toLowerCase()),
   otp: z.string().length(6, "OTP must be 6 digits"),
   newPassword: password,
 });
@@ -192,4 +192,47 @@ export const coverLetterSaveSchema = z.object({
 
 export type CoverLetterGenerateInput = z.infer<typeof coverLetterGenerateSchema>;
 export type CoverLetterExportInput   = z.infer<typeof coverLetterExportSchema>;
+
+export const interviewGenerateSchema = z.object({
+  jobTitle:       z.string().min(1).max(200),
+  jobDescription: z.string().max(8000).default(""),
+  difficulty:     z.enum(["easy", "medium", "hard"]).default("medium"),
+  sections:       z.array(z.string()).max(6).default([]),
+  count:          z.number().int().min(1).max(30).default(10),
+});
+
+export const interviewMarksSchema = z.object({
+  marks: z.record(z.enum(["correct", "review"]).nullable()),
+});
+
+export type InterviewGenerateInput = z.infer<typeof interviewGenerateSchema>;
+export type InterviewMarksInput    = z.infer<typeof interviewMarksSchema>;
+
+// ── Phase 15 — Career Roadmap ─────────────────────────────────────────────────
+
+export const roadmapGenerateSchema = z.object({
+  targetRole: z.string().min(1).max(200),
+  gapReport:  z.record(z.unknown()).default({}),
+  weeks:      z.number().int().min(4).max(52).default(12),
+});
+
+export const roadmapMarkStepSchema = z.object({
+  done: z.boolean(),
+});
+
+export type RoadmapGenerateInput  = z.infer<typeof roadmapGenerateSchema>;
+export type RoadmapMarkStepInput  = z.infer<typeof roadmapMarkStepSchema>;
+
+// ── Phase 17 — Notifications ──────────────────────────────────────────────────
+
+export const notificationAlertSchema = z.object({
+  name:      z.string().min(1).max(100),
+  filters:   z.object({
+    keywords: z.string().max(200).optional(),
+    location: z.string().max(100).optional(),
+    jobType:  z.string().optional(),
+    remote:   z.boolean().optional(),
+  }).default({}),
+  frequency: z.enum(["instant", "daily", "weekly"]).default("daily"),
+});
 

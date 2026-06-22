@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
 import "@/styles/globals.css";
 import { Providers } from "@/components/providers";
+import { cn } from "@/lib/utils";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -17,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-grid-dots bg-[#09090b] text-white relative min-h-screen overflow-x-hidden antialiased">
+    <html lang="en" className={cn("dark", poppins.variable)}>
+      <body className="bg-grid-dots bg-[#09090b] text-white relative min-h-screen overflow-x-hidden antialiased font-sans">
         {/* Drifting atmospheric glow orbs */}
         <div className="absolute top-[10%] left-[5%] w-[600px] h-[600px] ambient-glow-orb animate-float-1 opacity-60 pointer-events-none" />
         <div className="absolute top-[35%] right-[2%] w-[700px] h-[700px] ambient-glow-orb animate-float-2 opacity-55 pointer-events-none" />

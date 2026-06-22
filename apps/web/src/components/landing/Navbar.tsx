@@ -37,12 +37,12 @@ export function Navbar() {
 
         {/* Action Buttons (Desktop) */}
         <div className="hidden md:flex items-center gap-4">
-          <Link href="/auth/login">
+          <Link href="/login">
             <Button variant="ghost" className="text-zinc-300 hover:text-white">
               Sign In
             </Button>
           </Link>
-          <Link href="/auth/signup">
+          <Link href="/signup">
             <Button className="bg-white hover:bg-zinc-200 text-black font-medium">
               Get Started
             </Button>
@@ -94,12 +94,12 @@ export function Navbar() {
           </nav>
           <hr className="border-zinc-800" />
           <div className="flex flex-col gap-3">
-            <Link href="/auth/login" className="w-full">
+            <Link href="/login" className="w-full">
               <Button variant="ghost" className="w-full text-zinc-300 hover:text-white justify-center">
                 Sign In
               </Button>
             </Link>
-            <Link href="/auth/signup" className="w-full">
+            <Link href="/signup" className="w-full">
               <Button className="w-full bg-white hover:bg-zinc-200 text-black font-medium justify-center">
                 Get Started
               </Button>

@@ -91,7 +91,7 @@ export function Hero() {
           }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 w-full sm:w-auto"
         >
-          <Link href="/auth/signup" className="w-full sm:w-auto">
+          <Link href="/signup" className="w-full sm:w-auto">
             <Button size="lg" className="w-full sm:w-auto bg-white hover:bg-zinc-200 text-black font-semibold text-base px-8 h-12 flex items-center gap-2 group shadow-xl transition-all duration-300">
               Get Started Free
               <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform duration-300" />

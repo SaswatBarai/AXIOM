@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowRight, CheckCircle2, XCircle, Star,
-  BarChart3, Target, Sparkles, Brain,
+  BarChart3, Target, Sparkles, Brain, Eye, EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ const STEPS = [
 export default function SignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -172,11 +173,21 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</Label>
-              <Input
-                id="password" type="password" placeholder="••••••••"
-                value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required
-                className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-white/20 focus-visible:border-zinc-600 h-11"
-              />
+              <div className="relative">
+                <Input
+                  id="password" type={showPassword ? "text" : "password"} placeholder="••••••••"
+                  value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required
+                  className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-white/20 focus-visible:border-zinc-600 h-11 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-550 hover:text-white transition-colors cursor-pointer flex items-center justify-center p-0.5"
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {form.password.length > 0 && (
                 <div className="grid grid-cols-2 gap-1 mt-2">
                   {PASSWORD_REQS.map((req) => {

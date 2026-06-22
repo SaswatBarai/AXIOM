@@ -40,7 +40,7 @@ const plans: PricingPlan[] = [
       "Tailored cover letter generator"
     ],
     ctaText: "Get Started Free",
-    ctaLink: "/auth/signup",
+    ctaLink: "/signup",
     highlighted: false
   },
   {
@@ -59,7 +59,7 @@ const plans: PricingPlan[] = [
     ],
     missingFeatures: [],
     ctaText: "Start Free Trial",
-    ctaLink: "/auth/signup",
+    ctaLink: "/signup",
     highlighted: true
   },
   {

@@ -11,11 +11,13 @@ import {
   Bot,
   BarChart2,
   GraduationCap,
+  MapPin,
   Settings,
   LogOut,
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -26,6 +28,8 @@ const NAV_ITEMS = [
   { href: "/dashboard/jobs",         label: "Jobs",         icon: Briefcase },
   { href: "/dashboard/applications", label: "Applications", icon: ClipboardList },
   { href: "/dashboard/skills",       label: "Skills",       icon: GraduationCap },
+  { href: "/dashboard/interview",    label: "Interview",    icon: MessageSquare },
+  { href: "/dashboard/roadmap",      label: "Roadmap",      icon: MapPin },
   { href: "/dashboard/copilot",      label: "AI Copilot",   icon: Bot },
   { href: "/dashboard/analytics",    label: "Analytics",    icon: BarChart2 },
   { href: "/dashboard/settings",     label: "Settings",     icon: Settings },
