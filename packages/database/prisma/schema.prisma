@@ -62,9 +62,6 @@ model User {
   // Auth
   emailVerified    Boolean   @default(false)
   googleId         String?   @unique
-  refreshToken     String?
-  resetToken       String?
-  resetTokenExpiry DateTime?
 
   // Phase 11 — most-recent skill gap report
   latestGapReport Json?

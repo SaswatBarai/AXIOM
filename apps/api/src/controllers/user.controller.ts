@@ -52,19 +52,3 @@ export async function updatePreferencesHandler(req: AuthRequest, res: Response, 
     res.json({ preferences: prefs });
   } catch (err) { next(err); }
 }
-
-export async function listUsersHandler(req: AuthRequest, res: Response, next: NextFunction) {
-  try {
-    const page  = Math.max(1, Number(req.query.page  ?? 1));
-    const limit = Math.min(100, Math.max(1, Number(req.query.limit ?? 20)));
-    const result = await userService.listUsers(page, limit);
-    res.json(result);
-  } catch (err) { next(err); }
-}
-
-export async function changeRoleHandler(req: AuthRequest, res: Response, next: NextFunction) {
-  try {
-    const user = await userService.changeRole(req.params["id"] as string, req.body.role);
-    res.json({ user });
-  } catch (err) { next(err); }
-}

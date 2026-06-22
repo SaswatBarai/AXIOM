@@ -6,16 +6,21 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const ENDPOINT  = process.env.S3_ENDPOINT;   // set in dev: http://localhost:9000
+const ENDPOINT  = process.env.S3_ENDPOINT;
 const BUCKET    = process.env.AWS_S3_BUCKET ?? "axiom-resumes";
+const ACCESS_KEY = process.env.AWS_ACCESS_KEY_ID;
+const SECRET_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+
+if (!ACCESS_KEY || !SECRET_KEY) {
+  throw new Error("Missing required environment variables: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY");
+}
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION ?? "us-east-1",
   credentials: {
-    accessKeyId:     process.env.AWS_ACCESS_KEY_ID     ?? "minioadmin",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "minioadmin",
+    accessKeyId:     ACCESS_KEY,
+    secretAccessKey: SECRET_KEY,
   },
-  // MinIO requires a custom endpoint + path-style addressing
   ...(ENDPOINT && {
     endpoint:         ENDPOINT,
     forcePathStyle:   true,

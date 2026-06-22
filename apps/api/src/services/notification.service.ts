@@ -33,6 +33,19 @@ export async function listNotifications(userId: string) {
   });
 }
 
+// ── Retention: delete read notifications older than 90 days ──────────────────
+
+export async function deleteStaleNotifications(): Promise<number> {
+  const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  const result = await prisma.notification.deleteMany({
+    where: {
+      readAt: { not: null },
+      createdAt: { lt: cutoff },
+    },
+  });
+  return result.count;
+}
+
 // ── Mark read ─────────────────────────────────────────────────────────────────
 
 export async function markRead(userId: string, notificationId: string) {

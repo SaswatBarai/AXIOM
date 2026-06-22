@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 import { setCredentials, clearCredentials, setLoading } from "@/store/authSlice";
@@ -32,8 +32,7 @@ export function useAuth() {
         localStorage.removeItem("refreshToken");
         dispatch(clearCredentials());
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dispatch, isAuthenticated]);
 
   function logout() {
     const token = localStorage.getItem("accessToken");

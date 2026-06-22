@@ -47,7 +47,7 @@ export async function createApplication(
       jobId,
       status,
       appliedAt: status === "APPLIED" ? now : null,
-      timeline: JSON.stringify([timelineEntry]),
+      timeline: [timelineEntry],
     },
     include: { job: true },
   });
@@ -147,9 +147,11 @@ export async function updateApplication(
     // Parse existing timeline
     let timelineList: any[] = [];
     try {
-      timelineList = JSON.parse(app.timeline as string) || [];
-      if (!Array.isArray(timelineList)) {
-        timelineList = [];
+      const rawTimeline = app.timeline;
+      if (typeof rawTimeline === "string") {
+        timelineList = JSON.parse(rawTimeline) || [];
+      } else if (Array.isArray(rawTimeline)) {
+        timelineList = rawTimeline;
       }
     } catch {
       timelineList = [];
@@ -167,7 +169,7 @@ export async function updateApplication(
       timelineList = timelineList.slice(-50);
     }
 
-    updateData.timeline = JSON.stringify(timelineList);
+    updateData.timeline = timelineList;
   }
 
   const updatedApp = await prisma.application.update({
@@ -240,10 +242,11 @@ export async function getStats(userId: string) {
 
   apps.forEach((app) => {
     let timelineList: any[] = [];
-    try {
-      timelineList = JSON.parse(app.timeline as string) || [];
-    } catch {
-      timelineList = [];
+    const rawTimeline = app.timeline;
+    if (typeof rawTimeline === "string") {
+      try { timelineList = JSON.parse(rawTimeline) || []; } catch { timelineList = []; }
+    } else if (Array.isArray(rawTimeline)) {
+      timelineList = rawTimeline;
     }
 
     if (Array.isArray(timelineList)) {

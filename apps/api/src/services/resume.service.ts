@@ -51,13 +51,20 @@ export async function listResumes(userId: string) {
     where:   { userId },
     orderBy: { createdAt: "desc" },
   });
-  // Attach short-lived presigned download URL for each
-  return Promise.all(
-    resumes.map(async (r) => ({
-      ...r,
-      downloadUrl: await getPresignedUrl(keyFromUrl(r.fileUrl)),
-    }))
-  );
+  // Generate presigned URLs in parallel batches of 5
+  const batchSize = 5;
+  const result = [];
+  for (let i = 0; i < resumes.length; i += batchSize) {
+    const batch = resumes.slice(i, i + batchSize);
+    const enriched = await Promise.all(
+      batch.map(async (r) => ({
+        ...r,
+        downloadUrl: await getPresignedUrl(keyFromUrl(r.fileUrl)),
+      }))
+    );
+    result.push(...enriched);
+  }
+  return result;
 }
 
 export async function getResume(resumeId: string, userId: string) {
@@ -100,6 +107,9 @@ export async function analyzeResume(resumeId: string, userId: string, jobDescrip
 }
 
 async function getNextVersion(userId: string): Promise<number> {
-  const count = await prisma.resume.count({ where: { userId } });
-  return count + 1;
+  const maxResult = await prisma.resume.aggregate({
+    where: { userId },
+    _max: { version: true },
+  });
+  return (maxResult._max.version ?? 0) + 1;
 }

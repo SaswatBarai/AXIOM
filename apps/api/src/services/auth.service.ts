@@ -116,10 +116,10 @@ export async function logout(userId: string, accessToken: string) {
 export async function forgotPassword(input: ForgotPasswordInput) {
   const user = await prisma.user.findUnique({ where: { email: input.email } });
   // Always return success to prevent email enumeration
-  if (!user) return { message: "If that email exists, a reset code was sent." };
+  if (!user || !user.emailVerified) return { message: "If that email exists, a reset code was sent." };
 
   const otp = generateOtp();
-  await redis.set(CacheKey.otp(input.email), otp, TTL.OTP);
+  await redis.set(CacheKey.resetOtp(input.email), otp, TTL.OTP);
 
   console.warn(`[AUTH] Password reset OTP for ${input.email}: ${otp}`);
 
@@ -129,12 +129,12 @@ export async function forgotPassword(input: ForgotPasswordInput) {
 // ── Reset Password ────────────────────────────────────────────────────────────
 
 export async function resetPassword(input: ResetPasswordInput) {
-  const stored = await redis.get(CacheKey.otp(input.email));
+  const stored = await redis.get(CacheKey.resetOtp(input.email));
   if (!stored || stored !== input.otp) throw new AppError(400, "Invalid or expired OTP");
 
   const hashed = await bcrypt.hash(input.newPassword, 10);
   await prisma.user.update({ where: { email: input.email }, data: { password: hashed } });
-  await redis.del(CacheKey.otp(input.email));
+  await redis.del(CacheKey.resetOtp(input.email));
 
   return { message: "Password reset successfully" };
 }

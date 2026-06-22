@@ -1,6 +1,7 @@
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware";
 import * as authService from "../services/auth.service";
+import { prisma } from "@axiom/database";
 
 export async function registerHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
@@ -55,7 +56,6 @@ export async function resetPasswordHandler(req: AuthRequest, res: Response, next
 
 export async function meHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const { prisma } = await import("@axiom/database");
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
       select: { id: true, email: true, name: true, role: true, avatarUrl: true, emailVerified: true, createdAt: true },

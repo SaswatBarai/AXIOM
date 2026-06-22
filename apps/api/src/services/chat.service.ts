@@ -25,7 +25,7 @@ const aiClient = axios.create({
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 
 async function checkAndIncrRateLimit(userId: string): Promise<void> {
-  const key = `chat:rl:${userId}:${new Date().getUTCHours()}`;
+  const key = `chat:rl:${userId}:${new Date().toISOString().slice(0, 13)}`;
   const count = await redis.incr(key);
   if (count === 1) await redis.expire(key, 3600);
   if (count > HOURLY_QUOTA) {

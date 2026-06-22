@@ -1,6 +1,7 @@
 import { prisma } from "@axiom/database";
 import bcrypt from "bcryptjs";
 import { AppError } from "../middleware/errorHandler.middleware";
+import { deleteFromS3, keyFromUrl } from "./s3.service";
 import type {
   UpdateProfileInput,
   ChangePasswordInput,
@@ -56,6 +57,14 @@ export async function changePassword(userId: string, data: ChangePasswordInput) 
 }
 
 export async function deleteAccount(userId: string) {
+  // Delete associated S3 files before cascading DB deletion
+  const resumes = await prisma.resume.findMany({
+    where: { userId },
+    select: { fileUrl: true },
+  });
+  await Promise.allSettled(
+    resumes.map((r) => deleteFromS3(keyFromUrl(r.fileUrl)))
+  );
   await prisma.user.delete({ where: { id: userId } });
   return { message: "Account deleted successfully" };
 }
@@ -73,7 +82,7 @@ export async function exportData(userId: string) {
   });
   if (!user) throw new AppError(404, "User not found");
   // Strip credentials before export
-  const { password: _, googleId: _g, refreshToken: _r, resetToken: _rt, resetTokenExpiry: _rte, ...safeUser } = user;
+  const { password: _, googleId: _g, ...safeUser } = user;
   return safeUser;
 }
 

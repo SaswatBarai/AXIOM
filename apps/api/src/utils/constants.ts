@@ -14,6 +14,7 @@ export const CacheKey = {
   refreshToken: (userId: string) => `auth:refresh:${userId}`,
   blacklist: (token: string) => `auth:blacklist:${token}`,
   otp: (email: string) => `auth:otp:${email}`,
+  resetOtp: (email: string) => `auth:reset:${email}`,
   userProfile: (userId: string) => `user:profile:${userId}`,
   jobList: (page: number, filters: string) => `jobs:list:${page}:${filters}`,
   jobDetail: (jobId: string) => `jobs:detail:${jobId}`,

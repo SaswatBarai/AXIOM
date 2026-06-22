@@ -256,7 +256,8 @@ export async function runScrape(input: ScrapeRunInput) {
       create: data,
     });
 
-    if (Math.abs(result.createdAt.getTime() - Date.now()) < 5_000) inserted++;
+    const isNew = result.createdAt.getTime() === result.updatedAt.getTime();
+    if (isNew) inserted++;
     else updated++;
   }
 

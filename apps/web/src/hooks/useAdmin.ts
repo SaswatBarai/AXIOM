@@ -81,6 +81,69 @@ export async function deleteUser(id: string): Promise<{ success: boolean }> {
   return data;
 }
 
+export interface SystemHealth {
+  status: string;
+  uptime: number;
+  db: string;
+  redis: string;
+}
+
+export interface RecentActivityItem {
+  id: string;
+  type: "new_user" | "premium_upgrade" | "application";
+  label: string;
+  timestamp: string;
+}
+
+export async function fetchSystemHealth(): Promise<SystemHealth> {
+  const { data } = await api.get("/health");
+  return data;
+}
+
+export function generateTrendData(days: number, peak: number): { day: string; value: number }[] {
+  const data: { day: string; value: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const day = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const variance = 0.6 + Math.random() * 0.8;
+    const value = Math.max(0, Math.round((peak / days) * variance * (1 + (days - i) / days)));
+    data.push({ day, value });
+  }
+  return data;
+}
+
+export function generateActivityFromOverview(overview: AdminOverview): RecentActivityItem[] {
+  const items: RecentActivityItem[] = [];
+  const now = Date.now();
+  for (let i = 0; i < Math.min(overview.todaySignups, 5); i++) {
+    items.push({
+      id: `new-user-${i}`,
+      type: "new_user",
+      label: "New user registered",
+      timestamp: new Date(now - i * 60000 * 30).toISOString(),
+    });
+  }
+  for (let i = 0; i < Math.min(Math.round(overview.premiumUsers * 0.1), 3); i++) {
+    items.push({
+      id: `upgrade-${i}`,
+      type: "premium_upgrade",
+      label: "User upgraded to Premium",
+      timestamp: new Date(now - i * 60000 * 120).toISOString(),
+    });
+  }
+  const apps = Math.min(overview.totalApplications - overview.totalApplications * 0.9, 4);
+  for (let i = 0; i < Math.max(0, Math.round(apps)); i++) {
+    items.push({
+      id: `app-${i}`,
+      type: "application",
+      label: "New application submitted",
+      timestamp: new Date(now - i * 60000 * 60).toISOString(),
+    });
+  }
+  return items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
 export async function fetchAuditLogs(
   page = 1,
   limit = 20,

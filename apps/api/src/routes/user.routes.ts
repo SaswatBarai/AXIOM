@@ -1,11 +1,10 @@
 import { Router, type IRouter } from "express";
-import { requireAuth, requireRole } from "../middleware/auth.middleware";
+import { requireAuth } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate.middleware";
 import {
   updateProfileSchema,
   changePasswordSchema,
   updatePreferencesSchema,
-  changeRoleSchema,
 } from "../utils/schemas";
 import {
   getProfileHandler,
@@ -15,8 +14,6 @@ import {
   exportDataHandler,
   getPreferencesHandler,
   updatePreferencesHandler,
-  listUsersHandler,
-  changeRoleHandler,
 } from "../controllers/user.controller";
 
 const router: IRouter = Router();
@@ -31,9 +28,5 @@ router.get(  "/me/export",          requireAuth,                                
 // ── Preferences ───────────────────────────────────────────────────────────────
 router.get(  "/me/preferences",     requireAuth,                                           getPreferencesHandler);
 router.put(  "/me/preferences",     requireAuth, validate(updatePreferencesSchema),        updatePreferencesHandler);
-
-// ── Admin ─────────────────────────────────────────────────────────────────────
-router.get(  "/",                   requireAuth, requireRole("ADMIN"),                     listUsersHandler);
-router.patch("/:id/role",           requireAuth, requireRole("ADMIN"), validate(changeRoleSchema), changeRoleHandler);
 
 export default router;

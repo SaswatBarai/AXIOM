@@ -1,11 +1,13 @@
 import "dotenv/config";
 import http from "http";
-import express, { Application } from "express";
+import express, { type Application, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import compression from "compression";
 import { rateLimit } from "express-rate-limit";
 import { xss } from "express-xss-sanitizer";
+import { v4 as uuid } from "uuid";
 
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
@@ -22,14 +24,30 @@ import { notificationRoutes }    from "./routes/notification.routes";
 import adminRoutes            from "./routes/admin.routes";
 import { refreshMaterializedViews } from "./services/analytics.service";
 import { scheduleWeeklyDigest }  from "./services/queue.service";
+import { deleteStaleNotifications } from "./services/notification.service";
 import { initSocketIO }          from "./lib/socket";
 import { errorHandler } from "./middleware/errorHandler.middleware";
 import { prisma } from "@axiom/database";
 import { redis } from "./services/redis.service";
 import { logger } from "./utils/logger";
 
+// ── Startup validation ──────────────────────────────────────
+function requireEnv(name: string): string {
+  const val = process.env[name];
+  if (!val) throw new Error(`Missing required environment variable: ${name}`);
+  return val;
+}
+
+requireEnv("JWT_SECRET_KEY");
+
 const app: Application = express();
 const PORT = process.env.API_PORT ?? 4000;
+
+// ── Request ID ──────────────────────────────────────────────
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  req.id = req.headers["x-request-id"] as string || uuid();
+  next();
+});
 
 // ── Security ────────────────────────────────────────────────
 app.use(helmet());
@@ -46,13 +64,17 @@ app.use(
     windowMs: 15 * 60 * 1000,
     max: process.env.NODE_ENV === "development" ? 10000 : 100,
     message: { error: "Too many requests, please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
   })
 );
 
+// ── Compression ─────────────────────────────────────────────
+app.use(compression());
 
 // ── Parsing & sanitization ──────────────────────────────────
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(xss()); // strip XSS payloads from req.body / req.query / req.params
 app.use(morgan("dev"));
 
@@ -65,8 +87,9 @@ app.get("/health", async (_req, res) => {
   const status = dbOk && redisOk ? "ok" : "degraded";
   res.status(status === "ok" ? 200 : 503).json({
     status,
-    timestamp: new Date().toISOString(),
-    services: { db: dbOk ? "up" : "down", redis: redisOk ? "up" : "down" },
+    uptime: process.uptime(),
+    db: dbOk ? "up" : "down",
+    redis: redisOk ? "up" : "down",
   });
 });
 
@@ -99,6 +122,12 @@ function scheduleNightlyRefresh() {
       logger.info("Materialized views refreshed");
     } catch (err) {
       logger.error("Failed to refresh materialized views", err);
+    }
+    try {
+      const deleted = await deleteStaleNotifications();
+      if (deleted > 0) logger.info(`Cleaned up ${deleted} stale notifications`);
+    } catch (err) {
+      logger.error("Failed to clean up stale notifications", err);
     }
     setTimeout(tick, 24 * 60 * 60 * 1000);
   }, msUntilMidnight);
@@ -137,5 +166,21 @@ bootstrap().catch((err) => {
   logger.error("Failed to start server", err);
   process.exit(1);
 });
+
+// ── Graceful shutdown ───────────────────────────────────────
+async function shutdown(signal: string) {
+  logger.info(`${signal} received — shutting down gracefully`);
+  try {
+    await redis.disconnect();
+    await prisma.$disconnect();
+    process.exit(0);
+  } catch (err) {
+    logger.error("Error during shutdown", err);
+    process.exit(1);
+  }
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 export default app;
