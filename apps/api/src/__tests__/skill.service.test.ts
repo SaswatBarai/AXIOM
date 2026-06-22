@@ -29,7 +29,7 @@ vi.mock("../utils/logger", () => ({
 // Grab the axios instance after module mock is set
 import * as axiosMod from "axios";
 // The mock sets up a singleton returned by axios.create()
-const axiosInstance = (axiosMod.default.create as ReturnType<typeof vi.fn>)();
+const axiosInstance = (axiosMod.default as any).create() as { get: ReturnType<typeof vi.fn>; post: ReturnType<typeof vi.fn> };
 
 import { getTargetRoles, analyzeSkillGap } from "../services/skill.service";
 

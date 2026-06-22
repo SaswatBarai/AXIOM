@@ -19,6 +19,7 @@ import { interviewRoutes }       from "./routes/interview.routes";
 import { roadmapRoutes }         from "./routes/roadmap.routes";
 import { analyticsRoutes }       from "./routes/analytics.routes";
 import { notificationRoutes }    from "./routes/notification.routes";
+import adminRoutes            from "./routes/admin.routes";
 import { refreshMaterializedViews } from "./services/analytics.service";
 import { scheduleWeeklyDigest }  from "./services/queue.service";
 import { initSocketIO }          from "./lib/socket";
@@ -82,6 +83,7 @@ app.use("/api/interview",    interviewRoutes);
 app.use("/api/roadmap",      roadmapRoutes);
 app.use("/api/analytics",      analyticsRoutes);
 app.use("/api/notifications",  notificationRoutes);
+app.use("/api/admin",          adminRoutes);
 
 // ── Error handler ───────────────────────────────────────────
 app.use(errorHandler);

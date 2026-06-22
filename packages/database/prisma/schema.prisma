@@ -69,8 +69,12 @@ model User {
   // Phase 11 — most-recent skill gap report
   latestGapReport Json?
 
+  // Admin: suspended flag
+  suspendedAt    DateTime?
+
   // Relations
   preferences  UserPreferences?
+  auditLogs    AuditLog[] @relation("AdminAuditLogs")
   resumes           Resume[]
   applications      Application[]
   savedJobs         SavedJob[]
@@ -274,4 +278,25 @@ model InterviewSession {
 
   @@index([userId])
   @@map("interview_sessions")
+}
+
+// ─── Admin AuditLog ──────────────────────────────────────────────────────────
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+
+  admin  User     @relation("AdminAuditLogs", fields: [adminId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
 }

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   MessageSquare,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -140,6 +141,43 @@ export function Sidebar() {
               </Link>
             );
           })}
+
+          {user?.role === "ADMIN" && (
+            <>
+              <div className="border-t border-zinc-800/40 my-2" />
+              <Link
+                href="/admin/overview"
+                title={collapsed ? "Admin" : undefined}
+                className={cn(
+                  "flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 group relative",
+                  pathname.startsWith("/admin")
+                    ? "bg-white/[0.08] text-white shadow-sm"
+                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04]",
+                  collapsed
+                    ? "h-10 w-10 justify-center mx-auto"
+                    : "h-10 gap-3 px-3"
+                )}
+              >
+                <Shield
+                  size={18}
+                  strokeWidth={pathname.startsWith("/admin") ? 2 : 1.75}
+                  className={cn(
+                    "shrink-0 transition-colors",
+                    pathname.startsWith("/admin") ? "text-red-400" : "text-zinc-500 group-hover:text-zinc-300"
+                  )}
+                />
+                {!collapsed && (
+                  <span className="transition-opacity duration-150 truncate">Admin</span>
+                )}
+                {pathname.startsWith("/admin") && !collapsed && (
+                  <ChevronRight size={14} className="ml-auto text-zinc-600" />
+                )}
+                {pathname.startsWith("/admin") && collapsed && (
+                  <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-brand rounded-full" />
+                )}
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
