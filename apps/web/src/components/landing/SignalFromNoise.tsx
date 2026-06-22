@@ -92,17 +92,22 @@ export function SignalFromNoise() {
       if (!hero || !footer) return;
       const hy = hero.getBoundingClientRect().top   + window.scrollY;
       const fy = footer.getBoundingClientRect().top + window.scrollY;
-      boundsRef.current = [hy, Math.max(hy + 1, fy)];
+      // End just before the footer enters the viewport (i.e. top of footer reaches bottom of window)
+      const endScroll = fy - window.innerHeight;
+      boundsRef.current = [hy, Math.max(hy + 1, endScroll)];
     }
 
     measure();
+
+    // Observe body for resizes (which captures all layout shifts, dynamic mounts, and accordion expansions)
     const ro = new ResizeObserver(measure);
-    const hero   = document.getElementById("hero");
-    const footer = document.getElementById("footer");
-    if (hero)   ro.observe(hero);
-    if (footer) ro.observe(footer);
+    ro.observe(document.body);
+
     window.addEventListener("resize", measure);
-    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   // Canvas setup + RAF draw loop (single effect → stable closure)
