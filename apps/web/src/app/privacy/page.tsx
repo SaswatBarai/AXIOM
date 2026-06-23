@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
-import { FileText, ShieldCheck, ArrowRight, HelpCircle } from "lucide-react";
+import { FileText, ShieldCheck, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface TermsSection {
@@ -20,7 +20,7 @@ const privacySections: TermsSection[] = [
     content: (
       <>
         We collect information to provide better career services to our users. This includes:
-        <span className="block mt-2 text-zinc-400">
+        <span className="block mt-2 text-text-secondary">
           • Personal details: Name, email address, and professional background.
           <br />
           • Resume profiles: PDF and DOCX files uploaded for ATS analysis and parsing.
@@ -128,7 +128,7 @@ export default function PrivacyPage() {
 
   return (
     <SmoothScroll>
-      <main className="min-h-screen bg-bg-base text-white relative">
+      <main className="min-h-screen bg-bg-base text-text-primary relative">
         <Navbar />
 
         {/* Clipped background container to prevent vertical scroll overflow */}
@@ -138,7 +138,7 @@ export default function PrivacyPage() {
         </div>
 
         {/* Section Divider Line */}
-        <div className="absolute top-16 inset-x-0 h-px bg-gradient-to-r from-transparent via-zinc-800/80 to-transparent" />
+        <div className="absolute top-16 inset-x-0 h-px bg-gradient-to-r from-transparent via-border-subtle/80 to-transparent" />
 
         <div className="max-w-7xl mx-auto px-6 py-20 relative z-10">
           
@@ -148,10 +148,10 @@ export default function PrivacyPage() {
               <FileText className="w-3.5 h-3.5" />
               Legal Center
             </div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text-primary leading-tight">
               Privacy Policy
             </h1>
-            <p className="text-base text-zinc-400 leading-relaxed max-w-xl">
+            <p className="text-base text-text-secondary leading-relaxed max-w-xl">
               Last Updated: June 22, 2026. Review how we protect, process, and respect your resume profile data.
             </p>
           </div>
@@ -161,8 +161,8 @@ export default function PrivacyPage() {
             
             {/* Left Column: Sticky Index */}
             <div className="lg:col-span-4 lg:sticky lg:top-28 space-y-6">
-              <div className="border border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md rounded-2xl p-6 space-y-4">
-                <h2 className="text-xs font-mono tracking-[0.2em] uppercase text-zinc-500">
+              <div className="border border-border-subtle bg-bg-card/45 backdrop-blur-md rounded-2xl p-6 space-y-4">
+                <h2 className="text-xs font-mono tracking-[0.2em] uppercase text-text-muted">
                   Document Index
                 </h2>
                 <nav className="flex flex-col gap-1">
@@ -176,7 +176,7 @@ export default function PrivacyPage() {
                         className={`text-xs font-medium py-2.5 px-3 rounded-lg flex items-center justify-between transition-all duration-200 ${
                           isActive
                             ? "bg-brand/10 border border-brand/20 text-brand font-semibold"
-                            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30 border border-transparent"
+                            : "text-text-secondary hover:text-text-primary hover:bg-bg-hover border border-transparent"
                         }`}
                       >
                         {sec.title.split(". ")[1]}
@@ -188,14 +188,14 @@ export default function PrivacyPage() {
               </div>
 
               {/* Security Trust Widget */}
-              <div className="border border-zinc-800/80 bg-zinc-950/20 rounded-2xl p-6 space-y-4">
+              <div className="border border-border-subtle bg-bg-card/25 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+                  <div className="w-8 h-8 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center text-text-secondary">
                     <ShieldCheck className="w-4 h-4 text-brand" />
                   </div>
-                  <h3 className="text-sm font-bold text-white">Privacy Compliance</h3>
+                  <h3 className="text-sm font-bold text-text-primary">Privacy Compliance</h3>
                 </div>
-                <p className="text-xs text-zinc-400 leading-relaxed">
+                <p className="text-xs text-text-secondary leading-relaxed">
                   Have questions about resume encryption keys, vector data safety, or how to erase your records?
                 </p>
                 <div>
@@ -211,13 +211,13 @@ export default function PrivacyPage() {
             </div>
 
             {/* Right Column: Copy Panel */}
-            <div className="lg:col-span-8 space-y-10 border border-zinc-800/60 bg-zinc-950/20 rounded-2xl p-8 md:p-10">
+            <div className="lg:col-span-8 space-y-10 border border-border-subtle bg-bg-card/25 rounded-2xl p-8 md:p-10">
               {privacySections.map((sec) => (
                 <section key={sec.id} id={sec.id} className="space-y-4 scroll-mt-28">
-                  <h2 className="text-lg font-bold text-white border-b border-zinc-900 pb-3">
+                  <h2 className="text-lg font-bold text-text-primary border-b border-border-subtle pb-3">
                     {sec.title}
                   </h2>
-                  <p className="text-sm text-zinc-400 leading-relaxed font-normal">
+                  <p className="text-sm text-text-secondary leading-relaxed font-normal">
                     {sec.content}
                   </p>
                 </section>

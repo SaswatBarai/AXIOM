@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
-import { FileText, ShieldAlert, ArrowRight, HelpCircle } from "lucide-react";
+import { FileText, ShieldAlert, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface TermsSection {
@@ -130,107 +130,107 @@ export default function TermsPage() {
 
   return (
     <SmoothScroll>
-      <main className="min-h-screen bg-bg-base text-white relative">
-      <Navbar />
+      <main className="min-h-screen bg-bg-base text-text-primary relative">
+        <Navbar />
 
-      {/* Clipped background container to prevent vertical scroll overflow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[8%] left-[5%] w-[500px] h-[500px] ambient-glow-orb opacity-40" />
-        <div className="absolute bottom-[20%] right-[5%] w-[600px] h-[600px] ambient-glow-orb opacity-30" />
-      </div>
-
-      {/* Section Divider Line */}
-      <div className="absolute top-16 inset-x-0 h-px bg-gradient-to-r from-transparent via-zinc-800/80 to-transparent" />
-
-      <div className="max-w-7xl mx-auto px-6 py-20 relative z-10">
-        
-        {/* Header Block */}
-        <div className="max-w-3xl mb-16 space-y-5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand/10 border border-brand/20 rounded-full text-xs font-semibold text-brand">
-            <FileText className="w-3.5 h-3.5" />
-            Legal Center
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            Terms & Conditions
-          </h1>
-          <p className="text-base text-zinc-400 leading-relaxed max-w-xl">
-            Last Updated: June 22, 2026. Please read these terms carefully before accessing or using our services.
-          </p>
+        {/* Clipped background container to prevent vertical scroll overflow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-[8%] left-[5%] w-[500px] h-[500px] ambient-glow-orb opacity-40" />
+          <div className="absolute bottom-[20%] right-[5%] w-[600px] h-[600px] ambient-glow-orb opacity-30" />
         </div>
 
-        {/* Layout Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        {/* Section Divider Line */}
+        <div className="absolute top-16 inset-x-0 h-px bg-gradient-to-r from-transparent via-border-subtle/80 to-transparent" />
+
+        <div className="max-w-7xl mx-auto px-6 py-20 relative z-10">
           
-          {/* Left Column: Sticky Navigation Index */}
-          <div className="lg:col-span-4 lg:sticky lg:top-28 space-y-6">
-            <div className="border border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md rounded-2xl p-6 space-y-4">
-              <h2 className="text-xs font-mono tracking-[0.2em] uppercase text-zinc-500">
-                Document Index
-              </h2>
-              <nav className="flex flex-col gap-1">
-                {termsSections.map((sec) => {
-                  const isActive = activeId === sec.id;
-                  return (
-                    <a
-                      key={sec.id}
-                      href={`#${sec.id}`}
-                      onClick={(e) => handleLinkClick(e, sec.id)}
-                      className={`text-xs font-medium py-2.5 px-3 rounded-lg flex items-center justify-between transition-all duration-200 ${
-                        isActive
-                          ? "bg-brand/10 border border-brand/20 text-brand font-semibold"
-                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30 border border-transparent"
-                      }`}
-                    >
-                      {sec.title.split(". ")[1]}
-                      {isActive && <motion.div layoutId="activeIndex" className="w-1.5 h-1.5 rounded-full bg-brand" />}
-                    </a>
-                  );
-                })}
-              </nav>
+          {/* Header Block */}
+          <div className="max-w-3xl mb-16 space-y-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand/10 border border-brand/20 rounded-full text-xs font-semibold text-brand">
+              <FileText className="w-3.5 h-3.5" />
+              Legal Center
             </div>
-
-            {/* Quick Contact Widget */}
-            <div className="border border-zinc-800/80 bg-zinc-950/20 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
-                  <ShieldAlert className="w-4 h-4" />
-                </div>
-                <h3 className="text-sm font-bold text-white">Need Clarification?</h3>
-              </div>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                If you have questions regarding our software license, user guidelines, or data policies, get in touch.
-              </p>
-              <div>
-                <a
-                  href="mailto:legal@axiom.ai"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:text-brand-hover transition-colors group/link"
-                >
-                  Contact Legal{" "}
-                  <ArrowRight className="w-3 h-3 group-hover/link:translate-x-0.5 transition-transform" />
-                </a>
-              </div>
-            </div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text-primary leading-tight">
+              Terms & Conditions
+            </h1>
+            <p className="text-base text-text-secondary leading-relaxed max-w-xl">
+              Last Updated: June 22, 2026. Please read these terms carefully before accessing or using our services.
+            </p>
           </div>
 
-          {/* Right Column: Terms Text Content */}
-          <div className="lg:col-span-8 space-y-10 border border-zinc-800/60 bg-zinc-950/20 rounded-2xl p-8 md:p-10">
-            {termsSections.map((sec) => (
-              <section key={sec.id} id={sec.id} className="space-y-4 scroll-mt-28">
-                <h2 className="text-lg font-bold text-white border-b border-zinc-900 pb-3">
-                  {sec.title}
+          {/* Layout Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            
+            {/* Left Column: Sticky Navigation Index */}
+            <div className="lg:col-span-4 lg:sticky lg:top-28 space-y-6">
+              <div className="border border-border-subtle bg-bg-card/45 backdrop-blur-md rounded-2xl p-6 space-y-4">
+                <h2 className="text-xs font-mono tracking-[0.2em] uppercase text-text-muted">
+                  Document Index
                 </h2>
-                <p className="text-sm text-zinc-400 leading-relaxed font-normal">
-                  {sec.content}
+                <nav className="flex flex-col gap-1">
+                  {termsSections.map((sec) => {
+                    const isActive = activeId === sec.id;
+                    return (
+                      <a
+                        key={sec.id}
+                        href={`#${sec.id}`}
+                        onClick={(e) => handleLinkClick(e, sec.id)}
+                        className={`text-xs font-medium py-2.5 px-3 rounded-lg flex items-center justify-between transition-all duration-200 ${
+                          isActive
+                            ? "bg-brand/10 border border-brand/20 text-brand font-semibold"
+                            : "text-text-secondary hover:text-text-primary hover:bg-bg-hover border border-transparent"
+                        }`}
+                      >
+                        {sec.title.split(". ")[1]}
+                        {isActive && <motion.div layoutId="activeIndex" className="w-1.5 h-1.5 rounded-full bg-brand" />}
+                      </a>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Quick Contact Widget */}
+              <div className="border border-border-subtle bg-bg-card/25 rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center text-text-secondary">
+                    <ShieldAlert className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-text-primary">Need Clarification?</h3>
+                </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  If you have questions regarding our software license, user guidelines, or data policies, get in touch.
                 </p>
-              </section>
-            ))}
+                <div>
+                  <a
+                    href="mailto:legal@axiom.ai"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:text-brand-hover transition-colors group/link"
+                  >
+                    Contact Legal{" "}
+                    <ArrowRight className="w-3 h-3 group-hover/link:translate-x-0.5 transition-transform" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Terms Text Content */}
+            <div className="lg:col-span-8 space-y-10 border border-border-subtle bg-bg-card/25 rounded-2xl p-8 md:p-10">
+              {termsSections.map((sec) => (
+                <section key={sec.id} id={sec.id} className="space-y-4 scroll-mt-28">
+                  <h2 className="text-lg font-bold text-text-primary border-b border-border-subtle pb-3">
+                    {sec.title}
+                  </h2>
+                  <p className="text-sm text-text-secondary leading-relaxed font-normal">
+                    {sec.content}
+                  </p>
+                </section>
+              ))}
+            </div>
+
           </div>
 
         </div>
 
-      </div>
-
-      <Footer />
+        <Footer />
       </main>
     </SmoothScroll>
   );
