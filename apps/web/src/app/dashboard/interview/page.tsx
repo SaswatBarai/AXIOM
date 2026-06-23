@@ -52,8 +52,8 @@ function QuestionCard({
   const diffColor = q.difficulty === "easy"
     ? "text-emerald-500"
     : q.difficulty === "hard"
-      ? "text-red-550"
-      : "text-amber-550";
+      ? "text-red-500"
+      : "text-amber-500";
 
   return (
     <motion.div 
@@ -399,7 +399,7 @@ export default function InterviewPage() {
                 <p className="text-[10px] text-amber-500 font-medium select-none">Enter a target role title above to begin drafting.</p>
               )}
               {error && (
-                <div className="flex items-center gap-2 text-xs text-red-550 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                <div className="flex items-center gap-2 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
                   <AlertCircle size={14} className="shrink-0" />
                   <span>{error}</span>
                 </div>
