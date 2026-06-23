@@ -8,6 +8,6 @@ import { getTargetRolesHandler, analyzeSkillGapHandler } from "../controllers/sk
 const router = Router();
 
 router.get("/target-roles", requireAuth, getTargetRolesHandler);
-router.post("/gap/:resumeId", requireAuth, rateLimit(30, 1), validate(skillGapSchema), analyzeSkillGapHandler);
+router.post("/gap/:resumeId", requireAuth, rateLimit(30, 3600), validate(skillGapSchema), analyzeSkillGapHandler);
 
 export default router;

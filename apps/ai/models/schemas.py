@@ -1,10 +1,16 @@
+from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Optional
 
 
+class FileType(str, Enum):
+    pdf = "pdf"
+    docx = "docx"
+
+
 class ResumeParseRequest(BaseModel):
     file_url: str = Field(..., max_length=2048)
-    file_type: str = Field(..., max_length=10)
+    file_type: FileType
 
 
 class ATSAnalyzeRequest(BaseModel):

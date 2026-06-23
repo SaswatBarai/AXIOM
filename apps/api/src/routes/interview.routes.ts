@@ -17,7 +17,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/categories",                                                            listCategoriesHandler);
-router.post("/generate",      rateLimit(20, 1), validate(interviewGenerateSchema), generateHandler);
+router.post("/generate",      rateLimit(20, 3600), validate(interviewGenerateSchema), generateHandler);
 router.get("/sessions",                                          listSessionsHandler);
 router.get("/sessions/:sessionId",                               getSessionHandler);
 router.patch("/sessions/:sessionId/marks", validate(interviewMarksSchema), saveMarksHandler);

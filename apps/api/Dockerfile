@@ -19,11 +19,14 @@ RUN pnpm --filter @axiom/database db:generate
 RUN pnpm --filter @axiom/api build
 
 FROM node:22-alpine AS runner
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 # node_modules alone is not enough — pnpm workspace packages (@axiom/database etc.)
 # are symlinked from node_modules into packages/. Copy both so symlinks resolve.
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
+RUN chown -R appuser:appgroup /app
+USER appuser
 EXPOSE 4000
 CMD ["node", "dist/index.js"]

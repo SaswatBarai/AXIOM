@@ -9,8 +9,11 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // Seed admin user
-  const hashedPassword = await bcrypt.hash("Admin@123", 10);
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD;
+  if (!adminPassword) {
+    throw new Error("ADMIN_SEED_PASSWORD env var is required for seeding");
+  }
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@axiom.dev" },
@@ -33,7 +36,11 @@ async function main() {
   });
 
   // Seed demo user
-  const demoPassword = await bcrypt.hash("Demo@123", 10);
+  const demoPasswordVal = process.env.DEMO_SEED_PASSWORD;
+  if (!demoPasswordVal) {
+    throw new Error("DEMO_SEED_PASSWORD env var is required for seeding");
+  }
+  const demoPassword = await bcrypt.hash(demoPasswordVal, 10);
 
   const demo = await prisma.user.upsert({
     where: { email: "demo@axiom.dev" },

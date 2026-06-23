@@ -20,6 +20,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @axiom/web build
 
 FROM node:22-alpine AS runner
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 RUN npm install -g pnpm
 ENV NODE_ENV=production
@@ -30,6 +31,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/web ./apps/web
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+RUN chown -R appuser:appgroup /app
+USER appuser
 
 EXPOSE 3000
 CMD ["pnpm", "--filter", "@axiom/web", "start"]

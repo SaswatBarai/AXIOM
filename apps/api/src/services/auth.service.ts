@@ -72,11 +72,13 @@ export async function verifyEmail(input: VerifyEmailInput) {
 
 export async function login(input: LoginInput) {
   const user = await prisma.user.findUnique({ where: { email: input.email } });
-  if (!user || !user.password) throw new AppError(401, "Invalid credentials");
-  if (!user.emailVerified) throw new AppError(403, "Please verify your email before logging in");
 
-  const valid = await bcrypt.compare(input.password, user.password);
-  if (!valid) throw new AppError(401, "Invalid credentials");
+  const dummyHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+  const passwordToCompare = user?.password ?? dummyHash;
+  const valid = await bcrypt.compare(input.password, passwordToCompare);
+
+  if (!user || !user.password || !valid) throw new AppError(401, "Invalid credentials");
+  if (!user.emailVerified) throw new AppError(403, "Please verify your email before logging in");
 
   const accessToken = signAccessToken(user.id, user.role);
   const refreshToken = signRefreshToken(user.id);

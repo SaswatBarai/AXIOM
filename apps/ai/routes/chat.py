@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException
@@ -11,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from services.chat_service import stream_chat, get_session_title, new_session_id
 from utils.logger import logger
+from utils.db import get_redis
 
 router = APIRouter()
 

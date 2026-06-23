@@ -93,10 +93,11 @@ async def _is_safe_url(url: str) -> bool:
     # Resolve hostname to IPs in thread pool to avoid blocking event loop
     loop = asyncio.get_running_loop()
     try:
-        addrinfo = await loop.run_in_executor(
-            None, socket.getaddrinfo, hostname, 443, socket.AF_UNSPEC, socket.SOCK_STREAM,
-        )
-    except socket.gaierror:
+        async with asyncio.timeout(5):
+            addrinfo = await loop.run_in_executor(
+                None, socket.getaddrinfo, hostname, 443, socket.AF_UNSPEC, socket.SOCK_STREAM,
+            )
+    except (socket.gaierror, TimeoutError, asyncio.TimeoutError):
         return False
 
     for family, _, _, _, sockaddr in addrinfo:
@@ -118,10 +119,15 @@ async def download_file(url: str) -> bytes:
     if not await _is_safe_url(url):
         raise ValueError(f"Blocked potentially unsafe URL: {url[:120]}")
 
-    async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
+    async with httpx.AsyncClient(follow_redirects=False, timeout=30) as client:
         resp = await client.get(url)
         resp.raise_for_status()
-        return resp.content
+
+    final_url = str(resp.url)
+    if final_url != url and not await _is_safe_url(final_url):
+        raise ValueError(f"Redirect target blocked: {final_url[:120]}")
+
+    return resp.content
 
 # ── Text extraction ───────────────────────────────────────────────────────────
 

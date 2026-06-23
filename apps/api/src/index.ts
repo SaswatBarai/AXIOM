@@ -7,7 +7,6 @@ import morgan from "morgan";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
-import { xss } from "express-xss-sanitizer";
 import { v4 as uuid } from "uuid";
 
 import authRoutes from "./routes/auth.routes";
@@ -64,7 +63,7 @@ app.use(
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: process.env.NODE_ENV === "development" ? 1000 : 100,
+    max: process.env.NODE_ENV === "development" ? 1000 : 300,
     message: { error: "Too many requests, please try again later." },
     standardHeaders: true,
     legacyHeaders: false,
@@ -80,8 +79,7 @@ app.use(cookieParser());
 // ── Parsing & sanitization ──────────────────────────────────
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
-app.use(xss()); // strip XSS payloads from req.body / req.query / req.params
-app.use(morgan("dev"));
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // ── Health check ────────────────────────────────────────────
 app.get("/health", async (_req, res) => {
@@ -195,8 +193,7 @@ async function shutdown(signal: string) {
 
 // ── Crash safety net ─────────────────────────────────────────
 process.on("unhandledRejection", (reason) => {
-  logger.error({ err: reason }, "UNHANDLED_REJECTION — crashing to avoid undefined state");
-  process.exit(1);
+  logger.error({ err: reason }, "UNHANDLED_REJECTION");
 });
 process.on("uncaughtException", (err) => {
   logger.error({ err }, "UNCAUGHT_EXCEPTION");

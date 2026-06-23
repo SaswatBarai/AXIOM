@@ -1,21 +1,41 @@
 import os
-import psycopg2
+
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from utils.logger import logger
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    raise RuntimeError("CRITICAL: DATABASE_URL environment variable is not set")
+
+_db_pool = None
+
+
+def _get_pool():
+    global _db_pool
+    if _db_pool is None:
+        _db_pool = pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=10,
+            dsn=DATABASE_URL,
+        )
+    return _db_pool
+
+
 def get_db_connection():
-    """Get a raw connection to the PostgreSQL database."""
-    if not DATABASE_URL:
-        logger.error("DATABASE_URL is not set in environment variables")
-        raise ValueError("DATABASE_URL is not set")
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
+        return _get_pool().getconn()
     except Exception as e:
-        logger.error(f"Failed to connect to database: {e}")
+        logger.error(f"Failed to get connection from pool: {e}")
         raise e
+
+
+def return_connection(conn):
+    try:
+        _get_pool().putconn(conn)
+    except Exception:
+        conn.close()
 
 def parse_vector(vec_str) -> list[float]:
     """Parse postgres vector format '[0.1,0.2,...]' into list of floats."""

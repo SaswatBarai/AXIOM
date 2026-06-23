@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 import { setCredentials, clearCredentials, setLoading } from "@/store/authSlice";
@@ -11,12 +11,14 @@ export function useAuth() {
   const { user, accessToken, isAuthenticated, isLoading } = useSelector(
     (state: RootState) => state.auth,
   );
+  const initialized = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (initialized.current || isAuthenticated) {
       dispatch(setLoading(false));
       return;
     }
+    initialized.current = true;
     api
       .get("/auth/me", { withCredentials: true })
       .then(({ data }) => {

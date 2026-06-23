@@ -15,7 +15,7 @@ export const roadmapRoutes = Router();
 
 roadmapRoutes.use(requireAuth);
 
-roadmapRoutes.post("/generate",                         rateLimit(10, 1), validate(roadmapGenerateSchema), generateHandler);
+roadmapRoutes.post("/generate",                         rateLimit(10, 3600), validate(roadmapGenerateSchema), generateHandler);
 roadmapRoutes.get("/",                                  listHandler);
 roadmapRoutes.get("/:roadmapId",                        getHandler);
 roadmapRoutes.patch("/:roadmapId/steps/:week",          validate(roadmapMarkStepSchema), markStepHandler);

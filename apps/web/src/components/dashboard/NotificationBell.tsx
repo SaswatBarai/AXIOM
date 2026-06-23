@@ -43,10 +43,8 @@ function NotifItem({ n, onRead }: { n: AppNotification; onRead: () => void }) {
 }
 
 export function NotificationBell() {
-  const { user } = useAuth();
-  const { notifications, unreadCount, fetchNotifications, markRead, markAllRead } = useNotifications(
-    typeof window !== "undefined" ? (localStorage.getItem("accessToken") ?? undefined) : undefined,
-  );
+  const { user, accessToken } = useAuth();
+  const { notifications, unreadCount, fetchNotifications, markRead, markAllRead } = useNotifications(accessToken ?? undefined);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 

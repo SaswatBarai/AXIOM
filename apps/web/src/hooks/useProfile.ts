@@ -35,9 +35,7 @@ export function useProfile() {
     const res = await api.put("/users/me", data);
     const updated = res.data.user;
     setProfile(updated);
-    // keep Redux user in sync
-    const token = localStorage.getItem("accessToken") ?? "";
-    dispatch(setCredentials({ user: updated, accessToken: token }));
+    dispatch(setCredentials({ user: updated, accessToken: "" }));
     return updated;
   }
 

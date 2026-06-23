@@ -14,8 +14,6 @@ export interface ChatSession {
   updatedAt: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
-
 export function useChat() {
   const [messages, setMessages]   = useState<ChatMessage[]>([]);
   const [sessions, setSessions]   = useState<ChatSession[]>([]);
@@ -23,9 +21,6 @@ export function useChat() {
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  const getToken = () =>
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
   // ── Send a message ──────────────────────────────────────────
 
@@ -44,11 +39,10 @@ export function useChat() {
     abortRef.current = new AbortController();
 
     try {
-      const res = await fetch(`${API_BASE}/api/chat`, {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({ message: text, sessionId }),
         signal: abortRef.current.signal,
@@ -117,9 +111,7 @@ export function useChat() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/chat/sessions`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch("/api/chat/sessions", { credentials: "include" });
       const data = await res.json();
       setSessions(data.sessions ?? []);
     } catch { /* silently ignore */ }
@@ -127,9 +119,7 @@ export function useChat() {
 
   const loadSession = useCallback(async (sid: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/chat/sessions/${sid}`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch(`/api/chat/sessions/${sid}`, { credentials: "include" });
       const data = await res.json();
       setMessages(data.messages ?? []);
       setSessionId(sid);
@@ -139,9 +129,9 @@ export function useChat() {
   }, []);
 
   const deleteSession = useCallback(async (sid: string) => {
-    await fetch(`${API_BASE}/api/chat/sessions/${sid}`, {
+    await fetch(`/api/chat/sessions/${sid}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${getToken()}` },
+      credentials: "include",
     });
     setSessions((prev) => prev.filter((s) => s.sessionId !== sid));
     if (sessionId === sid) newSession();

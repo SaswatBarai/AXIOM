@@ -70,7 +70,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
 export function requireRole(...roles: string[]) {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.userRole || !roles.includes(req.userRole)) {
-      throw new AppError(403, "Insufficient permissions");
+      return next(new AppError(403, "Insufficient permissions"));
     }
     next();
   };
