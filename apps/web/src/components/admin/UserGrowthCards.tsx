@@ -18,26 +18,26 @@ export function UserGrowthCards({ data }: UserGrowthCardsProps) {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2.5">
-        <Calendar size={13} className="text-zinc-500" />
-        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">User Growth</span>
+        <Calendar size={13} className="text-text-muted" />
+        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">User Growth</span>
       </div>
       <div className="grid grid-cols-3 gap-3">
         {items.map(({ key, label, sub }) => {
           const val = data[key];
           return (
-            <div key={key} className="border border-zinc-800/60 bg-zinc-900/20 rounded-xl p-3.5">
+            <div key={key} className="border border-border-subtle bg-bg-card/25 rounded-xl p-3.5">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-medium text-zinc-400">{label}</span>
+                <span className="text-[11px] font-medium text-text-secondary">{label}</span>
                 <span className={cn(
-                  "inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded",
-                  val > 0 ? "text-emerald-400 bg-emerald-500/10" : "text-zinc-600 bg-zinc-800/30"
+                  "inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded animate-none",
+                  val > 0 ? "text-emerald-500 bg-emerald-500/10" : "text-text-muted bg-bg-hover"
                 )}>
                   {val > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                   {val > 0 ? "+" : ""}{val}
                 </span>
               </div>
-              <div className="text-lg font-bold text-white tracking-tight">{val}</div>
-              <div className="text-[10px] text-zinc-600 mt-0.5">{sub}</div>
+              <div className="text-lg font-bold text-text-primary tracking-tight">{val}</div>
+              <div className="text-[10px] text-text-muted mt-0.5">{sub}</div>
             </div>
           );
         })}

@@ -10,13 +10,13 @@ export const metadata: Metadata = {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <AdminGuard>
-      <div className="flex h-screen bg-[#09090B] overflow-hidden">
+      <div className="flex h-screen bg-bg-base overflow-hidden">
         <div className="hidden md:flex md:flex-shrink-0">
           <AdminSidebar />
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">
-          <header className="flex items-center px-6 py-3 border-b border-gray-800 bg-[#09090B]/80 backdrop-blur-sm flex-shrink-0">
-            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+          <header className="flex items-center px-6 py-3 border-b border-border-subtle bg-bg-base/80 backdrop-blur-sm flex-shrink-0">
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               Admin Panel
             </span>
           </header>

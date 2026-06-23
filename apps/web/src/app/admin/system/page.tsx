@@ -16,8 +16,8 @@ function StatusDot({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-block w-2 h-2 rounded-full",
-        status === "up" || status === "ok" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.4)]" : "bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.4)]"
+        "inline-block w-2 h-2 rounded-full animate-none",
+        status === "up" || status === "ok" ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]" : "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.4)]"
       )}
     />
   );
@@ -61,13 +61,13 @@ export default function AdminSystemPage() {
     <div className="max-w-4xl">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">System Health</h1>
-          <p className="text-sm text-zinc-500 mt-1">Monitor platform services and uptime</p>
+          <h1 className="text-2xl font-bold text-text-primary">System Health</h1>
+          <p className="text-sm text-text-secondary mt-1">Monitor platform services and uptime</p>
         </div>
         <button
           onClick={fetch}
           disabled={loading}
-          className="flex items-center gap-2 border border-zinc-700 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-200 text-xs px-4 py-2 rounded-md transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 border border-border-subtle bg-bg-card/40 hover:bg-bg-hover text-text-primary text-xs px-4 py-2 rounded-md transition-colors disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw size={14} className={cn(loading && "animate-spin")} />
           Refresh
@@ -77,7 +77,7 @@ export default function AdminSystemPage() {
       {/* Overall status banner */}
       <div
         className={cn(
-          "border rounded-2xl p-5 mb-6 flex items-center gap-4",
+          "border rounded-2xl p-5 mb-6 flex items-center gap-4 animate-none",
           health?.status === "ok"
             ? "border-emerald-500/20 bg-emerald-500/5"
             : "border-red-500/20 bg-red-500/5"
@@ -85,20 +85,20 @@ export default function AdminSystemPage() {
       >
         <div
           className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-            health?.status === "ok" ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 animate-none",
+            health?.status === "ok" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
           )}
         >
           <Activity size={20} />
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-text-primary">
               {health ? (health.status === "ok" ? "All Systems Operational" : "Degraded") : "Loading..."}
             </span>
             {health && <StatusDot status={health.status} />}
           </div>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-text-secondary mt-0.5">
             {health
               ? health.status === "ok"
                 ? "All services are running normally"
@@ -108,9 +108,9 @@ export default function AdminSystemPage() {
         </div>
         {health?.uptime && (
           <div className="ml-auto text-right hidden sm:block">
-            <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider">Uptime</div>
-            <div className="text-sm text-white font-semibold mt-0.5">
-              <Clock size={13} className="inline mr-1 text-zinc-500" />
+            <div className="text-xs text-text-muted font-medium uppercase tracking-wider">Uptime</div>
+            <div className="text-sm text-text-primary font-semibold mt-0.5">
+              <Clock size={13} className="inline mr-1 text-text-muted" />
               {formatUptime(health.uptime)}
             </div>
           </div>
@@ -125,24 +125,24 @@ export default function AdminSystemPage() {
           return (
             <div
               key={key}
-              className="border border-zinc-800/60 bg-zinc-900/20 p-5 rounded-2xl hover:bg-zinc-900/30 transition-colors"
+              className="border border-border-subtle bg-bg-card/25 p-5 rounded-2xl hover:bg-bg-hover transition-colors"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className="w-9 h-9 rounded-lg bg-zinc-800/50 border border-zinc-700/30 flex items-center justify-center">
-                  <Icon size={16} className="text-zinc-400" />
+                <div className="w-9 h-9 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                  <Icon size={16} className="text-text-secondary" />
                 </div>
                 <span
                   className={cn(
-                    "inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full",
-                    up ? "text-emerald-400 bg-emerald-500/10" : "text-red-400 bg-red-500/10"
+                    "inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full animate-none",
+                    up ? "text-emerald-500 bg-emerald-500/10" : "text-red-500 bg-red-500/10"
                   )}
                 >
                   <StatusDot status={val ?? ""} />
                   {up ? "Online" : "Offline"}
                 </span>
               </div>
-              <h3 className="text-sm font-semibold text-white">{label}</h3>
-              <p className="text-xs text-zinc-500 mt-1">{desc}</p>
+              <h3 className="text-sm font-semibold text-text-primary">{label}</h3>
+              <p className="text-xs text-text-muted mt-1">{desc}</p>
             </div>
           );
         })}

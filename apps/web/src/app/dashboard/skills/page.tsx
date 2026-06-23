@@ -17,21 +17,21 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_COLORS: Record<"must_have" | "should_have" | "nice_to_have", { border: string; bg: string; text: string; lightBg: string }> = {
   must_have: {
-    border: "border-red-950/60",
-    bg: "bg-red-950/10",
-    text: "text-red-400",
+    border: "border-red-500/20",
+    bg: "bg-red-500/10",
+    text: "text-red-500",
     lightBg: "bg-red-500/10"
   },
   should_have: {
-    border: "border-amber-950/60",
-    bg: "bg-amber-950/10",
-    text: "text-amber-400",
+    border: "border-amber-500/20",
+    bg: "bg-amber-500/10",
+    text: "text-amber-500",
     lightBg: "bg-amber-500/10"
   },
   nice_to_have: {
-    border: "border-blue-950/60",
-    bg: "bg-blue-950/10",
-    text: "text-blue-400",
+    border: "border-blue-500/20",
+    bg: "bg-blue-500/10",
+    text: "text-blue-500",
     lightBg: "bg-blue-500/10"
   },
 };
@@ -42,10 +42,10 @@ function ReadinessMeter({ pct }: { pct: number }) {
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-xs font-medium">
-        <span className="text-zinc-400">Overall Role Readiness</span>
-        <span className="font-semibold text-white">{pct}%</span>
+        <span className="text-text-secondary">Overall Role Readiness</span>
+        <span className="font-semibold text-text-primary">{pct}%</span>
       </div>
-      <div className="h-2 w-full rounded-full bg-zinc-900 overflow-hidden border border-zinc-800/40">
+      <div className="h-2 w-full rounded-full bg-bg-base overflow-hidden border border-border-subtle/40">
         <motion.div 
           className={cn("h-full rounded-full transition-all", color)} 
           initial={{ width: 0 }}
@@ -65,14 +65,14 @@ function SkillChip({ skill, matched }: { skill: string; matched: boolean }) {
       className={cn(
         "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium select-none transition-all duration-150",
         matched
-          ? "border-emerald-500/20 bg-emerald-950/10 text-emerald-400 hover:bg-emerald-950/20"
-          : "border-zinc-800 bg-zinc-900/40 text-zinc-400 hover:text-zinc-300"
+          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
+          : "border-border-subtle bg-bg-card/40 text-text-secondary hover:text-text-primary"
       )}
     >
       {matched ? (
-        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
       ) : (
-        <XCircle className="h-3.5 w-3.5 text-zinc-550 shrink-0" />
+        <XCircle className="h-3.5 w-3.5 text-text-muted shrink-0" />
       )}
       {skill}
     </motion.span>
@@ -93,7 +93,7 @@ function TierSection({
   if (!matchedSkills.length && !missingSkills.length) return null;
 
   return (
-    <div className={cn("rounded-xl border bg-zinc-900/10 backdrop-blur-md p-4 transition-all duration-200", colors.border)}>
+    <div className={cn("rounded-xl border bg-bg-card/10 backdrop-blur-md p-4 transition-all duration-200 animate-none", colors.border)}>
       <button
         type="button"
         className="flex w-full items-center justify-between cursor-pointer"
@@ -103,11 +103,11 @@ function TierSection({
           <span className={cn("text-xs font-semibold px-2 py-0.5 rounded border uppercase tracking-wider text-[10px]", colors.text, colors.border)}>
             {TIER_LABELS[tier]?.split(" ")[0]}
           </span>
-          <span className="text-sm font-semibold text-zinc-200">{TIER_LABELS[tier]}</span>
+          <span className="text-sm font-semibold text-text-primary">{TIER_LABELS[tier]}</span>
         </div>
-        <div className="flex items-center gap-3 text-xs text-zinc-450">
+        <div className="flex items-center gap-3 text-xs text-text-secondary">
           <span>{matchedSkills.length} matched · {missingSkills.length} missing</span>
-          <ChevronDown className={cn("h-4 w-4 text-zinc-500 transition-transform duration-200", open ? "" : "-rotate-90")} />
+          <ChevronDown className={cn("h-4 w-4 text-text-muted transition-transform duration-200", open ? "" : "-rotate-90")} />
         </div>
       </button>
       
@@ -119,7 +119,7 @@ function TierSection({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-zinc-800/30">
+            <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-border-subtle/30">
               {matchedSkills.map((s) => <SkillChip key={s} skill={s} matched />)}
               {missingSkills.map((s) => <SkillChip key={s} skill={s} matched={false} />)}
             </div>
@@ -138,15 +138,15 @@ function GapReportView({ report }: { report: GapReport }) {
       className="space-y-6"
     >
       {/* Summary card */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/25 backdrop-blur-md p-6 space-y-5 relative overflow-hidden shadow-xl">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.01] rounded-full blur-2xl pointer-events-none" />
+      <div className="rounded-2xl border border-border-subtle bg-bg-card/25 backdrop-blur-md p-6 space-y-5 relative overflow-hidden shadow-xl">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-text-primary/[0.01] rounded-full blur-2xl pointer-events-none" />
         
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-white tracking-tight">{report.roleLabel}</h2>
-            <p className="text-[11px] text-zinc-500 mt-0.5">Automated skill mapping matrix</p>
+            <h2 className="text-base font-semibold text-text-primary tracking-tight">{report.roleLabel}</h2>
+            <p className="text-[11px] text-text-muted mt-0.5">Automated skill mapping matrix</p>
           </div>
-          <span className="rounded-full bg-zinc-900 border border-zinc-800 px-3 py-1 text-xs text-zinc-300 font-medium">
+          <span className="rounded-full bg-bg-base border border-border-subtle px-3 py-1 text-xs text-text-secondary font-medium">
             {report.summary.matchedCount} of {report.summary.total} skills matched
           </span>
         </div>
@@ -154,14 +154,14 @@ function GapReportView({ report }: { report: GapReport }) {
         <ReadinessMeter pct={report.summary.readinessPct} />
         
         {report.summary.mustHaveGap > 0 ? (
-          <div className="flex items-start gap-2.5 rounded-lg bg-red-950/10 border border-red-900/30 p-3 text-xs text-red-400 leading-relaxed">
+          <div className="flex items-start gap-2.5 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-500 leading-relaxed">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold">Missing critical requirements:</span> You are missing <span className="font-semibold text-white">{report.summary.mustHaveGap} must-have</span> skill{report.summary.mustHaveGap !== 1 ? "s" : ""} required for this role. Acquired skills gap sits at <span className="font-semibold text-white">{report.summary.skillsAway}</span> total skill{report.summary.skillsAway !== 1 ? "s" : ""}.
+              <span className="font-semibold">Missing critical requirements:</span> You are missing <span className="font-semibold text-text-primary">{report.summary.mustHaveGap} must-have</span> skill{report.summary.mustHaveGap !== 1 ? "s" : ""} required for this role. Acquired skills gap sits at <span className="font-semibold text-text-primary">{report.summary.skillsAway}</span> total skill{report.summary.skillsAway !== 1 ? "s" : ""}.
             </div>
           </div>
         ) : (
-          <div className="flex items-start gap-2.5 rounded-lg bg-emerald-950/10 border border-emerald-900/30 p-3 text-xs text-emerald-400 leading-relaxed">
+          <div className="flex items-start gap-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-500 leading-relaxed">
             <Trophy className="h-4 w-4 shrink-0 mt-0.5" />
             <div>
               <span className="font-semibold">Excellent match!</span> You possess all the essential must-have skills required for this target role.
@@ -184,16 +184,16 @@ function GapReportView({ report }: { report: GapReport }) {
 
       {/* Top recommendations */}
       {report.recommendations.length > 0 && (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/25 backdrop-blur-md p-6 space-y-4 shadow-xl">
-          <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles size={13} className="text-zinc-400" /> Key Skills Priority Checklist
+        <div className="rounded-2xl border border-border-subtle bg-bg-card/25 backdrop-blur-md p-6 space-y-4 shadow-xl">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles size={13} className="text-text-muted" /> Key Skills Priority Checklist
           </h3>
-          <div className="divide-y divide-zinc-800/40">
+          <div className="divide-y divide-border-subtle/40">
             {report.recommendations.slice(0, 6).map((rec) => {
               const colors = TIER_COLORS[rec.tier] ?? TIER_COLORS.nice_to_have;
               return (
-                <div key={rec.skill} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 text-xs">
-                  <span className="text-zinc-200 font-medium">{rec.skill}</span>
+                <div key={rec.skill} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 text-xs border-b border-border-subtle/20 last:border-b-0">
+                  <span className="text-text-primary font-medium">{rec.skill}</span>
                   <span className={cn("rounded-md border px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase", colors.text, colors.border, colors.lightBg)}>
                     {rec.tierLabel?.replace(" Skills", "")}
                   </span>
@@ -231,39 +231,39 @@ export default function SkillsPage() {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh)] bg-bg-base bg-grid-dots overflow-hidden">
+    <div className="relative min-h-screen bg-bg-base bg-grid-dots overflow-hidden">
       {/* Background glow effects */}
       <div className="ambient-glow-orb w-[600px] h-[600px] -top-40 -left-20 animate-float-1" />
       <div className="ambient-glow-orb w-[500px] h-[500px] bottom-5 right-5 animate-float-2" />
 
       <div className="relative z-10 mx-auto max-w-3xl space-y-8 py-8 px-6">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-xl font-bold text-text-primary tracking-tight flex items-center gap-2">
             Skill Gap Analyzer
-            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-500 uppercase tracking-wider">ATS</span>
+            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-bg-card border border-border-subtle text-text-muted uppercase tracking-wider">ATS</span>
           </h1>
-          <p className="mt-1 text-xs text-zinc-400">
+          <p className="mt-1 text-xs text-text-secondary">
             Compare your resume skills against target roles to identify critical skill gaps.
           </p>
         </div>
 
         {/* Controls */}
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/25 backdrop-blur-md p-6 space-y-5 shadow-xl">
+        <div className="rounded-2xl border border-border-subtle bg-bg-card/25 backdrop-blur-md p-6 space-y-5 shadow-xl">
           {/* Resume picker */}
           {resumes.length > 1 && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-zinc-450 uppercase tracking-wider">Select Resume</label>
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Select Resume</label>
               <div className="relative">
                 <select
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 px-3.5 py-2.5 text-xs text-white transition-all appearance-none cursor-pointer focus:outline-hidden"
+                  className="w-full rounded-xl border border-border-subtle bg-bg-card/60 hover:bg-bg-card hover:border-border-medium px-3.5 py-2.5 text-xs text-text-primary transition-all appearance-none cursor-pointer focus:outline-hidden"
                   value={selectedResume}
                   onChange={(e) => { setSelectedResume(e.target.value); setAnalyzed(false); }}
                 >
                   {resumes.map((r) => (
-                    <option key={r.id} value={r.id} className="bg-zinc-950 text-white">{r.fileName ?? r.id}</option>
+                    <option key={r.id} value={r.id} className="bg-bg-base text-text-primary">{r.fileName ?? r.id}</option>
                   ))}
                 </select>
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
                   <ChevronDown className="h-4 w-4" />
                 </div>
               </div>
@@ -272,10 +272,10 @@ export default function SkillsPage() {
 
           {/* Role picker */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-zinc-455 uppercase tracking-wider">Select Target Role</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Select Target Role</label>
             {loading && !roles.length ? (
-              <div className="flex items-center gap-2 text-xs text-zinc-500 py-2">
-                <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+              <div className="flex items-center gap-2 text-xs text-text-muted py-2">
+                <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
                 Loading target roles matrix…
               </div>
             ) : (
@@ -287,14 +287,14 @@ export default function SkillsPage() {
                     title={role.description}
                     onClick={() => { setSelectedRole(role); setAnalyzed(false); }}
                     className={cn(
-                      "rounded-xl border px-3 py-3 text-left text-xs transition-all duration-150 cursor-pointer select-none",
+                      "rounded-xl border px-3 py-3 text-left text-xs transition-all duration-150 cursor-pointer select-none animate-none",
                       selectedRole?.id === role.id
-                        ? "border-white/20 bg-white/[0.08] text-white font-medium"
-                        : "border-zinc-800 bg-zinc-900/30 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                        ? "border-border-medium bg-text-primary/10 text-text-primary font-medium"
+                        : "border-border-subtle bg-bg-card/30 text-text-secondary hover:border-border-medium hover:text-text-primary"
                     )}
                   >
                     <p className="font-semibold truncate">{role.label}</p>
-                    <p className="text-[9px] text-zinc-500 truncate mt-0.5">{role.description}</p>
+                    <p className="text-[9px] text-text-muted truncate mt-0.5">{role.description}</p>
                   </button>
                 ))}
               </div>
@@ -320,14 +320,14 @@ export default function SkillsPage() {
           </Button>
 
           {error && (
-            <div className="flex items-center gap-2 text-xs text-red-400 bg-red-950/10 border border-red-900/20 rounded-xl p-3">
+            <div className="flex items-center gap-2 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {!resumes.length && !loading && (
-            <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-950/10 border border-amber-900/20 rounded-xl p-3">
+            <div className="flex items-center gap-2 text-xs text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>Please upload a resume first to run gap analysis.</span>
             </div>

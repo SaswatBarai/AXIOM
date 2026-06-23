@@ -39,7 +39,7 @@ export default function AdminOverviewPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-7 h-7 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-border-subtle border-t-brand rounded-full animate-spin" />
       </div>
     );
   }
@@ -48,12 +48,12 @@ export default function AdminOverviewPage() {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
         <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
-          <span className="text-red-400 text-lg font-bold">!</span>
+          <span className="text-red-500 text-lg font-bold">!</span>
         </div>
-        <p className="text-sm text-zinc-500">Failed to load overview data</p>
+        <p className="text-sm text-text-muted">Failed to load overview data</p>
         <button
           onClick={() => load()}
-          className="border border-zinc-700 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-200 text-xs px-4 py-2 rounded-md transition-colors cursor-pointer"
+          className="border border-border-subtle bg-bg-card/40 hover:bg-bg-hover text-text-primary text-xs px-4 py-2 rounded-md transition-colors cursor-pointer"
         >
           Retry
         </button>

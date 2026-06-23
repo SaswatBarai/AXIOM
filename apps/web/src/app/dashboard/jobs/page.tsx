@@ -12,7 +12,7 @@ const SOURCES = [
   { value: "internshala",label: "Internshala" },
   { value: "unstop",     label: "Unstop"      },
   { value: "naukri",     label: "Naukri"      },
-] as const;
+ ] as const;
 
 const JOB_TYPES = [
   { value: undefined,         label: "All types" },
@@ -39,10 +39,10 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
         active
           ? "bg-brand text-black border-brand"
-          : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-white"
+          : "bg-bg-card text-text-secondary border-border-subtle hover:border-border-medium hover:text-text-primary"
       }`}
     >
       {label}
@@ -52,9 +52,9 @@ function FilterPill({
 
 function MatchBadge({ score }: { score?: number | null }) {
   if (score == null) return null;
-  let color = "bg-zinc-800/80 text-zinc-400 border-zinc-700";
-  if (score >= 90) color = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-  else if (score >= 75) color = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+  let color = "bg-bg-elevated text-text-secondary border-border-subtle";
+  if (score >= 90) color = "bg-emerald-500/10 text-emerald-500 border-emerald-500/30";
+  else if (score >= 75) color = "bg-amber-500/10 text-amber-500 border-amber-500/30";
   return (
     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${color}`}>
       {score}% Match
@@ -100,21 +100,21 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="px-6 py-8 max-w-6xl mx-auto">
+    <div className="px-6 py-8 max-w-6xl mx-auto bg-bg-base min-h-screen">
       {/* Header */}
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Jobs</h1>
-          <p className="text-sm text-zinc-400 mt-1">
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Jobs</h1>
+          <p className="text-sm text-text-secondary mt-1">
             Search across Internshala, Unstop, and Naukri.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-zinc-500">{total.toLocaleString()} jobs</span>
+          <span className="text-xs text-text-muted">{total.toLocaleString()} jobs</span>
           <select
             value={filters.sortBy || "match"}
             onChange={(e) => applyFilter({ sortBy: e.target.value as "date" | "match" })}
-            className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700 font-medium"
+            className="bg-bg-card border border-border-subtle rounded px-2.5 py-1 text-xs text-text-secondary focus:outline-none focus:border-border-medium font-medium cursor-pointer"
           >
             <option value="match">Sort by Match</option>
             <option value="date">Sort by Date</option>
@@ -125,19 +125,19 @@ export default function JobsPage() {
       {/* Search row */}
       <div className="flex gap-2 mb-5">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
           <Input
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submitSearch()}
             placeholder="Search by title, company, or description…"
-            className="pl-10 h-11 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-500"
+            className="pl-10 h-11 bg-bg-card border-border-subtle text-text-primary placeholder:text-text-muted focus:ring-1 focus:ring-brand/20 focus:border-border-medium"
           />
         </div>
         <Button
           onClick={submitSearch}
-          className="bg-brand text-black hover:bg-brand-hover h-11 px-5 font-medium"
+          className="bg-brand text-black hover:bg-brand-hover h-11 px-5 font-medium cursor-pointer"
         >
           Search
         </Button>
@@ -184,18 +184,18 @@ export default function JobsPage() {
 
       {/* Results */}
       {error && (
-        <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400">
+        <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-500">
           {error}
         </div>
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-zinc-500">
+        <div className="flex items-center justify-center py-16 text-text-secondary">
           <Loader2 className="w-5 h-5 animate-spin mr-2" />
           Loading jobs…
         </div>
       ) : jobs.length === 0 ? (
-        <div className="text-center py-16 text-zinc-500 text-sm">
+        <div className="text-center py-16 text-text-secondary text-sm">
           No jobs match your filters. Try broadening your search.
         </div>
       ) : (
@@ -207,11 +207,11 @@ export default function JobsPage() {
             return (
               <li
                 key={job.id}
-                className="group rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900 hover:border-zinc-700 transition-colors p-5"
+                className="group rounded-xl border border-border-subtle bg-bg-card/40 hover:bg-bg-hover/20 hover:border-border-medium transition-colors p-5 animate-none"
               >
                 <div className="flex items-start gap-4">
                   {/* Logo */}
-                  <div className="shrink-0 w-11 h-11 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-sm font-semibold text-zinc-300 overflow-hidden">
+                  <div className="shrink-0 w-11 h-11 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center text-sm font-semibold text-text-secondary overflow-hidden">
                     {job.companyLogoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -229,10 +229,10 @@ export default function JobsPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-base font-semibold text-white truncate">{job.title}</h3>
+                          <h3 className="text-base font-semibold text-text-primary truncate">{job.title}</h3>
                           <MatchBadge score={(job as any).matchScore} />
                         </div>
-                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-zinc-400">
+                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-text-secondary">
                           <span className="flex items-center gap-1.5">
                             <Building2 className="w-3.5 h-3.5" /> {job.company}
                           </span>
@@ -240,9 +240,9 @@ export default function JobsPage() {
                             <MapPin className="w-3.5 h-3.5" /> {job.location}
                           </span>
                           {job.remote && (
-                            <span className="text-emerald-400">Remote</span>
+                            <span className="text-emerald-500">Remote</span>
                           )}
-                          <span className="uppercase tracking-wide text-[10px] text-zinc-500">
+                          <span className="uppercase tracking-wide text-[10px] text-text-muted">
                             {job.source}
                           </span>
                         </div>
@@ -253,10 +253,10 @@ export default function JobsPage() {
                           type="button"
                           onClick={() => toggleSave(job.id)}
                           aria-label={saved ? "Unsave" : "Save"}
-                          className={`p-2 rounded-lg transition-colors ${
+                          className={`p-2 rounded-lg transition-colors cursor-pointer ${
                             saved
-                              ? "text-pink-400 hover:bg-zinc-800"
-                              : "text-zinc-500 hover:text-pink-400 hover:bg-zinc-800"
+                              ? "text-pink-500 hover:bg-bg-hover"
+                              : "text-text-muted hover:text-pink-500 hover:bg-bg-hover"
                           }`}
                         >
                           <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
@@ -266,9 +266,9 @@ export default function JobsPage() {
                         <Button
                           disabled={isTracked || trackingLoadingId === job.id}
                           onClick={() => handleTrackJob(job.id)}
-                          className={`text-xs font-medium px-3 py-1.5 h-auto transition-colors ${
+                          className={`text-xs font-medium px-3 py-1.5 h-auto transition-colors cursor-pointer ${
                             isTracked
-                              ? "bg-zinc-850 text-zinc-500 hover:bg-zinc-850 border-zinc-850 cursor-not-allowed"
+                              ? "bg-bg-elevated text-text-muted hover:bg-bg-elevated border-border-subtle cursor-not-allowed"
                               : "bg-brand text-black hover:bg-brand-hover"
                           }`}
                         >
@@ -285,14 +285,14 @@ export default function JobsPage() {
                           href={job.sourceUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs font-medium px-3 py-1.5 rounded-lg bg-zinc-800 text-white border border-zinc-700 hover:bg-zinc-700 transition-colors flex items-center gap-1"
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg bg-bg-elevated text-text-primary border border-border-subtle hover:bg-bg-hover transition-colors flex items-center gap-1"
                         >
                           View <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
                     </div>
 
-                    <p className="mt-2 text-sm text-zinc-400 line-clamp-2">{job.description}</p>
+                    <p className="mt-2 text-sm text-text-secondary line-clamp-2">{job.description}</p>
 
                     {/* Skill chips */}
                     {job.requiredSkills.length > 0 && (
@@ -300,7 +300,7 @@ export default function JobsPage() {
                         {job.requiredSkills.slice(0, 6).map((s) => (
                           <span
                             key={s}
-                            className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-zinc-800/70 text-zinc-400 border border-zinc-800"
+                            className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-bg-elevated/70 text-text-secondary border border-border-subtle"
                           >
                             {s}
                           </span>
@@ -309,12 +309,12 @@ export default function JobsPage() {
                     )}
 
                     {/* Footer */}
-                    <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
+                    <div className="mt-3 flex items-center justify-between text-xs text-text-muted">
                       <span>
                         {job.jobType.replace("_", "-").toLowerCase()} · {job.experienceLevel.toLowerCase()}
                       </span>
                       {salary && (
-                        <span className="text-zinc-300 font-medium">{salary}</span>
+                        <span className="text-text-secondary font-medium">{salary}</span>
                       )}
                     </div>
                   </div>

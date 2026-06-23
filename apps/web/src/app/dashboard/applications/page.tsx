@@ -17,13 +17,13 @@ import {
 } from "lucide-react";
 
 const COLUMNS = [
-  { id: "SAVED", label: "Saved", color: "border-zinc-800 bg-zinc-900/10", text: "text-zinc-400", dot: "bg-zinc-500" },
-  { id: "APPLIED", label: "Applied", color: "border-blue-900 bg-blue-950/10", text: "text-blue-400", dot: "bg-blue-500" },
-  { id: "OA_RECEIVED", label: "Online Assessment", color: "border-amber-900 bg-amber-950/10", text: "text-amber-450", dot: "bg-amber-500" },
-  { id: "INTERVIEW_SCHEDULED", label: "Interviewing", color: "border-teal-900 bg-teal-950/10", text: "text-teal-400", dot: "bg-teal-500" },
-  { id: "OFFER_RECEIVED", label: "Offers", color: "border-emerald-900 bg-emerald-950/10", text: "text-emerald-400", dot: "bg-emerald-500" },
-  { id: "REJECTED", label: "Rejected", color: "border-rose-900 bg-rose-950/10", text: "text-rose-450", dot: "bg-rose-500" },
-  { id: "WITHDRAWN", label: "Withdrawn", color: "border-zinc-800 bg-zinc-950/20", text: "text-zinc-500", dot: "bg-zinc-650" }
+  { id: "SAVED", label: "Saved", color: "border-border-subtle bg-bg-card/10", text: "text-text-secondary", dot: "bg-text-secondary" },
+  { id: "APPLIED", label: "Applied", color: "border-blue-500/20 bg-blue-500/5", text: "text-blue-500", dot: "bg-blue-500" },
+  { id: "OA_RECEIVED", label: "Online Assessment", color: "border-amber-500/20 bg-amber-500/5", text: "text-amber-500", dot: "bg-amber-500" },
+  { id: "INTERVIEW_SCHEDULED", label: "Interviewing", color: "border-teal-500/20 bg-teal-500/5", text: "text-teal-500", dot: "bg-teal-500" },
+  { id: "OFFER_RECEIVED", label: "Offers", color: "border-emerald-500/20 bg-emerald-500/5", text: "text-emerald-500", dot: "bg-emerald-500" },
+  { id: "REJECTED", label: "Rejected", color: "border-rose-500/20 bg-rose-500/5", text: "text-rose-500", dot: "bg-rose-500" },
+  { id: "WITHDRAWN", label: "Withdrawn", color: "border-border-subtle bg-bg-card/20", text: "text-text-muted", dot: "bg-text-muted" }
 ];
 
 export default function ApplicationsPage() {
@@ -188,15 +188,15 @@ export default function ApplicationsPage() {
     }
 
     return (
-      <div className="relative border-l border-zinc-800 pl-4 ml-2 flex flex-col gap-4 py-2">
+      <div className="relative border-l border-border-subtle pl-4 ml-2 flex flex-col gap-4 py-2">
         {list.map((entry, idx) => (
           <div key={idx} className="relative">
-            <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-zinc-700 ring-4 ring-zinc-950" />
-            <div className="text-[10px] text-zinc-500 font-mono">
+            <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-text-muted ring-4 ring-bg-base" />
+            <div className="text-[10px] text-text-muted font-mono">
               {new Date(entry.at).toLocaleString()}
             </div>
-            <div className="text-xs font-semibold text-zinc-300 capitalize">{entry.status.replace("_", " ")}</div>
-            <div className="text-xs text-zinc-400 mt-0.5">{entry.note}</div>
+            <div className="text-xs font-semibold text-text-secondary capitalize">{entry.status.replace("_", " ")}</div>
+            <div className="text-xs text-text-secondary mt-0.5">{entry.note}</div>
           </div>
         ))}
       </div>
@@ -204,34 +204,34 @@ export default function ApplicationsPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto min-h-screen text-white relative">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto min-h-screen bg-bg-base text-text-primary relative">
       {/* Header & Stats */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Application Tracker</h1>
-          <p className="text-zinc-500 text-sm mt-1">Manage your pipeline, track interview status, and view metrics.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary">Application Tracker</h1>
+          <p className="text-text-secondary text-sm mt-1">Manage your pipeline, track interview status, and view metrics.</p>
         </div>
 
         {/* Dynamic Analytics Stats Widgets */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-zinc-900/30 p-3 rounded-xl border border-zinc-800">
-            <div className="px-3 py-1 flex flex-col border-r border-zinc-800 last:border-0">
-              <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Total</span>
-              <span className="text-lg font-bold text-white">{applications.length}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-bg-card/30 p-3 rounded-xl border border-border-subtle">
+            <div className="px-3 py-1 flex flex-col border-r border-border-subtle last:border-0">
+              <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">Total</span>
+              <span className="text-lg font-bold text-text-primary">{applications.length}</span>
             </div>
-            <div className="px-3 py-1 flex flex-col border-r border-zinc-800 last:border-0">
-              <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Active</span>
-              <span className="text-lg font-bold text-blue-400">
+            <div className="px-3 py-1 flex flex-col border-r border-border-subtle last:border-0">
+              <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">Active</span>
+              <span className="text-lg font-bold text-blue-500">
                 {applications.filter(a => !["SAVED", "REJECTED", "WITHDRAWN"].includes(a.status)).length}
               </span>
             </div>
-            <div className="px-3 py-1 flex flex-col border-r border-zinc-800 last:border-0">
-              <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Offers</span>
-              <span className="text-lg font-bold text-emerald-400">{stats.counts?.OFFER_RECEIVED || 0}</span>
+            <div className="px-3 py-1 flex flex-col border-r border-border-subtle last:border-0">
+              <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">Offers</span>
+              <span className="text-lg font-bold text-emerald-500">{stats.counts?.OFFER_RECEIVED || 0}</span>
             </div>
             <div className="px-3 py-1 flex flex-col">
-              <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Avg Interview</span>
-              <span className="text-lg font-bold text-teal-400">
+              <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">Avg Interview</span>
+              <span className="text-lg font-bold text-teal-500">
                 {stats.avgTimeToInterviewDays > 0 ? `${stats.avgTimeToInterviewDays}d` : "—"}
               </span>
             </div>
@@ -245,28 +245,28 @@ export default function ApplicationsPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="mb-6 rounded-lg border border-red-500/30 bg-red-950/20 p-4 text-xs text-red-400 flex items-center gap-2"
+          className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-xs text-red-500 flex items-center gap-2"
         >
           <AlertCircle size={14} className="shrink-0" />
           <span>Transition rejected: {transitionErrorMessage}</span>
-          <button onClick={() => setTransitionErrorMessage(null)} className="ml-auto hover:text-white">
+          <button onClick={() => setTransitionErrorMessage(null)} className="ml-auto hover:text-text-primary cursor-pointer">
             <X size={14} />
           </button>
         </motion.div>
       )}
 
       {/* Filters Toolbar */}
-      <div className="flex flex-col gap-3 p-4 rounded-xl border border-zinc-800 bg-zinc-900/40 mb-8">
+      <div className="flex flex-col gap-3 p-4 rounded-xl border border-border-subtle bg-bg-card/40 mb-8">
         <div className="flex flex-wrap items-center gap-3">
           {/* Company/Title Search */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-2.5 text-zinc-650" size={15} />
+            <Search className="absolute left-3 top-2.5 text-text-muted" size={15} />
             <input
               type="text"
               placeholder="Search company, title, location..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 pl-9 pr-4 text-xs text-zinc-350 focus:outline-none focus:border-zinc-750 placeholder-zinc-600"
+              className="w-full bg-bg-card border border-border-subtle rounded-lg py-2 pl-9 pr-4 text-xs text-text-secondary focus:outline-none focus:border-border-medium placeholder-text-muted/60"
             />
           </div>
 
@@ -274,7 +274,7 @@ export default function ApplicationsPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-zinc-900 border border-zinc-850 rounded-lg px-3 py-2 text-xs text-zinc-350 focus:outline-none focus:border-zinc-750"
+            className="bg-bg-card border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-secondary focus:outline-none focus:border-border-medium cursor-pointer"
           >
             <option value="">All Statuses</option>
             {COLUMNS.map((col) => (
@@ -290,27 +290,27 @@ export default function ApplicationsPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="bg-zinc-900 border border-zinc-850 rounded-lg px-3 py-2 text-xs text-zinc-350 focus:outline-none focus:border-zinc-750"
+              className="bg-bg-card border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-secondary focus:outline-none focus:border-border-medium cursor-pointer"
             />
-            <span className="text-zinc-600 text-xs">to</span>
+            <span className="text-text-muted text-xs">to</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="bg-zinc-900 border border-zinc-850 rounded-lg px-3 py-2 text-xs text-zinc-350 focus:outline-none focus:border-zinc-750"
+              className="bg-bg-card border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-secondary focus:outline-none focus:border-border-medium cursor-pointer"
             />
           </div>
 
           {/* Buttons */}
           <button
             onClick={handleApplyFilters}
-            className="text-xs bg-brand text-black px-4 py-2 rounded-lg font-medium hover:bg-brand-hover transition-colors"
+            className="text-xs bg-brand text-black px-4 py-2 rounded-lg font-medium hover:bg-brand-hover transition-colors cursor-pointer"
           >
             Apply Filters
           </button>
           <button
             onClick={handleClearFilters}
-            className="text-xs bg-zinc-800 text-zinc-300 px-3 py-2 rounded-lg font-medium hover:bg-zinc-750 transition-colors"
+            className="text-xs bg-bg-elevated text-text-secondary px-3 py-2 rounded-lg font-medium hover:bg-bg-hover transition-colors cursor-pointer"
           >
             Clear
           </button>
@@ -318,7 +318,7 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Kanban Board Container */}
-      <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent select-none">
+      <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-border-medium scrollbar-track-transparent select-none">
         {COLUMNS.map((col) => {
           const colApps = filteredAppsBySearch.filter((a) => a.status === col.id);
           const isOver = dragOverColumnId === col.id;
@@ -327,19 +327,19 @@ export default function ApplicationsPage() {
             <div
               key={col.id}
               className={`flex-shrink-0 w-80 rounded-xl border p-4 transition-all flex flex-col gap-3 min-h-[500px] ${
-                isOver ? "border-zinc-600 bg-zinc-900/40 ring-1 ring-zinc-700" : "border-zinc-900/60 bg-zinc-900/10"
+                isOver ? "border-border-medium bg-bg-card/40 ring-1 ring-border-medium" : col.color + " border-border-subtle"
               }`}
               onDragOver={(e) => handleDragOver(e, col.id)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, col.id)}
             >
               {/* Header */}
-              <div className="flex items-center justify-between pb-2 border-b border-zinc-850">
+              <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
                 <div className="flex items-center gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full ${col.dot}`} />
-                  <span className="text-xs font-semibold text-zinc-300">{col.label}</span>
+                  <span className="text-xs font-semibold text-text-primary">{col.label}</span>
                 </div>
-                <span className="text-[10px] text-zinc-550 font-mono bg-zinc-850 px-2 py-0.5 rounded">
+                <span className="text-[10px] text-text-muted font-mono bg-bg-elevated px-2 py-0.5 rounded">
                   {colApps.length}
                 </span>
               </div>
@@ -352,14 +352,14 @@ export default function ApplicationsPage() {
                     draggable
                     onDragStart={(e) => handleDragStart(e, app.id)}
                     onClick={() => handleOpenDetail(app)}
-                    className="group rounded-lg border border-zinc-850 bg-zinc-900/60 p-3 hover:border-zinc-700 cursor-pointer transition-all active:scale-[0.98]"
+                    className="group rounded-lg border border-border-subtle bg-bg-card/60 p-3 hover:border-border-medium cursor-pointer transition-all active:scale-[0.98] animate-none"
                   >
-                    <h3 className="text-xs font-semibold text-white group-hover:text-zinc-200 truncate">
+                    <h3 className="text-xs font-semibold text-text-primary group-hover:text-brand truncate">
                       {app.job.title}
                     </h3>
-                    <p className="text-[11px] text-zinc-450 truncate mt-0.5">{app.job.company}</p>
+                    <p className="text-[11px] text-text-secondary truncate mt-0.5">{app.job.company}</p>
 
-                    <div className="flex items-center justify-between mt-3 text-[10px] text-zinc-550">
+                    <div className="flex items-center justify-between mt-3 text-[10px] text-text-muted">
                       <span className="flex items-center gap-1">
                         <MapPin size={9} />
                         {app.job.location}
@@ -373,7 +373,7 @@ export default function ApplicationsPage() {
                 ))}
 
                 {colApps.length === 0 && (
-                  <div className="flex-1 border border-dashed border-zinc-850/60 rounded-lg flex items-center justify-center p-6 text-center text-[10px] text-zinc-700">
+                  <div className="flex-1 border border-dashed border-border-subtle rounded-lg flex items-center justify-center p-6 text-center text-[10px] text-text-muted">
                     Drag items here
                   </div>
                 )}
@@ -393,7 +393,7 @@ export default function ApplicationsPage() {
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedAppId(null)}
-              className="fixed inset-0 bg-black z-40"
+              className="fixed inset-0 bg-black/60 z-40"
             />
 
             {/* Slideout Panel */}
@@ -402,18 +402,18 @@ export default function ApplicationsPage() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3 }}
-              className="fixed right-0 top-0 bottom-0 w-full sm:w-[500px] bg-zinc-950 border-l border-zinc-900 z-50 overflow-y-auto flex flex-col p-6 shadow-2xl"
+              className="fixed right-0 top-0 bottom-0 w-full sm:w-[500px] bg-bg-card border-l border-border-subtle z-50 overflow-y-auto flex flex-col p-6 shadow-2xl"
             >
               {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-zinc-900 pb-4 mb-6">
+              <div className="flex items-center justify-between border-b border-border-subtle pb-4 mb-6">
                 <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 font-mono">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary font-mono">
                     Application Details
                   </h2>
                 </div>
                 <button
                   onClick={() => setSelectedAppId(null)}
-                  className="w-7 h-7 rounded-lg border border-zinc-850 flex items-center justify-center hover:bg-zinc-900 transition-colors"
+                  className="w-7 h-7 rounded-lg border border-border-subtle flex items-center justify-center hover:bg-bg-hover text-text-secondary transition-colors cursor-pointer"
                 >
                   <X size={15} />
                 </button>
@@ -423,13 +423,13 @@ export default function ApplicationsPage() {
               <div className="mb-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-bold text-white leading-tight">{selectedApp.job.title}</h3>
-                    <p className="text-zinc-400 font-semibold text-sm mt-1">{selectedApp.job.company}</p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 mt-3">
+                    <h3 className="text-lg font-bold text-text-primary leading-tight">{selectedApp.job.title}</h3>
+                    <p className="text-text-secondary font-semibold text-sm mt-1">{selectedApp.job.company}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary mt-3">
                       <span className="flex items-center gap-1">
                         <MapPin size={11} /> {selectedApp.job.location}
                       </span>
-                      <span className="flex items-center gap-1 uppercase tracking-wider bg-zinc-900 px-2 py-0.5 rounded text-[10px] font-mono border border-zinc-850">
+                      <span className="flex items-center gap-1 uppercase tracking-wider bg-bg-elevated px-2 py-0.5 rounded text-[10px] font-mono border border-border-subtle">
                         {selectedApp.job.jobType.replace("_", " ")}
                       </span>
                     </div>
@@ -438,7 +438,7 @@ export default function ApplicationsPage() {
                     href={selectedApp.job.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-850 flex items-center justify-center hover:bg-zinc-800 transition-all"
+                    className="shrink-0 w-8 h-8 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center hover:bg-bg-hover transition-all text-text-secondary"
                   >
                     <ExternalLink size={13} />
                   </a>
@@ -446,10 +446,10 @@ export default function ApplicationsPage() {
               </div>
 
               {/* Status Transition & Note Form */}
-              <div className="rounded-xl border border-zinc-900 bg-zinc-900/10 p-4 mb-6">
+              <div className="rounded-xl border border-border-subtle bg-bg-card/10 p-4 mb-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp size={13} className="text-zinc-550" />
-                  <span className="text-xs font-semibold text-zinc-400">Transition Status</span>
+                  <TrendingUp size={13} className="text-text-secondary" />
+                  <span className="text-xs font-semibold text-text-secondary">Transition Status</span>
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -459,10 +459,10 @@ export default function ApplicationsPage() {
                       <button
                         key={col.id}
                         onClick={() => handleManualStatusChange(col.id)}
-                        className={`text-[10px] font-medium px-2.5 py-1 rounded transition-all ${
+                        className={`text-[10px] font-medium px-2.5 py-1 rounded transition-all cursor-pointer ${
                           isActive
                             ? "bg-brand text-black font-semibold"
-                            : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-850"
+                            : "bg-bg-elevated text-text-secondary hover:text-text-primary border border-border-subtle"
                         }`}
                       >
                         {col.label}
@@ -476,25 +476,25 @@ export default function ApplicationsPage() {
                   placeholder="Optional status transition log note..."
                   value={transitionNote}
                   onChange={(e) => setTransitionNote(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-900 rounded-lg p-2 text-xs text-zinc-350 focus:outline-none focus:border-zinc-800 placeholder-zinc-700"
+                  className="w-full bg-bg-elevated border border-border-subtle rounded-lg p-2 text-xs text-text-primary focus:outline-none focus:border-border-medium placeholder-text-muted"
                 />
               </div>
 
               {/* Collapsible/Sections tabs */}
               <div className="flex-1 flex flex-col gap-6">
                 {/* Notes Section */}
-                <div className="flex flex-col border-b border-zinc-900 pb-6">
+                <div className="flex flex-col border-b border-border-subtle pb-6">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <FileText size={13} className="text-zinc-500" />
-                      <span className="text-xs font-semibold text-zinc-300">My Interview Notes</span>
+                      <FileText size={13} className="text-text-secondary" />
+                      <span className="text-xs font-semibold text-text-primary">My Interview Notes</span>
                     </div>
                     <button
                       onClick={() => {
                         if (isNotesEditing) handleSaveNotes();
                         else setIsNotesEditing(true);
                       }}
-                      className="text-xs font-medium text-white hover:underline flex items-center gap-1"
+                      className="text-xs font-medium text-text-secondary hover:text-text-primary hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       {isNotesEditing ? "Save" : "Edit"}
                     </button>
@@ -505,29 +505,29 @@ export default function ApplicationsPage() {
                       value={notesText}
                       onChange={(e) => setNotesText(e.target.value)}
                       rows={5}
-                      className="w-full bg-zinc-950 border border-zinc-900 rounded-lg p-3 text-xs text-zinc-350 focus:outline-none focus:border-zinc-800 placeholder-zinc-700"
+                      className="w-full bg-bg-elevated border border-border-subtle rounded-lg p-3 text-xs text-text-primary focus:outline-none focus:border-border-medium placeholder-text-muted resize-none"
                       placeholder="Write notes about your interview, questions asked, recruiter info..."
                     />
                   ) : (
-                    <div className="text-xs text-zinc-450 bg-zinc-950/40 p-3 rounded-lg border border-zinc-900 min-h-[50px] whitespace-pre-wrap">
+                    <div className="text-xs text-text-secondary bg-bg-elevated/40 p-3 rounded-lg border border-border-subtle min-h-[50px] whitespace-pre-wrap">
                       {selectedApp.notes || "No notes written yet. Click edit to write thoughts, tasks, or follow-ups."}
                     </div>
                   )}
                 </div>
 
                 {/* Cover Letter Section */}
-                <div className="flex flex-col border-b border-zinc-900 pb-6">
+                <div className="flex flex-col border-b border-border-subtle pb-6">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <FileText size={13} className="text-zinc-500" />
-                      <span className="text-xs font-semibold text-zinc-300">Cover Letter</span>
+                      <FileText size={13} className="text-text-secondary" />
+                      <span className="text-xs font-semibold text-text-primary">Cover Letter</span>
                     </div>
                     <button
                       onClick={() => {
                         if (isCoverLetterEditing) handleSaveCoverLetter();
                         else setIsCoverLetterEditing(true);
                       }}
-                      className="text-xs font-medium text-white hover:underline flex items-center gap-1"
+                      className="text-xs font-medium text-text-secondary hover:text-text-primary hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       {isCoverLetterEditing ? "Save" : "Edit"}
                     </button>
@@ -538,11 +538,11 @@ export default function ApplicationsPage() {
                       value={coverLetterText}
                       onChange={(e) => setCoverLetterText(e.target.value)}
                       rows={8}
-                      className="w-full bg-zinc-950 border border-zinc-900 rounded-lg p-3 text-xs text-zinc-350 focus:outline-none focus:border-zinc-800 placeholder-zinc-700"
+                      className="w-full bg-bg-elevated border border-border-subtle rounded-lg p-3 text-xs text-text-primary focus:outline-none focus:border-border-medium placeholder-text-muted resize-none"
                       placeholder="Paste cover letter template or custom text utilized for this job application..."
                     />
                   ) : (
-                    <div className="text-xs text-zinc-450 bg-zinc-950/40 p-3 rounded-lg border border-zinc-900 min-h-[80px] whitespace-pre-wrap font-mono">
+                    <div className="text-xs text-text-secondary bg-bg-elevated/40 p-3 rounded-lg border border-border-subtle min-h-[80px] whitespace-pre-wrap font-mono">
                       {selectedApp.coverLetter || "No cover letter saved. Click edit to paste templates."}
                     </div>
                   )}
@@ -551,16 +551,16 @@ export default function ApplicationsPage() {
                 {/* Timeline Log Section */}
                 <div className="flex flex-col pb-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <Clock size={13} className="text-zinc-500" />
-                    <span className="text-xs font-semibold text-zinc-300">History Timeline Log</span>
+                    <Clock size={13} className="text-text-secondary" />
+                    <span className="text-xs font-semibold text-text-primary">History Timeline Log</span>
                   </div>
                   {renderTimeline(selectedApp.timeline)}
                 </div>
               </div>
 
               {/* Danger Action Footer */}
-              <div className="border-t border-zinc-900 pt-4 mt-6 flex justify-between items-center">
-                <span className="text-[10px] text-zinc-600 font-mono">ID: {selectedApp.id}</span>
+              <div className="border-t border-border-subtle pt-4 mt-6 flex justify-between items-center">
+                <span className="text-[10px] text-text-muted font-mono">ID: {selectedApp.id}</span>
                 <button
                   onClick={async () => {
                     if (confirm("Are you sure you want to delete this application tracker?")) {
@@ -568,7 +568,7 @@ export default function ApplicationsPage() {
                       setSelectedAppId(null);
                     }
                   }}
-                  className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-400 font-medium transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-400 font-medium transition-colors cursor-pointer"
                 >
                   <Trash2 size={13} />
                   Delete Tracker

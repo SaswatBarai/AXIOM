@@ -19,43 +19,43 @@ export function EngagementCard({ data }: EngagementCardProps) {
 
   return (
     <div className="mb-6">
-      <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2.5">Engagement</div>
-      <div className="border border-zinc-800/60 bg-zinc-900/20 rounded-xl p-4">
+      <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2.5">Engagement</div>
+      <div className="border border-border-subtle bg-bg-card/25 rounded-xl p-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-              <Activity size={16} className="text-emerald-400" />
+              <Activity size={16} className="text-emerald-500" />
             </div>
             <div>
-              <div className="text-lg font-bold text-white">{formatNumber(data.activeUsers)}</div>
-              <div className="text-[10px] text-zinc-500">Active users (30d)</div>
+              <div className="text-lg font-bold text-text-primary">{formatNumber(data.activeUsers)}</div>
+              <div className="text-[10px] text-text-muted">Active users (30d)</div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-bg-elevated rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-400 rounded-full transition-all duration-700"
+                className="h-full bg-emerald-500 rounded-full transition-all duration-700"
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <span className="text-xs font-bold text-emerald-400 w-10 text-right">{pct}%</span>
+            <span className="text-xs font-bold text-emerald-500 w-10 text-right">{pct}%</span>
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-4 text-[11px]">
             <div className="text-right">
-              <div className="text-zinc-400 font-medium">{formatNumber(data.activeUsers)}</div>
-              <div className="text-zinc-600">Active</div>
+              <div className="text-text-secondary font-medium">{formatNumber(data.activeUsers)}</div>
+              <div className="text-text-muted">Active</div>
             </div>
-            <div className="w-px h-8 bg-zinc-800" />
+            <div className="w-px h-8 bg-border-subtle" />
             <div className="text-right">
-              <div className="text-zinc-400 font-medium">{formatNumber(data.totalUsers - data.activeUsers)}</div>
-              <div className="text-zinc-600">Inactive</div>
+              <div className="text-text-secondary font-medium">{formatNumber(data.totalUsers - data.activeUsers)}</div>
+              <div className="text-text-muted">Inactive</div>
             </div>
-            <div className="w-px h-8 bg-zinc-800" />
+            <div className="w-px h-8 bg-border-subtle" />
             <div className="text-right">
-              <div className={cn("font-medium", pct > 50 ? "text-emerald-400" : "text-yellow-400")}>{pct}%</div>
-              <div className="text-zinc-600">Rate</div>
+              <div className={cn("font-medium", pct > 50 ? "text-emerald-500" : "text-amber-500")}>{pct}%</div>
+              <div className="text-text-muted">Rate</div>
             </div>
           </div>
         </div>

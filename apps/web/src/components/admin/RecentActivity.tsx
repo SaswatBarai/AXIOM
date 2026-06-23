@@ -12,9 +12,9 @@ interface RecentActivityProps {
 }
 
 const iconMap = {
-  new_user: { icon: UserPlus, color: "text-blue-400 bg-blue-500/10" },
-  premium_upgrade: { icon: Crown, color: "text-yellow-400 bg-yellow-500/10" },
-  application: { icon: FileText, color: "text-emerald-400 bg-emerald-500/10" },
+  new_user: { icon: UserPlus, color: "text-blue-500 bg-blue-500/10" },
+  premium_upgrade: { icon: Crown, color: "text-amber-500 bg-amber-500/10" },
+  application: { icon: FileText, color: "text-emerald-500 bg-emerald-500/10" },
 } as const;
 
 export function RecentActivity({ overview }: RecentActivityProps) {
@@ -47,15 +47,15 @@ export function RecentActivity({ overview }: RecentActivityProps) {
 
   if (loading) {
     return (
-      <div className="border border-zinc-800/60 bg-zinc-900/20 rounded-xl p-4">
-        <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-3">Recent Activity</div>
+      <div className="border border-border-subtle bg-bg-card/25 rounded-xl p-4">
+        <div className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-3">Recent Activity</div>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3 animate-pulse">
-              <div className="w-7 h-7 rounded-full bg-zinc-800" />
+              <div className="w-7 h-7 rounded-full bg-bg-elevated" />
               <div className="flex-1 space-y-1">
-                <div className="h-3 bg-zinc-800 rounded w-2/3" />
-                <div className="h-2 bg-zinc-800 rounded w-1/3" />
+                <div className="h-3 bg-bg-elevated rounded w-2/3" />
+                <div className="h-2 bg-bg-elevated rounded w-1/3" />
               </div>
             </div>
           ))}
@@ -66,18 +66,18 @@ export function RecentActivity({ overview }: RecentActivityProps) {
 
   if (items.length === 0) {
     return (
-      <div className="border border-zinc-800/60 bg-zinc-900/20 rounded-xl p-4">
-        <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-3">Recent Activity</div>
-        <p className="text-xs text-zinc-600 text-center py-4">No recent activity</p>
+      <div className="border border-border-subtle bg-bg-card/25 rounded-xl p-4">
+        <div className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-3">Recent Activity</div>
+        <p className="text-xs text-text-muted text-center py-4">No recent activity</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-zinc-800/60 bg-zinc-900/20 rounded-xl p-4">
+    <div className="border border-border-subtle bg-bg-card/25 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Clock size={13} className="text-zinc-500" />
-        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Recent Activity</span>
+        <Clock size={13} className="text-text-muted" />
+        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Recent Activity</span>
       </div>
       <div className="space-y-2">
         {items.map((item, idx) => {
@@ -86,16 +86,16 @@ export function RecentActivity({ overview }: RecentActivityProps) {
           return (
             <div key={item.id} className="flex items-center gap-3">
               <div className="relative">
-                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", meta.color)}>
+                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center animate-none", meta.color)}>
                   <Icon size={13} />
                 </div>
                 {idx < items.length - 1 && (
-                  <div className="absolute top-7 left-1/2 -translate-x-1/2 w-px h-3 bg-zinc-800" />
+                  <div className="absolute top-7 left-1/2 -translate-x-1/2 w-px h-3 bg-border-subtle" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-zinc-300 truncate">{item.label}</div>
-                <div className="text-[10px] text-zinc-600">{timeAgo(item.timestamp)}</div>
+                <div className="text-xs text-text-primary truncate">{item.label}</div>
+                <div className="text-[10px] text-text-muted">{timeAgo(item.timestamp)}</div>
               </div>
             </div>
           );
@@ -104,4 +104,3 @@ export function RecentActivity({ overview }: RecentActivityProps) {
     </div>
   );
 }
-

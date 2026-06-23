@@ -31,24 +31,24 @@ export function SystemStatus() {
 
   return (
     <div className="mt-3">
-      <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2.5">System Status</div>
-      <div className="border border-zinc-800/60 bg-zinc-900/20 rounded-xl p-3 space-y-2">
+      <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2.5">System Status</div>
+      <div className="border border-border-subtle bg-bg-card/25 rounded-xl p-3 space-y-2">
         {services.map(({ key, label, icon: Icon }) => {
           const status = getStatus(key);
           return (
             <div key={key} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Icon size={12} className="text-zinc-500" />
-                <span className="text-xs text-zinc-400">{label}</span>
+                <Icon size={12} className="text-text-muted" />
+                <span className="text-xs text-text-secondary">{label}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className={cn(
                   "inline-block w-1.5 h-1.5 rounded-full",
-                  status === "up" ? "bg-emerald-400" : status === "down" ? "bg-red-400" : "bg-zinc-600"
+                  status === "up" ? "bg-emerald-500" : status === "down" ? "bg-red-500" : "bg-text-muted"
                 )} />
                 <span className={cn(
                   "text-[10px] font-medium",
-                  status === "up" ? "text-emerald-400" : status === "down" ? "text-red-400" : "text-zinc-600"
+                  status === "up" ? "text-emerald-500" : status === "down" ? "text-red-500" : "text-text-muted"
                 )}>
                   {status === "up" ? "Healthy" : status === "down" ? "Down" : "N/A"}
                 </span>

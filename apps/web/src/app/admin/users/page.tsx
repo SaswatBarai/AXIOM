@@ -72,19 +72,19 @@ export default function AdminUsersPage() {
   if (loading && !result) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-7 h-7 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-border-subtle border-t-brand rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-6">Users</h1>
+      <h1 className="text-2xl font-bold text-text-primary mb-6">Users</h1>
 
-      <div className="border border-zinc-800/60 bg-zinc-900/20 rounded-2xl overflow-hidden">
+      <div className="border border-border-subtle bg-bg-card/25 rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wider">
+            <tr className="border-b border-border-subtle text-text-secondary text-xs uppercase tracking-wider">
               <th className="text-left py-3 px-4">Name</th>
               <th className="text-left py-3 px-4">Email</th>
               <th className="text-left py-3 px-4">Role</th>
@@ -97,33 +97,33 @@ export default function AdminUsersPage() {
             {result?.data.map((u) => (
               <tr
                 key={u.id}
-                className="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors"
+                className="border-b border-border-subtle/50 hover:bg-bg-hover transition-colors"
               >
-                <td className="py-3 px-4 text-white font-medium">{u.name}</td>
-                <td className="py-3 px-4 text-zinc-400">{u.email}</td>
+                <td className="py-3 px-4 text-text-primary font-medium">{u.name}</td>
+                <td className="py-3 px-4 text-text-secondary">{u.email}</td>
                 <td className="py-3 px-4">
                   <select
                     value={u.role}
                     onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                    className="bg-zinc-900 border border-zinc-800 rounded-md text-xs text-white px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand/50"
+                    className="bg-bg-card border border-border-subtle rounded-md text-xs text-text-primary px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand/50 cursor-pointer"
                   >
-                    <option value="USER">USER</option>
-                    <option value="PREMIUM">PREMIUM</option>
-                    <option value="ADMIN">ADMIN</option>
+                    <option value="USER" className="bg-bg-card text-text-primary">USER</option>
+                    <option value="PREMIUM" className="bg-bg-card text-text-primary">PREMIUM</option>
+                    <option value="ADMIN" className="bg-bg-card text-text-primary">ADMIN</option>
                   </select>
                 </td>
                 <td className="py-3 px-4">
                   {u.suspendedAt ? (
-                    <span className="inline-flex items-center text-xs font-medium text-red-400 bg-red-500/10 rounded px-2 py-0.5">
+                    <span className="inline-flex items-center text-xs font-medium text-red-500 bg-red-500/10 rounded px-2 py-0.5">
                       Suspended
                     </span>
                   ) : (
-                    <span className="inline-flex items-center text-xs font-medium text-emerald-400 bg-emerald-500/10 rounded px-2 py-0.5">
+                    <span className="inline-flex items-center text-xs font-medium text-emerald-500 bg-emerald-500/10 rounded px-2 py-0.5">
                       Active
                     </span>
                   )}
                 </td>
-                <td className="py-3 px-4 text-zinc-500 text-xs">
+                <td className="py-3 px-4 text-text-muted text-xs">
                   {new Date(u.createdAt).toLocaleDateString()}
                 </td>
                 <td className="py-3 px-4 text-right">
@@ -131,21 +131,21 @@ export default function AdminUsersPage() {
                     {u.suspendedAt ? (
                       <button
                         onClick={() => handleUnsuspend(u.id)}
-                        className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                        className="text-xs text-emerald-500 hover:text-emerald-500/80 transition-colors cursor-pointer"
                       >
                         Unsuspend
                       </button>
                     ) : (
                       <button
                         onClick={() => handleSuspend(u.id)}
-                        className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                        className="text-xs text-amber-500 hover:text-amber-500/80 transition-colors cursor-pointer"
                       >
                         Suspend
                       </button>
                     )}
                     <button
                       onClick={() => handleDelete(u.id)}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                      className="text-xs text-red-500 hover:text-red-500/80 transition-colors cursor-pointer"
                     >
                       Delete
                     </button>
@@ -158,21 +158,21 @@ export default function AdminUsersPage() {
       </div>
 
       {result && result.pages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-6">
+        <div className="flex items-center justify-center gap-4 mt-6 animate-none">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="border border-zinc-700 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-200 text-xs px-4 py-2 rounded-md disabled:opacity-40 transition-colors"
+            className="border border-border-subtle bg-bg-card/40 hover:bg-bg-hover text-text-primary text-xs px-4 py-2 rounded-md disabled:opacity-40 transition-colors cursor-pointer"
           >
             Previous
           </button>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-text-muted">
             Page {page} of {result.pages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(result.pages, p + 1))}
             disabled={page === result.pages}
-            className="border border-zinc-700 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-200 text-xs px-4 py-2 rounded-md disabled:opacity-40 transition-colors"
+            className="border border-border-subtle bg-bg-card/40 hover:bg-bg-hover text-text-primary text-xs px-4 py-2 rounded-md disabled:opacity-40 transition-colors cursor-pointer"
           >
             Next
           </button>

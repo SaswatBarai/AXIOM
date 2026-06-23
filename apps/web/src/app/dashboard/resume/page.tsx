@@ -26,7 +26,7 @@ function ScoreRing({ score, size = 88 }: { score: number; size?: number }) {
                   "#ef4444";
   return (
     <svg width={size} height={size} className="-rotate-90">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#27272a" strokeWidth={8} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" className="text-border-subtle" strokeWidth={8} />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={8}
         strokeDasharray={`${fill} ${circ}`} strokeLinecap="round" />
     </svg>
@@ -37,31 +37,31 @@ function ScoreRing({ score, size = 88 }: { score: number; size?: number }) {
 
 function ParsedPanel({ data }: { data: ParsedResume }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 space-y-4 text-sm">
+    <div className="rounded-xl border border-border-subtle bg-bg-card/65 p-4 space-y-4 text-sm">
       {data.skills && data.skills.length > 0 && (
         <div>
-          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
-            <Cpu size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Skills detected</span>
+          <div className="flex items-center gap-1.5 text-text-secondary mb-2">
+            <Cpu size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Skills detected</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {data.skills.map((s) => (
-              <span key={s.name} className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-xs text-zinc-350">{s.name}</span>
+              <span key={s.name} className="px-2 py-0.5 rounded-full bg-bg-elevated border border-border-subtle text-xs text-text-secondary">{s.name}</span>
             ))}
           </div>
         </div>
       )}
       {data.experience && data.experience.length > 0 && (
         <div>
-          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
-            <Briefcase size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Experience</span>
+          <div className="flex items-center gap-1.5 text-text-secondary mb-2">
+            <Briefcase size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Experience</span>
           </div>
           <div className="space-y-1.5">
             {data.experience.map((e, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-zinc-600 mt-2 shrink-0" />
-                <p className="text-xs text-zinc-450">
-                  <span className="text-zinc-200 font-semibold">{e.title}</span>
-                  {e.company && <span className="text-zinc-400 font-medium"> · {e.company}</span>}
+                <span className="w-1 h-1 rounded-full bg-text-muted mt-2 shrink-0" />
+                <p className="text-xs text-text-secondary">
+                  <span className="text-text-primary font-semibold">{e.title}</span>
+                  {e.company && <span className="text-text-secondary font-medium"> · {e.company}</span>}
                 </p>
               </div>
             ))}
@@ -70,16 +70,16 @@ function ParsedPanel({ data }: { data: ParsedResume }) {
       )}
       {data.education && data.education.length > 0 && (
         <div>
-          <div className="flex items-center gap-1.5 text-zinc-400 mb-2">
-            <GraduationCap size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Education</span>
+          <div className="flex items-center gap-1.5 text-text-secondary mb-2">
+            <GraduationCap size={13} /><span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Education</span>
           </div>
           <div className="space-y-1.5">
             {data.education.map((e, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-zinc-600 mt-2 shrink-0" />
-                <p className="text-xs text-zinc-450">
-                  <span className="text-zinc-200 font-semibold">{e.institution}</span>
-                  {e.endYear && <span className="text-zinc-400 font-medium"> · {e.endYear}</span>}
+                <span className="w-1 h-1 rounded-full bg-text-muted mt-2 shrink-0" />
+                <p className="text-xs text-text-secondary">
+                  <span className="text-text-primary font-semibold">{e.institution}</span>
+                  {e.endYear && <span className="text-text-secondary font-medium"> · {e.endYear}</span>}
                 </p>
               </div>
             ))}
@@ -94,23 +94,23 @@ function ParsedPanel({ data }: { data: ParsedResume }) {
 
 function ATSPanel({ score }: { score: ATSScore }) {
   const label =
-    score.overall >= 75 ? { text: "Excellent",  cls: "text-green-400 bg-green-950/40 border-green-800/40" } :
-    score.overall >= 50 ? { text: "Good",        cls: "text-amber-400 bg-amber-950/40 border-amber-800/40" } :
-                          { text: "Needs work",  cls: "text-red-400 bg-red-950/40 border-red-800/40" };
+    score.overall >= 75 ? { text: "Excellent",  cls: "text-green-500 bg-green-500/10 border-green-500/20" } :
+    score.overall >= 50 ? { text: "Good",        cls: "text-amber-500 bg-amber-500/10 border-amber-500/20" } :
+                          { text: "Needs work",  cls: "text-red-500 bg-red-500/10 border-red-500/20" };
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5 space-y-5">
+    <div className="rounded-xl border border-border-subtle bg-bg-card/65 p-5 space-y-5">
       {/* Score ring + breakdown */}
       <div className="flex items-center gap-5">
         <div className="relative shrink-0">
           <ScoreRing score={score.overall} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-white">{score.overall}</span>
-            <span className="text-xs text-zinc-400">/ 100</span>
+            <span className="text-2xl font-bold text-text-primary">{score.overall}</span>
+            <span className="text-xs text-text-muted">/ 100</span>
           </div>
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-white mb-1">ATS Score</p>
+          <p className="text-sm font-semibold text-text-primary mb-1">ATS Score</p>
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full border text-xs font-medium ${label.cls}`}>{label.text}</span>
           <div className="mt-3 space-y-1.5">
             {[
@@ -119,11 +119,11 @@ function ATSPanel({ score }: { score: ATSScore }) {
               { label: "Readability",  val: score.readability },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-2">
-                <span className="text-xs text-zinc-400 w-24 shrink-0 font-medium">{s.label}</span>
-                <div className="flex-1 h-1.5 bg-zinc-800 rounded-full">
+                <span className="text-xs text-text-secondary w-24 shrink-0 font-medium">{s.label}</span>
+                <div className="flex-1 h-1.5 bg-bg-elevated rounded-full">
                   <div className="h-full rounded-full bg-brand/70" style={{ width: `${s.val}%` }} />
                 </div>
-                <span className="text-xs text-zinc-355 w-8 text-right shrink-0 font-semibold">{s.val}%</span>
+                <span className="text-xs text-text-secondary w-8 text-right shrink-0 font-semibold">{s.val}%</span>
               </div>
             ))}
           </div>
@@ -132,12 +132,12 @@ function ATSPanel({ score }: { score: ATSScore }) {
 
       {score.strengths && score.strengths.length > 0 && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2 flex items-center gap-1.5">
             <CheckCircle2 size={12} className="text-green-500" /> Strengths
           </p>
           <ul className="space-y-1">
             {score.strengths.map((s, i) => (
-              <li key={i} className="text-xs text-zinc-300 flex items-start gap-2 font-medium">
+              <li key={i} className="text-xs text-text-secondary flex items-start gap-2 font-medium">
                 <span className="w-1 h-1 rounded-full bg-green-500 mt-1.5 shrink-0" />{s}
               </li>
             ))}
@@ -147,12 +147,12 @@ function ATSPanel({ score }: { score: ATSScore }) {
 
       {score.missingSkills && score.missingSkills.length > 0 && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2 flex items-center gap-1.5">
             <XCircle size={12} className="text-amber-500" /> Missing keywords
           </p>
           <div className="flex flex-wrap gap-1.5">
             {score.missingSkills.map((s) => (
-              <span key={s} className="px-2 py-0.5 rounded-full bg-amber-950/30 border border-amber-800/40 text-xs text-amber-300 font-semibold">{s}</span>
+              <span key={s} className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500 font-semibold">{s}</span>
             ))}
           </div>
         </div>
@@ -160,13 +160,13 @@ function ATSPanel({ score }: { score: ATSScore }) {
 
       {score.suggestions && score.suggestions.length > 0 && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-            <Lightbulb size={12} className="text-blue-400" /> Suggestions
+          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2 flex items-center gap-1.5">
+            <Lightbulb size={12} className="text-blue-500" /> Suggestions
           </p>
           <ul className="space-y-1">
             {score.suggestions.map((s, i) => (
-              <li key={i} className="text-xs text-zinc-300 flex items-start gap-2 font-medium">
-                <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />{s}
+              <li key={i} className="text-xs text-text-secondary flex items-start gap-2 font-medium">
+                <span className="w-1 h-1 rounded-full bg-blue-500 mt-1.5 shrink-0" />{s}
               </li>
             ))}
           </ul>
@@ -196,17 +196,17 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
       onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) handle(f); }}
       onClick={() => inputRef.current?.click()}
       className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition-all
-        ${drag ? "border-white/60 bg-white/5" : "border-zinc-700 hover:border-zinc-500 hover:bg-zinc-900/40"}`}
+        ${drag ? "border-text-primary/60 bg-text-primary/5" : "border-border-medium hover:border-border-strong hover:bg-bg-hover/30"}`}
     >
       <input ref={inputRef} type="file" accept={ACCEPTED} className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) handle(f); e.target.value = ""; }} />
       <div className="flex flex-col items-center gap-3">
-        <div className="w-14 h-14 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-          <Upload size={24} className="text-zinc-400" />
+        <div className="w-14 h-14 rounded-2xl bg-bg-elevated border border-border-subtle flex items-center justify-center">
+          <Upload size={24} className="text-text-secondary" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white">Drop your resume here</p>
-          <p className="text-xs text-zinc-400 mt-1">or click to browse — PDF or DOCX, max {MAX_MB} MB</p>
+          <p className="text-sm font-semibold text-text-primary">Drop your resume here</p>
+          <p className="text-xs text-text-secondary mt-1">or click to browse — PDF or DOCX, max {MAX_MB} MB</p>
         </div>
       </div>
     </div>
@@ -250,16 +250,16 @@ function AnalyzeModal({
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-        className="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-xl bg-bg-card border border-border-subtle rounded-2xl shadow-2xl overflow-hidden"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
           <div>
-            <p className="text-sm font-semibold text-white flex items-center gap-2">
-              <Zap size={14} className="text-amber-400" /> ATS Analyzer
+            <p className="text-sm font-semibold text-text-primary flex items-center gap-2">
+              <Zap size={14} className="text-amber-500" /> ATS Analyzer
             </p>
-            <p className="text-xs text-zinc-400 mt-0.5 truncate max-w-xs">{resume.fileName}</p>
+            <p className="text-xs text-text-secondary mt-0.5 truncate max-w-xs">{resume.fileName}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors cursor-pointer">
             <X size={16} />
           </button>
         </div>
@@ -267,20 +267,20 @@ function AnalyzeModal({
         <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           {!result && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Job description</label>
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Job description</label>
               <textarea
                 value={jd}
                 onChange={(e) => setJd(e.target.value)}
                 placeholder="Paste the full job description here…"
                 rows={8}
-                className="w-full rounded-xl bg-zinc-800 border border-zinc-700 text-sm text-white placeholder-zinc-550 p-3 resize-none focus:outline-none focus:border-zinc-500 transition-colors"
+                className="w-full rounded-xl bg-bg-elevated border border-border-subtle text-sm text-text-primary placeholder:text-text-muted p-3 resize-none focus:outline-none focus:border-border-medium transition-colors"
               />
-              <p className="text-xs text-zinc-450 font-medium">{jd.length} / 10 000 chars</p>
+              <p className="text-xs text-text-muted font-medium">{jd.length} / 10 000 chars</p>
             </div>
           )}
 
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-950/40 border border-red-800/50 text-red-400 text-xs">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
               <AlertCircle size={14} /> {error}
             </div>
           )}
@@ -291,17 +291,17 @@ function AnalyzeModal({
             {result ? (
               <>
                 <button onClick={() => { setResult(null); setJd(""); }}
-                  className="flex-1 py-2.5 rounded-xl border border-zinc-705 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
+                  className="flex-1 py-2.5 rounded-xl border border-border-medium text-sm text-text-secondary hover:bg-bg-hover transition-colors cursor-pointer">
                   Re-analyze
                 </button>
                 <button onClick={onClose}
-                  className="flex-1 py-2.5 rounded-xl bg-zinc-50 text-zinc-950 text-sm font-semibold hover:bg-zinc-200 transition-colors cursor-pointer">
+                  className="flex-1 py-2.5 rounded-xl bg-text-primary text-bg-base text-sm font-semibold hover:opacity-90 transition-colors cursor-pointer">
                   Done
                 </button>
               </>
             ) : (
               <button onClick={handleRun} disabled={loading || jd.trim().length < 20}
-                className="flex-1 py-2.5 rounded-xl bg-zinc-50 text-zinc-950 text-sm font-semibold hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                className="flex-1 py-2.5 rounded-xl bg-text-primary text-bg-base text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer">
                 {loading ? <><Loader2 size={14} className="animate-spin" /> Analyzing…</> : "Run ATS Analysis"}
               </button>
             )}
@@ -342,40 +342,40 @@ function ResumeCard({
   return (
     <>
       <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
-        className="rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-colors">
+        className="rounded-xl border border-border-subtle bg-bg-card/50 hover:border-border-medium transition-colors">
         <div className="flex items-center gap-4 p-4 group relative">
-          <div className="w-10 h-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-            <FileText size={18} className="text-zinc-300" />
+          <div className="w-10 h-10 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center shrink-0">
+            <FileText size={18} className="text-text-secondary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate pr-16 md:pr-0">{resume.fileName}</p>
+            <p className="text-sm font-medium text-text-primary truncate pr-16 md:pr-0">{resume.fileName}</p>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-              <span className="text-xs text-zinc-450 uppercase font-mono">{resume.fileType}</span>
-              <span className="text-zinc-700">·</span>
-              <span className="text-xs text-zinc-450">v{resume.version}</span>
-              <span className="text-zinc-700">·</span>
-              <Clock size={11} className="text-zinc-500 shrink-0" />
-              <span className="text-xs text-zinc-450">{date}</span>
+              <span className="text-xs text-text-secondary uppercase font-mono">{resume.fileType}</span>
+              <span className="text-border-subtle">·</span>
+              <span className="text-xs text-text-secondary">v{resume.version}</span>
+              <span className="text-border-subtle">·</span>
+              <Clock size={11} className="text-text-muted shrink-0" />
+              <span className="text-xs text-text-secondary">{date}</span>
             </div>
           </div>
 
           {/* Status badge */}
           {atsScore ? (
-            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 mr-2 md:mr-0">
-              <span className={`text-xs font-bold ${atsScore.overall >= 75 ? "text-green-400" : atsScore.overall >= 50 ? "text-amber-400" : "text-red-400"}`}>
+            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-elevated border border-border-subtle mr-2 md:mr-0">
+              <span className={`text-xs font-bold ${atsScore.overall >= 75 ? "text-green-500" : atsScore.overall >= 50 ? "text-amber-500" : "text-red-500"}`}>
                 {atsScore.overall}
               </span>
-              <span className="text-xs text-zinc-450">ATS</span>
+              <span className="text-xs text-text-secondary">ATS</span>
             </div>
           ) : hasParsed ? (
-            <div className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-950/40 border border-green-800/40 mr-2 md:mr-0">
-              <CheckCircle2 size={11} className="text-green-400" />
-              <span className="text-xs text-green-400 font-medium">Parsed</span>
+            <div className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 mr-2 md:mr-0">
+              <CheckCircle2 size={11} className="text-green-500" />
+              <span className="text-xs text-green-500 font-medium">Parsed</span>
             </div>
           ) : (
-            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 mr-2 md:mr-0">
-              <Loader2 size={11} className="text-zinc-450 animate-spin" />
-              <span className="text-xs text-zinc-450 font-medium">Parsing…</span>
+            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-elevated border border-border-subtle mr-2 md:mr-0">
+              <Loader2 size={11} className="text-text-secondary animate-spin" />
+              <span className="text-xs text-text-secondary font-medium">Parsing…</span>
             </div>
           )}
 
@@ -383,32 +383,32 @@ function ResumeCard({
           <div className="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             {hasParsed && (
               <button onClick={() => setAnalyzeOpen(true)}
-                className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer" title="ATS Analyze">
+                className="p-2 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-amber-500 transition-colors cursor-pointer" title="ATS Analyze">
                 <Zap size={15} />
               </button>
             )}
             {resume.downloadUrl && (
               <a href={resume.downloadUrl} target="_blank" rel="noopener noreferrer"
-                className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors" title="Download">
+                className="p-2 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors" title="Download">
                 <Download size={15} />
               </a>
             )}
             {hasParsed && (
               <button onClick={() => setExpanded((v) => !v)}
-                className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className="p-2 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
                 title={expanded ? "Hide details" : "Show parsed data"}>
                 {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
               </button>
             )}
             <button onClick={handleDelete} disabled={deleting}
-              className={`p-2 rounded-lg transition-colors cursor-pointer ${confirming ? "bg-red-600/20 text-red-400 hover:bg-red-600/30" : "hover:bg-zinc-800 text-zinc-400 hover:text-red-400"}`}
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${confirming ? "bg-red-500/10 text-red-500 hover:bg-red-500/20" : "hover:bg-bg-hover text-text-secondary hover:text-red-500"}`}
               title={confirming ? "Click again to confirm" : "Delete"}>
               {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
             </button>
           </div>
 
           {confirming && (
-            <button onClick={() => setConfirming(false)} className="text-xs text-zinc-400 hover:text-zinc-200 shrink-0 cursor-pointer">
+            <button onClick={() => setConfirming(false)} className="text-xs text-text-secondary hover:text-text-primary shrink-0 cursor-pointer">
               Cancel
             </button>
           )}
@@ -474,19 +474,19 @@ export default function ResumePage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl">
+    <div className="p-6 md:p-8 max-w-3xl bg-bg-base">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Resume</h1>
-        <p className="text-sm text-zinc-400 mt-1 font-medium">
+        <h1 className="text-2xl font-bold text-text-primary">Resume</h1>
+        <p className="text-sm text-text-secondary mt-1 font-medium">
           Upload your resume — it will be parsed automatically, then you can run ATS analysis against any job description.
         </p>
       </div>
 
       <div className="mb-4">
         {isUploading ? (
-          <div className="rounded-2xl border-2 border-dashed border-zinc-700 p-10 flex flex-col items-center gap-3">
-            <Loader2 size={28} className="text-zinc-400 animate-spin" />
-            <p className="text-sm text-zinc-400 font-medium">Uploading and reading file layers…</p>
+          <div className="rounded-2xl border-2 border-dashed border-border-medium p-10 flex flex-col items-center gap-3 bg-bg-card/20">
+            <Loader2 size={28} className="text-text-secondary animate-spin" />
+            <p className="text-sm text-text-secondary font-medium">Uploading and reading file layers…</p>
           </div>
         ) : (
           <UploadZone onFile={handleFile} />
@@ -496,7 +496,7 @@ export default function ResumePage() {
       <AnimatePresence>
         {uploadSuccess && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-green-950/40 border border-green-800/50 text-green-400 text-sm font-medium">
+            className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-500 text-sm font-medium">
             <CheckCircle2 size={15} />
             Uploaded successfully! Parsing document in background
             {polling && <Loader2 size={13} className="ml-1 animate-spin" />}
@@ -504,7 +504,7 @@ export default function ResumePage() {
         )}
         {uploadError && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-950/40 border border-red-800/50 text-red-400 text-sm font-medium">
+            className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium">
             <AlertCircle size={15} />
             {uploadError}
           </motion.div>
@@ -513,11 +513,11 @@ export default function ResumePage() {
 
       <div className="mt-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
             Your resumes {resumes.length > 0 && `(${resumes.length})`}
           </h2>
           {resumes.some((r) => r.parsedData) && (
-            <p className="text-xs text-zinc-400 flex items-center gap-1 font-medium">
+            <p className="text-xs text-text-secondary flex items-center gap-1 font-medium">
               <Zap size={11} className="text-amber-500" />
               Hover a card to run ATS analysis
             </p>
@@ -526,8 +526,8 @@ export default function ResumePage() {
 
         {resumes.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
-            <FileX size={32} className="text-zinc-700" />
-            <p className="text-sm text-zinc-400 font-medium">No resumes yet — upload one above to get started.</p>
+            <FileX size={32} className="text-text-muted" />
+            <p className="text-sm text-text-secondary font-medium">No resumes yet — upload one above to get started.</p>
           </div>
         ) : (
           <motion.div layout className="space-y-2">

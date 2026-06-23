@@ -19,24 +19,24 @@ export function QuickStats({ data }: QuickStatsProps) {
   const engagementRate = data.totalUsers > 0 ? (data.activeUsers / data.totalUsers) * 100 : 0;
 
   const stats = [
-    { icon: BarChart3, label: "Apps / User", value: fmt1(appsPerUser), color: "text-blue-400 bg-blue-500/10" },
-    { icon: Percent, label: "Premium Rate", value: `${fmt1(premiumRate)}%`, color: "text-yellow-400 bg-yellow-500/10" },
-    { icon: Hash, label: "Jobs / User", value: fmt1(jobsPerUser), color: "text-violet-400 bg-violet-500/10" },
-    { icon: Zap, label: "Engagement", value: `${fmt1(engagementRate)}%`, color: "text-emerald-400 bg-emerald-500/10" },
+    { icon: BarChart3, label: "Apps / User", value: fmt1(appsPerUser), color: "text-blue-500 bg-blue-500/10" },
+    { icon: Percent, label: "Premium Rate", value: `${fmt1(premiumRate)}%`, color: "text-amber-500 bg-amber-500/10" },
+    { icon: Hash, label: "Jobs / User", value: fmt1(jobsPerUser), color: "text-violet-500 bg-violet-500/10" },
+    { icon: Zap, label: "Engagement", value: `${fmt1(engagementRate)}%`, color: "text-emerald-500 bg-emerald-500/10" },
   ];
 
   return (
     <div>
-      <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2.5">Quick Stats</div>
+      <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2.5">Quick Stats</div>
       <div className="grid grid-cols-2 gap-2">
         {stats.map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="border border-zinc-800/60 bg-zinc-900/20 rounded-xl p-3 flex items-center gap-2.5">
+          <div key={label} className="border border-border-subtle bg-bg-card/25 rounded-xl p-3 flex items-center gap-2.5">
             <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", color)}>
               <Icon size={13} />
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-bold text-white">{value}</div>
-              <div className="text-[10px] text-zinc-600 truncate">{label}</div>
+              <div className="text-sm font-bold text-text-primary">{value}</div>
+              <div className="text-[10px] text-text-muted truncate">{label}</div>
             </div>
           </div>
         ))}

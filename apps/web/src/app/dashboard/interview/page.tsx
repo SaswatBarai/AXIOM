@@ -14,9 +14,9 @@ import { InterviewPageSkeleton } from "@/components/dashboard/InterviewSkeleton"
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const DIFFICULTIES: { value: Difficulty; label: string; color: string }[] = [
-  { value: "easy",   label: "Easy",   color: "border-emerald-500/20 bg-emerald-950/10 text-emerald-400"  },
-  { value: "medium", label: "Medium", color: "border-amber-500/20 bg-amber-950/10 text-amber-400" },
-  { value: "hard",   label: "Hard",   color: "border-red-500/20 bg-red-950/10 text-red-400"        },
+  { value: "easy",   label: "Easy",   color: "border-emerald-500/20 bg-emerald-500/10 text-emerald-500"  },
+  { value: "medium", label: "Medium", color: "border-amber-500/20 bg-amber-500/10 text-amber-500" },
+  { value: "hard",   label: "Hard",   color: "border-red-500/20 bg-red-500/10 text-red-500"        },
 ];
 
 const ALL_SECTIONS = [
@@ -29,12 +29,12 @@ const ALL_SECTIONS = [
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  dsa:               "border-blue-500/20 bg-blue-950/10 text-blue-400",
-  system_design:     "border-purple-500/20 bg-purple-950/10 text-purple-400",
-  sql:               "border-cyan-500/20 bg-cyan-950/10 text-cyan-400",
-  behavioral:        "border-amber-500/20 bg-amber-950/10 text-amber-400",
-  coding:            "border-emerald-500/20 bg-emerald-950/10 text-emerald-400",
-  language_specific: "border-pink-500/20 bg-pink-950/10 text-pink-400",
+  dsa:               "border-blue-500/20 bg-blue-500/10 text-blue-500",
+  system_design:     "border-purple-500/20 bg-purple-500/10 text-purple-500",
+  sql:               "border-cyan-500/20 bg-cyan-500/10 text-cyan-500",
+  behavioral:        "border-amber-500/20 bg-amber-500/10 text-amber-500",
+  coding:            "border-emerald-500/20 bg-emerald-500/10 text-emerald-500",
+  language_specific: "border-pink-500/20 bg-pink-500/10 text-pink-500",
 };
 
 // ── Question card ─────────────────────────────────────────────────────────────
@@ -48,29 +48,29 @@ function QuestionCard({
   onMark: (m: Mark) => void;
 }) {
   const [hintOpen, setHintOpen] = useState(false);
-  const catColor = CATEGORY_COLORS[q.category] ?? "border-zinc-800 bg-zinc-900/30 text-zinc-400";
+  const catColor = CATEGORY_COLORS[q.category] ?? "border-border-subtle bg-bg-card/30 text-text-secondary";
   const diffColor = q.difficulty === "easy"
-    ? "text-emerald-400"
+    ? "text-emerald-500"
     : q.difficulty === "hard"
-      ? "text-red-400"
-      : "text-amber-400";
+      ? "text-red-550"
+      : "text-amber-550";
 
   return (
     <motion.div 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-xl border p-5 bg-zinc-950/20 backdrop-blur-md transition-all duration-200",
+        "rounded-xl border p-5 bg-bg-card/25 backdrop-blur-md transition-all duration-200",
         mark === "correct"
-          ? "border-emerald-500/20 bg-emerald-950/[0.03]"
+          ? "border-emerald-500/20 bg-emerald-500/[0.03]"
           : mark === "review"
-            ? "border-amber-500/20 bg-amber-950/[0.03]"
-            : "border-zinc-800/80 hover:border-zinc-700"
+            ? "border-amber-500/20 bg-amber-500/[0.03]"
+            : "border-border-subtle hover:border-border-medium"
       )}
     >
       {/* Header */}
       <div className="flex items-start gap-3.5">
-        <span className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-300 shadow-inner">
+        <span className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-lg bg-bg-card border border-border-subtle flex items-center justify-center text-xs font-bold text-text-secondary shadow-inner">
           {index + 1}
         </span>
         <div className="flex-1 min-w-0">
@@ -78,11 +78,11 @@ function QuestionCard({
             <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border select-none", catColor)}>
               {q.category.replace("_", " ")}
             </span>
-            <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-zinc-800 bg-zinc-900/50 select-none", diffColor)}>
+            <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-border-subtle bg-bg-card/50 select-none", diffColor)}>
               {q.difficulty}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-150 leading-relaxed font-medium">{q.question}</p>
+          <p className="text-xs sm:text-sm text-text-primary leading-relaxed font-medium">{q.question}</p>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ function QuestionCard({
         <button
           type="button"
           onClick={() => setHintOpen((o) => !o)}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer select-none"
+          className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors cursor-pointer select-none"
         >
           {hintOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           <span className="font-medium">{hintOpen ? "Hide response hint" : "Show response hint"}</span>
@@ -105,9 +105,9 @@ function QuestionCard({
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="mt-2.5 rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3.5 text-[11px] text-zinc-350 leading-relaxed">
-                <div className="font-semibold text-white mb-1 flex items-center gap-1">
-                  <HelpCircle size={11} className="text-zinc-400" /> Key Talking Points:
+              <div className="mt-2.5 rounded-xl border border-border-subtle bg-bg-card/30 px-4 py-3.5 text-[11px] text-text-secondary leading-relaxed">
+                <div className="font-semibold text-text-primary mb-1 flex items-center gap-1">
+                  <HelpCircle size={11} className="text-text-muted" /> Key Talking Points:
                 </div>
                 {q.expected_answer_hint}
               </div>
@@ -124,8 +124,8 @@ function QuestionCard({
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer select-none",
             mark === "correct"
-              ? "border-emerald-500/30 bg-emerald-950/20 text-emerald-400 shadow-sm"
-              : "border-zinc-850 bg-zinc-900/20 text-zinc-400 hover:border-emerald-500/20 hover:text-emerald-400"
+              ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-500 shadow-sm"
+              : "border-border-subtle bg-bg-card/20 text-text-secondary hover:border-emerald-500/20 hover:text-emerald-500"
           )}
         >
           <CheckCircle2 size={12} /> Got it
@@ -136,8 +136,8 @@ function QuestionCard({
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer select-none",
             mark === "review"
-              ? "border-amber-500/30 bg-amber-950/20 text-amber-400 shadow-sm"
-              : "border-zinc-850 bg-zinc-900/20 text-zinc-400 hover:border-amber-500/20 hover:text-amber-400"
+              ? "border-amber-500/30 bg-amber-500/20 text-amber-500 shadow-sm"
+              : "border-border-subtle bg-bg-card/20 text-text-secondary hover:border-amber-500/20 hover:text-amber-500"
           )}
         >
           <Clock size={12} /> Needs review
@@ -155,13 +155,13 @@ function Progress({ marks, total }: { marks: Record<number, Mark>; total: number
   const pct     = total > 0 ? Math.round((correct / total) * 100) : 0;
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/25 backdrop-blur-md p-5 flex flex-col sm:flex-row items-center gap-6 shadow-xl relative overflow-hidden">
+    <div className="rounded-2xl border border-border-subtle bg-bg-card/25 backdrop-blur-md p-5 flex flex-col sm:flex-row items-center gap-6 shadow-xl relative overflow-hidden">
       <div className="flex-1 w-full">
         <div className="flex justify-between text-xs font-semibold mb-2 select-none">
-          <span className="text-zinc-455">Practice Completion</span>
-          <span className="text-white">{pct}%</span>
+          <span className="text-text-secondary">Practice Completion</span>
+          <span className="text-text-primary">{pct}%</span>
         </div>
-        <div className="h-2 rounded-full bg-zinc-950 border border-zinc-900 overflow-hidden w-full">
+        <div className="h-2 rounded-full bg-bg-base border border-border-subtle overflow-hidden w-full">
           <motion.div
             className="h-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all"
             initial={{ width: 0 }}
@@ -171,9 +171,9 @@ function Progress({ marks, total }: { marks: Record<number, Mark>; total: number
         </div>
       </div>
       <div className="flex gap-4 text-xs shrink-0 select-none">
-        <span className="text-emerald-400 flex items-center gap-1.5 font-medium"><CheckCircle2 size={13} />{correct} Got it</span>
-        <span className="text-amber-400 flex items-center gap-1.5 font-medium"><Clock size={13} />{review} Review</span>
-        <span className="text-zinc-500">{total - correct - review} Remaining</span>
+        <span className="text-emerald-500 flex items-center gap-1.5 font-medium"><CheckCircle2 size={13} />{correct} Got it</span>
+        <span className="text-amber-500 flex items-center gap-1.5 font-medium"><Clock size={13} />{review} Review</span>
+        <span className="text-text-muted">{total - correct - review} Remaining</span>
       </div>
     </div>
   );
@@ -214,7 +214,7 @@ export default function InterviewPage() {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh)] bg-bg-base bg-grid-dots overflow-hidden">
+    <div className="relative min-h-screen bg-bg-base bg-grid-dots overflow-hidden">
       {/* Background glow effects */}
       <div className="ambient-glow-orb w-[600px] h-[600px] -top-40 -left-20 animate-float-1" />
       <div className="ambient-glow-orb w-[500px] h-[500px] bottom-5 right-5 animate-float-2" />
@@ -223,36 +223,36 @@ export default function InterviewPage() {
         
         {/* ── Session sidebar ─────────────────────────────── */}
         <aside className="w-full md:w-56 shrink-0 flex flex-col gap-3">
-          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2 select-none">
-            <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest">History</span>
+          <div className="flex items-center justify-between border-b border-border-subtle pb-2 select-none">
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">History</span>
             {questions.length > 0 && (
               <button
                 type="button"
                 onClick={handleNewSession}
-                className="text-[10px] font-bold text-white hover:opacity-80 transition-opacity cursor-pointer"
+                className="text-[10px] font-bold text-text-primary hover:opacity-80 transition-opacity cursor-pointer"
               >
                 + New Prep
               </button>
             )}
           </div>
           {sessions.length === 0 && (
-            <p className="text-xs text-zinc-650 py-4 select-none">No prep sessions yet</p>
+            <p className="text-xs text-text-muted py-4 select-none">No prep sessions yet</p>
           )}
           <div className="space-y-1.5 max-h-[40vh] md:max-h-[70vh] overflow-y-auto pr-1 scrollbar-none">
             {sessions.map((s) => (
               <div
                 key={s.id}
-                className="group relative rounded-xl border border-zinc-800 bg-zinc-900/10 hover:border-zinc-700/60 p-3.5 cursor-pointer transition-all duration-150"
+                className="group relative rounded-xl border border-border-subtle bg-bg-card/10 hover:border-border-medium p-3.5 cursor-pointer transition-all duration-150"
                 onClick={() => loadSession(s.id)}
               >
-                <p className="text-xs font-semibold text-zinc-150 truncate leading-tight pr-4">{s.jobTitle}</p>
-                <p className="text-[9px] text-zinc-500 mt-1 capitalize leading-none font-medium">
+                <p className="text-xs font-semibold text-text-primary truncate leading-tight pr-4">{s.jobTitle}</p>
+                <p className="text-[9px] text-text-muted mt-1 capitalize leading-none font-medium">
                   {s.difficulty} · {new Date(s.createdAt).toLocaleDateString()}
                 </p>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }}
-                  className="absolute top-3.5 right-3 opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 transition rounded p-0.5 hover:bg-white/5 cursor-pointer"
+                  className="absolute top-3.5 right-3 opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-500 transition rounded p-0.5 hover:bg-bg-hover cursor-pointer"
                   title="Delete session"
                 >
                   <Trash2 size={12} />
@@ -267,18 +267,18 @@ export default function InterviewPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              <h1 className="text-xl font-bold text-text-primary tracking-tight flex items-center gap-2">
                 Interview Prep Coach
-                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-500 uppercase tracking-wider">AI</span>
+                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-bg-card border border-border-subtle text-text-muted uppercase tracking-wider">AI</span>
               </h1>
-              <p className="text-xs text-zinc-400 mt-1">Generative simulated question banks customized to target descriptions</p>
+              <p className="text-xs text-text-secondary mt-1">Generative simulated question banks customized to target descriptions</p>
             </div>
             {questions.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPanelOpen((o) => !o)}
-                className="border-zinc-800 hover:border-zinc-700 bg-zinc-900/20 text-zinc-400 hover:text-white rounded-xl text-xs cursor-pointer select-none"
+                className="border-border-subtle hover:border-border-medium bg-bg-card/20 text-text-secondary hover:text-text-primary rounded-xl text-xs cursor-pointer select-none"
               >
                 {panelOpen ? "Hide Configuration" : "Edit Setup"}
               </Button>
@@ -287,22 +287,22 @@ export default function InterviewPage() {
 
           {/* Config panel */}
           {panelOpen && (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/25 backdrop-blur-md p-6 space-y-5 shadow-xl">
+            <div className="rounded-2xl border border-border-subtle bg-bg-card/25 backdrop-blur-md p-6 space-y-5 shadow-xl">
               {/* Job title */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-zinc-450 uppercase tracking-wider">Job Title *</label>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Job Title *</label>
                 <input
                   type="text"
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
                   placeholder="e.g. Senior Backend Engineer"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-hidden transition-all"
+                  className="w-full rounded-xl border border-border-subtle bg-bg-card/60 hover:bg-bg-hover hover:border-border-medium px-3.5 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-hidden transition-all"
                 />
               </div>
 
               {/* Job description */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-zinc-450 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Job Description <span className="opacity-60 lowercase font-normal">(optional — boosts relevance)</span>
                 </label>
                 <textarea
@@ -310,13 +310,13 @@ export default function InterviewPage() {
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste the job requirements description here to generate specialized context matching..."
                   rows={3}
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-600 resize-none focus:outline-hidden transition-all"
+                  className="w-full rounded-xl border border-border-subtle bg-bg-card/60 hover:bg-bg-hover hover:border-border-medium px-3.5 py-2.5 text-xs text-text-primary placeholder:text-text-muted resize-none focus:outline-hidden transition-all"
                 />
               </div>
 
               {/* Difficulty */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-zinc-450 uppercase tracking-wider">Difficulty Level</label>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Difficulty Level</label>
                 <div className="flex gap-2">
                   {DIFFICULTIES.map((d) => (
                     <button
@@ -327,7 +327,7 @@ export default function InterviewPage() {
                         "flex-1 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all cursor-pointer select-none",
                         difficulty === d.value
                           ? d.color
-                          : "border-zinc-800 bg-zinc-900/30 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                          : "border-border-subtle bg-bg-card/30 text-text-secondary hover:border-border-medium hover:text-text-primary"
                       )}
                     >
                       {d.label}
@@ -338,7 +338,7 @@ export default function InterviewPage() {
 
               {/* Sections */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-zinc-450 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Question Categories <span className="opacity-60 lowercase font-normal">(leave empty for automated select)</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -352,8 +352,8 @@ export default function InterviewPage() {
                         className={cn(
                           "px-3.5 py-1.5 rounded-full border text-[11px] font-medium transition-all cursor-pointer select-none",
                           active
-                            ? "border-white/20 bg-white/[0.08] text-white font-semibold"
-                            : "border-zinc-800 text-zinc-450 bg-zinc-900/20 hover:border-zinc-700 hover:text-zinc-200"
+                            ? "border-border-medium bg-text-primary/10 text-text-primary font-semibold"
+                            : "border-border-subtle text-text-secondary bg-bg-card/20 hover:border-border-medium hover:text-text-primary"
                         )}
                       >
                         {s.label}
@@ -366,14 +366,14 @@ export default function InterviewPage() {
               {/* Count + Generate */}
               <div className="flex flex-col sm:flex-row items-end gap-3 pt-2">
                 <div className="space-y-2 w-full sm:w-32 shrink-0">
-                  <label className="text-xs font-semibold text-zinc-455 uppercase tracking-wider">Count</label>
+                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Count</label>
                   <input
                     type="number"
                     value={count}
                     min={1}
                     max={30}
                     onChange={(e) => setCount(Number(e.target.value))}
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 px-3.5 py-2.5 text-xs text-white focus:outline-hidden"
+                    className="w-full rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 py-2.5 text-xs text-text-primary focus:outline-hidden"
                   />
                 </div>
                 <Button
@@ -399,7 +399,7 @@ export default function InterviewPage() {
                 <p className="text-[10px] text-amber-500 font-medium select-none">Enter a target role title above to begin drafting.</p>
               )}
               {error && (
-                <div className="flex items-center gap-2 text-xs text-red-400 bg-red-950/10 border border-red-900/20 rounded-xl p-3">
+                <div className="flex items-center gap-2 text-xs text-red-550 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
                   <AlertCircle size={14} className="shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -415,14 +415,14 @@ export default function InterviewPage() {
           {/* Questions list */}
           {questions.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-zinc-900 pb-2 select-none">
-                <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+              <div className="flex items-center justify-between border-b border-border-subtle pb-2 select-none">
+                <h2 className="text-xs font-bold text-text-secondary uppercase tracking-widest">
                   {questions.length} Questions Set
                 </h2>
                 <button
                   type="button"
                   onClick={resetMarks}
-                  className="text-xs text-zinc-550 hover:text-zinc-300 transition-colors cursor-pointer"
+                  className="text-xs text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                 >
                   Clear practice flags
                 </button>
@@ -445,8 +445,8 @@ export default function InterviewPage() {
           {/* Empty state */}
           {questions.length === 0 && !loading && !panelOpen && (
             <div className="flex flex-col items-center justify-center py-20 text-center select-none">
-              <BookOpen size={36} className="text-zinc-700 mb-4" />
-              <p className="text-xs text-zinc-500">No mock questions generated yet. Enable settings to initiate prep.</p>
+              <BookOpen size={36} className="text-text-muted mb-4" />
+              <p className="text-xs text-text-secondary">No mock questions generated yet. Enable settings to initiate prep.</p>
             </div>
           )}
         </div>

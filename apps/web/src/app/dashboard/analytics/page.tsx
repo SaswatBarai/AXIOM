@@ -47,8 +47,8 @@ const FUNNEL_COLORS: Record<string, string> = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/90 backdrop-blur-md p-3 shadow-2xl select-none text-left">
-        <p className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest mb-2">{label}</p>
+      <div className="rounded-xl border border-border-subtle bg-bg-card/90 backdrop-blur-md p-3 shadow-2xl select-none text-left">
+        <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2">{label}</p>
         <div className="space-y-1.5">
           {payload.map((item: any, i: number) => {
             let val = item.value;
@@ -64,8 +64,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             return (
               <div key={i} className="flex items-center gap-2 text-xs">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color || item.fill }} />
-                <span className="text-zinc-400 font-medium">{displayName}:</span>
-                <span className="text-white font-bold">{val}</span>
+                <span className="text-text-secondary font-medium">{displayName}:</span>
+                <span className="text-text-primary font-bold">{val}</span>
               </div>
             );
           })}
@@ -86,22 +86,22 @@ function KpiCard({ label, value, sub, icon: Icon, colorClass, borderGlowClass }:
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative rounded-2xl border border-zinc-800 bg-zinc-900/25 backdrop-blur-md p-5 flex flex-col justify-between shadow-xl overflow-hidden group hover:border-zinc-700/60 transition-all duration-300"
+      className="relative rounded-2xl border border-border-subtle bg-bg-card/25 backdrop-blur-md p-5 flex flex-col justify-between shadow-xl overflow-hidden group hover:border-border-medium transition-all duration-300 animate-none"
     >
       {/* Decorative background glow */}
-      <div className={cn("absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-20 transition-all duration-300 group-hover:scale-125 group-hover:opacity-30", borderGlowClass || "bg-zinc-500")} />
+      <div className={cn("absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-20 transition-all duration-300 group-hover:scale-125 group-hover:opacity-30", borderGlowClass || "bg-text-muted")} />
 
       <div className="flex justify-between items-start mb-4 relative z-10">
         <div>
-          <p className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest select-none">{label}</p>
-          <h3 className="text-2xl font-extrabold text-white tracking-tight mt-1">{value}</h3>
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest select-none">{label}</p>
+          <h3 className="text-2xl font-extrabold text-text-primary tracking-tight mt-1">{value}</h3>
         </div>
-        <div className={cn("p-2 rounded-xl border border-zinc-850 bg-zinc-950/60 text-zinc-400 group-hover:text-white transition-all duration-300", colorClass)}>
+        <div className={cn("p-2 rounded-xl border border-border-subtle bg-bg-card/60 text-text-secondary group-hover:text-text-primary transition-all duration-300", colorClass)}>
           <Icon size={18} />
         </div>
       </div>
       {sub && (
-        <p className="text-[11px] text-zinc-450 font-medium select-none flex items-center gap-1 mt-auto relative z-10">
+        <p className="text-[11px] text-text-secondary font-medium select-none flex items-center gap-1 mt-auto relative z-10">
           {sub}
         </p>
       )}
@@ -118,16 +118,16 @@ function Panel({ title, children, empty, emptyMsg, subtitle }: {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-zinc-800 bg-zinc-900/25 backdrop-blur-md p-5 flex flex-col shadow-xl"
+      className="rounded-2xl border border-border-subtle bg-bg-card/25 backdrop-blur-md p-5 flex flex-col shadow-xl animate-none"
     >
       <div className="mb-5 select-none">
-        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{title}</h3>
-        {subtitle && <p className="text-[11px] text-zinc-550 mt-0.5 leading-normal">{subtitle}</p>}
+        <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest">{title}</h3>
+        {subtitle && <p className="text-[11px] text-text-muted mt-0.5 leading-normal">{subtitle}</p>}
       </div>
       {empty ? (
         <div className="flex flex-col items-center justify-center h-48 text-center select-none">
-          <AlertCircle size={20} className="text-zinc-650 mb-2" />
-          <p className="text-xs text-zinc-550">{emptyMsg ?? "No data available yet"}</p>
+          <AlertCircle size={20} className="text-text-muted mb-2" />
+          <p className="text-xs text-text-muted">{emptyMsg ?? "No data available yet"}</p>
         </div>
       ) : (
         <div className="flex-1 w-full min-h-[220px]">
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(exportRef.current, {
-        backgroundColor: "#09090b",
+        backgroundColor: "var(--bg-base)",
         scale: 2,
         useCORS: true,
         logging: false,
@@ -187,7 +187,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh)] bg-bg-base bg-grid-dots overflow-hidden">
+    <div className="relative min-h-screen bg-bg-base bg-grid-dots overflow-hidden">
       {/* Background glow effects */}
       <div className="ambient-glow-orb w-[600px] h-[600px] -top-40 -left-20 animate-float-1" />
       <div className="ambient-glow-orb w-[500px] h-[500px] bottom-5 right-5 animate-float-2" />
@@ -196,16 +196,16 @@ export default function AnalyticsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none">
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-xl font-bold text-text-primary tracking-tight flex items-center gap-2">
               Search Analytics
-              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-500 uppercase tracking-wider">AI</span>
+              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-bg-card border border-border-subtle text-text-muted uppercase tracking-wider">AI</span>
             </h1>
-            <p className="text-xs text-zinc-400 mt-1">Real-time tracking and metrics of your job applications</p>
+            <p className="text-xs text-text-secondary mt-1">Real-time tracking and metrics of your job applications</p>
           </div>
 
           <div className="flex items-center flex-wrap gap-2">
             {/* Date range picker */}
-            <div className="flex rounded-xl border border-zinc-800 bg-zinc-900/20 p-1 select-none">
+            <div className="flex rounded-xl border border-border-subtle bg-bg-card/20 p-1 select-none">
               {RANGE_OPTIONS.map((o) => (
                 <button
                   key={o.value}
@@ -215,7 +215,7 @@ export default function AnalyticsPage() {
                     "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                     range === o.value
                       ? "bg-brand text-black shadow-sm"
-                      : "text-zinc-455 hover:text-white hover:bg-white/5"
+                      : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
                   )}
                 >
                   {o.label}
@@ -228,7 +228,7 @@ export default function AnalyticsPage() {
               variant="outline"
               size="sm"
               onClick={() => exportCsv("applications-monthly.csv", monthly as unknown as Record<string, unknown>[])}
-              className="border-zinc-800 hover:border-zinc-700 bg-zinc-900/20 text-zinc-400 hover:text-white rounded-xl text-xs cursor-pointer select-none"
+              className="border-border-subtle hover:border-border-medium bg-bg-card/20 text-text-secondary hover:text-text-primary rounded-xl text-xs cursor-pointer select-none"
             >
               <Download size={12} className="mr-1" /> Export CSV
             </Button>
@@ -239,7 +239,7 @@ export default function AnalyticsPage() {
               size="sm"
               onClick={exportPng}
               disabled={exporting}
-              className="border-zinc-800 hover:border-zinc-700 bg-zinc-900/20 text-zinc-400 hover:text-white rounded-xl text-xs cursor-pointer select-none disabled:opacity-50"
+              className="border-border-subtle hover:border-border-medium bg-bg-card/20 text-text-secondary hover:text-text-primary rounded-xl text-xs cursor-pointer select-none disabled:opacity-50"
             >
               {exporting ? <Loader2 size={12} className="mr-1 animate-spin" /> : <FileImage size={12} className="mr-1" />}
               {exporting ? "Saving…" : "Export PNG"}
@@ -249,7 +249,7 @@ export default function AnalyticsPage() {
 
         {/* Error */}
         {error && (
-          <div className="flex items-center gap-2 text-xs text-red-400 bg-red-950/10 border border-red-900/20 rounded-xl p-3">
+          <div className="flex items-center gap-2 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
             <AlertCircle size={14} className="shrink-0" />
             <span>{error}</span>
           </div>
@@ -258,8 +258,8 @@ export default function AnalyticsPage() {
         {/* Loading */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-24">
-            <Loader2 size={32} className="animate-spin text-zinc-500" />
-            <p className="text-xs text-zinc-500 mt-3 font-medium select-none">Aggregating search metrics…</p>
+            <Loader2 size={32} className="animate-spin text-text-muted" />
+            <p className="text-xs text-text-muted mt-3 font-medium select-none">Aggregating search metrics…</p>
           </div>
         )}
 
@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
                 value={overview.totalApplications}
                 sub={`${overview.savedJobs} saved jobs`}
                 icon={Briefcase}
-                colorClass="group-hover:border-orange-500/20 group-hover:bg-orange-950/10"
+                colorClass="group-hover:border-orange-500/20 group-hover:bg-orange-500/10"
                 borderGlowClass="bg-brand"
               />
               <KpiCard
@@ -280,7 +280,7 @@ export default function AnalyticsPage() {
                 value={overview.interviews}
                 sub={`${overview.totalApplications > 0 ? Math.round((overview.interviews / overview.totalApplications) * 100) : 0}% interview rate`}
                 icon={Users}
-                colorClass="group-hover:border-blue-500/20 group-hover:bg-blue-950/10"
+                colorClass="group-hover:border-blue-500/20 group-hover:bg-blue-500/10"
                 borderGlowClass="bg-blue-500"
               />
               <KpiCard
@@ -288,7 +288,7 @@ export default function AnalyticsPage() {
                 value={overview.offers}
                 sub={`${overview.successRate}% success rate`}
                 icon={Trophy}
-                colorClass="group-hover:border-emerald-500/20 group-hover:bg-emerald-950/10"
+                colorClass="group-hover:border-emerald-500/20 group-hover:bg-emerald-500/10"
                 borderGlowClass="bg-emerald-500"
               />
               <KpiCard
@@ -296,7 +296,7 @@ export default function AnalyticsPage() {
                 value={overview.avgAtsScore !== null ? `${overview.avgAtsScore}%` : "—"}
                 sub={`${overview.roadmaps} career roadmap${overview.roadmaps !== 1 ? "s" : ""}`}
                 icon={Star}
-                colorClass="group-hover:border-amber-500/20 group-hover:bg-amber-950/10"
+                colorClass="group-hover:border-amber-500/20 group-hover:bg-amber-500/10"
                 borderGlowClass="bg-amber-500"
               />
             </div>
@@ -317,19 +317,19 @@ export default function AnalyticsPage() {
                         <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#18181b" vertical={false} />
+                    <CartesianGrid strokeDasharray="4 4" stroke="var(--border-subtle)" vertical={false} />
                     <XAxis
                       dataKey="version"
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: "var(--text-muted)", fontSize: 10, fontWeight: 500 }}
                       dy={8}
                     />
                     <YAxis
                       domain={[0, 100]}
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: "var(--text-muted)", fontSize: 10, fontWeight: 500 }}
                       dx={-8}
                     />
                     <Tooltip content={<CustomTooltip />} />
@@ -341,7 +341,7 @@ export default function AnalyticsPage() {
                       strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#atsGlow)"
-                      dot={{ fill: "#a855f7", stroke: "#18181b", strokeWidth: 2, r: 4 }}
+                      dot={{ fill: "#a855f7", stroke: "var(--bg-base)", strokeWidth: 2, r: 4 }}
                       activeDot={{ fill: "#fff", stroke: "#a855f7", strokeWidth: 2, r: 5 }}
                     />
                   </AreaChart>
@@ -356,18 +356,18 @@ export default function AnalyticsPage() {
               >
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={monthly} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#18181b" vertical={false} />
+                    <CartesianGrid strokeDasharray="4 4" stroke="var(--border-subtle)" vertical={false} />
                     <XAxis
                       dataKey="month"
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: "var(--text-muted)", fontSize: 10, fontWeight: 500 }}
                       dy={8}
                     />
                     <YAxis
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: "var(--text-muted)", fontSize: 10, fontWeight: 500 }}
                       dx={-8}
                     />
                     <Tooltip content={<CustomTooltip />} />
@@ -376,7 +376,7 @@ export default function AnalyticsPage() {
                       height={36}
                       iconType="circle"
                       iconSize={6}
-                      wrapperStyle={{ fontSize: 10, color: "#71717a", fontWeight: 500 }}
+                      wrapperStyle={{ fontSize: 10, color: "var(--text-secondary)", fontWeight: 500 }}
                     />
                     <Bar dataKey="applied"     fill="#3b82f6" name="Applied"     radius={[4, 4, 0, 0]} maxBarSize={16} />
                     <Bar dataKey="interviewed" fill="#f59e0b" name="Interviewed" radius={[4, 4, 0, 0]} maxBarSize={16} />
@@ -396,12 +396,12 @@ export default function AnalyticsPage() {
               >
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={skills.slice(0, 10)} layout="vertical" margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#18181b" horizontal={false} />
+                    <CartesianGrid strokeDasharray="4 4" stroke="var(--border-subtle)" horizontal={false} />
                     <XAxis
                       type="number"
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: "var(--text-muted)", fontSize: 10, fontWeight: 500 }}
                       dy={8}
                     />
                     <YAxis
@@ -410,7 +410,7 @@ export default function AnalyticsPage() {
                       width={90}
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: "var(--text-muted)", fontSize: 10, fontWeight: 500 }}
                       dx={-6}
                     />
                     <Tooltip content={<CustomTooltip />} />
@@ -431,18 +431,18 @@ export default function AnalyticsPage() {
               >
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={funnel.map((f) => ({ ...f, label: FUNNEL_LABELS[f.stage] ?? f.stage }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#18181b" vertical={false} />
+                    <CartesianGrid strokeDasharray="4 4" stroke="var(--border-subtle)" vertical={false} />
                     <XAxis
                       dataKey="label"
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: "var(--text-muted)", fontSize: 10, fontWeight: 500 }}
                       dy={8}
                     />
                     <YAxis
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
+                      tick={{ fill: "var(--text-muted)", fontSize: 10, fontWeight: 500 }}
                       dx={-8}
                     />
                     <Tooltip content={<CustomTooltip />} />
@@ -460,26 +460,26 @@ export default function AnalyticsPage() {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/25 backdrop-blur-md p-5 shadow-xl relative overflow-hidden select-none"
+              className="rounded-2xl border border-border-subtle bg-bg-card/25 backdrop-blur-md p-5 shadow-xl relative overflow-hidden select-none animate-none"
             >
               <div className="absolute -right-10 -bottom-10 w-32 h-32 rounded-full blur-3xl opacity-10 bg-emerald-500" />
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">Pipeline Summary</h3>
+              <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4">Pipeline Summary</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/20">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Saved Jobs</p>
-                  <p className="text-lg font-bold text-white mt-1">{overview.savedJobs}</p>
+                <div className="p-4 rounded-xl border border-border-subtle bg-bg-card/20">
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Saved Jobs</p>
+                  <p className="text-lg font-bold text-text-primary mt-1">{overview.savedJobs}</p>
                 </div>
-                <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/20">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Career Roadmaps</p>
-                  <p className="text-lg font-bold text-white mt-1">{overview.roadmaps}</p>
+                <div className="p-4 rounded-xl border border-border-subtle bg-bg-card/20">
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Career Roadmaps</p>
+                  <p className="text-lg font-bold text-text-primary mt-1">{overview.roadmaps}</p>
                 </div>
-                <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/20">
-                  <p className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">Scheduled Interviews</p>
-                  <p className="text-lg font-bold text-white mt-1">{overview.interviews}</p>
+                <div className="p-4 rounded-xl border border-border-subtle bg-bg-card/20">
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Scheduled Interviews</p>
+                  <p className="text-lg font-bold text-text-primary mt-1">{overview.interviews}</p>
                 </div>
-                <div className="p-4 rounded-xl border border-zinc-900 bg-zinc-950/20">
-                  <p className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">Success Rate</p>
-                  <p className="text-lg font-bold text-emerald-400 mt-1">{overview.successRate}%</p>
+                <div className="p-4 rounded-xl border border-border-subtle bg-bg-card/20">
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Success Rate</p>
+                  <p className="text-lg font-bold text-emerald-500 mt-1">{overview.successRate}%</p>
                 </div>
               </div>
             </motion.div>
@@ -489,9 +489,9 @@ export default function AnalyticsPage() {
         {/* New-user empty state */}
         {!loading && !overview && !error && (
           <div className="flex flex-col items-center justify-center py-24 text-center select-none">
-            <TrendingUp size={36} className="text-zinc-700 mb-4" />
-            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">No metrics generated yet</p>
-            <p className="text-xs text-zinc-500 mt-2 max-w-xs leading-relaxed">
+            <TrendingUp size={36} className="text-text-muted mb-4" />
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-widest">No metrics generated yet</p>
+            <p className="text-xs text-text-muted mt-2 max-w-xs leading-relaxed">
               Start applying to jobs, generating roadmaps, and scheduling mock sessions. Your metrics will automatically populate here.
             </p>
           </div>

@@ -27,7 +27,7 @@ export default function AdminAuditPage() {
   if (loading && !result) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-7 h-7 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-border-subtle border-t-brand rounded-full animate-spin" />
       </div>
     );
   }
@@ -35,27 +35,27 @@ export default function AdminAuditPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white">Audit Log</h1>
+        <h1 className="text-2xl font-bold text-text-primary">Audit Log</h1>
         <div className="flex items-center gap-3">
           <input
             value={actionFilter}
             onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
             placeholder="Filter by action..."
-            className="h-9 px-3 rounded-md bg-zinc-900 border border-zinc-800 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-brand/50 focus:border-brand/50 transition-colors w-52"
+            className="h-9 px-3 rounded-md bg-bg-card border border-border-subtle text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand/50 focus:border-brand/50 transition-colors w-52"
           />
           <button
             onClick={load}
-            className="border border-zinc-700 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-200 text-xs px-4 py-2 rounded-md transition-colors"
+            className="border border-border-subtle bg-bg-card/40 hover:bg-bg-hover text-text-primary text-xs px-4 py-2 rounded-md transition-colors cursor-pointer"
           >
             Refresh
           </button>
         </div>
       </div>
 
-      <div className="border border-zinc-800/60 bg-zinc-900/20 rounded-2xl overflow-hidden">
+      <div className="border border-border-subtle bg-bg-card/25 rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wider">
+            <tr className="border-b border-border-subtle text-text-secondary text-xs uppercase tracking-wider">
               <th className="text-left py-3 px-4">Time</th>
               <th className="text-left py-3 px-4">Admin</th>
               <th className="text-left py-3 px-4">Action</th>
@@ -67,23 +67,23 @@ export default function AdminAuditPage() {
             {result?.data.map((log) => (
               <tr
                 key={log.id}
-                className="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors"
+                className="border-b border-border-subtle/50 hover:bg-bg-hover transition-colors"
               >
-                <td className="py-3 px-4 text-zinc-500 text-xs whitespace-nowrap">
+                <td className="py-3 px-4 text-text-muted text-xs whitespace-nowrap">
                   {new Date(log.createdAt).toLocaleString()}
                 </td>
-                <td className="py-3 px-4 text-white font-medium">
+                <td className="py-3 px-4 text-text-primary font-medium">
                   {log.admin?.name ?? log.adminId}
                 </td>
                 <td className="py-3 px-4">
-                  <span className="inline-flex items-center text-xs font-medium text-brand bg-brand/10 rounded px-2 py-0.5">
+                  <span className="inline-flex items-center text-xs font-medium text-brand bg-brand/10 rounded px-2 py-0.5 border border-brand/20">
                     {log.action}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-zinc-400 text-xs">
+                <td className="py-3 px-4 text-text-secondary text-xs">
                   {log.targetType} / {log.targetId.slice(0, 8)}...
                 </td>
-                <td className="py-3 px-4 text-zinc-600 text-xs font-mono">
+                <td className="py-3 px-4 text-text-muted text-xs font-mono">
                   {log.ipAddress ?? "-"}
                 </td>
               </tr>
@@ -93,21 +93,21 @@ export default function AdminAuditPage() {
       </div>
 
       {result && result.pages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-6">
+        <div className="flex items-center justify-center gap-4 mt-6 animate-none">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="border border-zinc-700 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-200 text-xs px-4 py-2 rounded-md disabled:opacity-40 transition-colors"
+            className="border border-border-subtle bg-bg-card/40 hover:bg-bg-hover text-text-primary text-xs px-4 py-2 rounded-md disabled:opacity-40 transition-colors cursor-pointer"
           >
             Previous
           </button>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-text-muted">
             Page {page} of {result.pages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(result.pages, p + 1))}
             disabled={page === result.pages}
-            className="border border-zinc-700 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-200 text-xs px-4 py-2 rounded-md disabled:opacity-40 transition-colors"
+            className="border border-border-subtle bg-bg-card/40 hover:bg-bg-hover text-text-primary text-xs px-4 py-2 rounded-md disabled:opacity-40 transition-colors cursor-pointer"
           >
             Next
           </button>

@@ -49,12 +49,12 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full border-r border-zinc-800/80 bg-zinc-950 transition-all duration-300 ease-in-out select-none",
+        "flex flex-col h-full border-r border-border-subtle bg-bg-card transition-all duration-300 ease-in-out select-none",
         collapsed ? "w-[68px]" : "w-64"
       )}
     >
       {/* ─── Header: Logo + Collapse ─── */}
-      <div className="flex items-center h-14 border-b border-zinc-800/80 px-3 shrink-0">
+      <div className="flex items-center h-14 border-b border-border-subtle px-3 shrink-0">
         <div
           className={cn(
             "flex items-center w-full transition-all duration-300",
@@ -73,7 +73,7 @@ export function Sidebar() {
               A
             </div>
             {!collapsed && (
-              <span className="font-semibold text-[15px] text-white tracking-tight transition-opacity duration-200">
+              <span className="font-semibold text-[15px] text-text-primary tracking-tight transition-opacity duration-200">
                 AXIOM
               </span>
             )}
@@ -82,7 +82,7 @@ export function Sidebar() {
           {!collapsed && (
             <button
               onClick={() => setCollapsed(true)}
-              className="flex items-center justify-center h-8 w-8 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-all duration-150 shrink-0"
+              className="flex items-center justify-center h-8 w-8 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-all duration-150 shrink-0"
               title="Collapse sidebar"
             >
               <PanelLeftClose size={18} />
@@ -107,8 +107,8 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 group relative",
                   active
-                    ? "bg-white/[0.08] text-white shadow-sm"
-                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04]",
+                    ? "bg-bg-elevated text-text-primary shadow-sm"
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-hover",
                   collapsed
                     ? "h-10 w-10 justify-center mx-auto"
                     : "h-10 gap-3 px-3"
@@ -119,7 +119,7 @@ export function Sidebar() {
                   strokeWidth={active ? 2 : 1.75}
                   className={cn(
                     "shrink-0 transition-colors",
-                    active ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"
+                    active ? "text-text-primary" : "text-text-muted group-hover:text-text-secondary"
                   )}
                 />
                 {!collapsed && (
@@ -130,7 +130,7 @@ export function Sidebar() {
                 {active && !collapsed && (
                   <ChevronRight
                     size={14}
-                    className="ml-auto text-zinc-600 transition-transform duration-200"
+                    className="ml-auto text-text-muted transition-transform duration-200"
                   />
                 )}
 
@@ -144,15 +144,15 @@ export function Sidebar() {
 
           {user?.role === "ADMIN" && (
             <>
-              <div className="border-t border-zinc-800/40 my-2" />
+              <div className="border-t border-border-subtle/50 my-2" />
               <Link
                 href="/admin/overview"
                 title={collapsed ? "Admin" : undefined}
                 className={cn(
                   "flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 group relative",
                   pathname.startsWith("/admin")
-                    ? "bg-white/[0.08] text-white shadow-sm"
-                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04]",
+                    ? "bg-bg-elevated text-text-primary shadow-sm"
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-hover",
                   collapsed
                     ? "h-10 w-10 justify-center mx-auto"
                     : "h-10 gap-3 px-3"
@@ -163,14 +163,14 @@ export function Sidebar() {
                   strokeWidth={pathname.startsWith("/admin") ? 2 : 1.75}
                   className={cn(
                     "shrink-0 transition-colors",
-                    pathname.startsWith("/admin") ? "text-red-400" : "text-zinc-500 group-hover:text-zinc-300"
+                    pathname.startsWith("/admin") ? "text-red-500" : "text-text-muted group-hover:text-text-secondary"
                   )}
                 />
                 {!collapsed && (
                   <span className="transition-opacity duration-150 truncate">Admin</span>
                 )}
                 {pathname.startsWith("/admin") && !collapsed && (
-                  <ChevronRight size={14} className="ml-auto text-zinc-600" />
+                  <ChevronRight size={14} className="ml-auto text-text-muted" />
                 )}
                 {pathname.startsWith("/admin") && collapsed && (
                   <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-brand rounded-full" />
@@ -184,7 +184,7 @@ export function Sidebar() {
       {/* ─── Footer: User + Logout ─── */}
       <div
         className={cn(
-          "border-t border-zinc-800/80 shrink-0",
+          "border-t border-border-subtle shrink-0",
           collapsed ? "px-2 py-3" : "px-3 py-3"
         )}
       >
@@ -197,17 +197,17 @@ export function Sidebar() {
                 collapsed ? "h-10 w-10 justify-center mx-auto" : "gap-3 px-3 py-1"
               )}
             >
-              <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0">
-                <span className="text-xs font-semibold text-zinc-300 uppercase">
+              <div className="w-8 h-8 rounded-full bg-bg-elevated border border-border-subtle flex items-center justify-center shrink-0">
+                <span className="text-xs font-semibold text-text-primary uppercase">
                   {user.name?.charAt(0) ?? user.email.charAt(0)}
                 </span>
               </div>
               {!collapsed && (
                 <div className="min-w-0 flex flex-col justify-center transition-opacity duration-200">
-                  <p className="text-xs font-semibold text-white truncate leading-none">
+                  <p className="text-xs font-semibold text-text-primary truncate leading-none">
                     {user.name ?? "User"}
                   </p>
-                  <p className="text-[10px] text-zinc-500 truncate leading-none mt-0.5">
+                  <p className="text-[10px] text-text-secondary truncate leading-none mt-0.5">
                     {user.email}
                   </p>
                 </div>
@@ -219,7 +219,7 @@ export function Sidebar() {
             onClick={handleLogout}
             title={collapsed ? "Log out" : undefined}
             className={cn(
-              "flex items-center rounded-lg text-[13px] font-medium text-zinc-500 hover:text-red-400 hover:bg-red-500/[0.08] transition-all duration-150 group cursor-pointer",
+              "flex items-center rounded-lg text-[13px] font-medium text-text-secondary hover:text-red-500 hover:bg-red-500/10 transition-all duration-150 group cursor-pointer",
               collapsed
                 ? "h-10 w-10 justify-center mx-auto"
                 : "h-10 w-full gap-3 px-3"
@@ -229,7 +229,7 @@ export function Sidebar() {
               <LogOut
                 size={18}
                 strokeWidth={1.75}
-                className="text-zinc-500 group-hover:text-red-400 transition-colors"
+                className="text-text-secondary group-hover:text-red-500 transition-colors"
               />
             </span>
             {!collapsed && (

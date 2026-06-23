@@ -15,14 +15,13 @@ interface KPICardsProps {
 }
 
 export function KPICards({ data }: KPICardsProps) {
-  const engagementRate = data.totalUsers > 0 ? Math.round((data.activeUsers / data.totalUsers) * 100) : 0;
   const premiumRate = data.totalUsers > 0 ? Math.round((data.premiumUsers / data.totalUsers) * 100) : 0;
 
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Key Metrics</span>
-        <div className="h-px flex-1 bg-gradient-to-r from-zinc-800/60 to-transparent" />
+        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Key Metrics</span>
+        <div className="h-px flex-1 bg-gradient-to-r from-border-subtle/60 to-transparent" />
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
@@ -31,7 +30,7 @@ export function KPICards({ data }: KPICardsProps) {
           value={formatNumber(data.totalUsers)}
           trend={12}
           trendLabel="↑ 12% vs last month"
-          iconColor="text-blue-400 bg-blue-500/10"
+          iconColor="text-blue-500 bg-blue-500/10"
         />
         <MetricCard
           icon={Crown}
@@ -39,7 +38,7 @@ export function KPICards({ data }: KPICardsProps) {
           value={formatNumber(data.premiumUsers)}
           trend={premiumRate}
           trendLabel={`${premiumRate}% of total users`}
-          iconColor="text-yellow-400 bg-yellow-500/10"
+          iconColor="text-amber-500 bg-amber-500/10"
         />
         <MetricCard
           icon={ClipboardList}
@@ -47,7 +46,7 @@ export function KPICards({ data }: KPICardsProps) {
           value={formatNumber(data.totalApplications)}
           trend={8}
           trendLabel="↑ 8% vs last month"
-          iconColor="text-emerald-400 bg-emerald-500/10"
+          iconColor="text-emerald-500 bg-emerald-500/10"
         />
         <MetricCard
           icon={Briefcase}
@@ -55,7 +54,7 @@ export function KPICards({ data }: KPICardsProps) {
           value={formatNumber(data.totalJobs)}
           trend={-3}
           trendLabel="↓ 3% vs last month"
-          iconColor="text-violet-400 bg-violet-500/10"
+          iconColor="text-violet-500 bg-violet-500/10"
         />
       </div>
     </div>
