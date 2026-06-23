@@ -14,7 +14,6 @@ alembic==1.13.2
 
 # Cache & Queue
 redis==5.0.8
-celery==5.4.0
 kafka-python==2.0.2
 
 # Auth

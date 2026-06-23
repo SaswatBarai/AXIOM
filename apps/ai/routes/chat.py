@@ -57,6 +57,18 @@ async def chat_stream(
     session_id = request.session_id or new_session_id()
 
     async def event_generator():
+        # Daily quota check
+        try:
+            r = await get_redis()
+            today = date.today().isoformat()
+            quota_key = f"chat_quota:{today}"
+            used = await r.incr(quota_key)
+            await r.expire(quota_key, 86400)
+            if used > DAILY_MSG_QUOTA:
+                yield f"data: {json.dumps({'type': 'error', 'message': f'Daily quota of {DAILY_MSG_QUOTA} messages exceeded. Please try again tomorrow.'})}\n\n"
+                return
+        except Exception:
+            logger.warning("Redis unavailable — quota check skipped")
         # First event: session_id so client can persist it
         yield f"data: {json.dumps({'type': 'session_id', 'session_id': session_id})}\n\n"
         try:

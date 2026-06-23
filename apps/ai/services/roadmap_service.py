@@ -9,17 +9,13 @@ from typing import TypedDict
 
 import google.generativeai as genai
 
+from utils.sanitize import sanitize_input
+
 # ── Gemini setup ──────────────────────────────────────────────────────────────
 
 _API_KEY    = os.getenv("GEMINI_API_KEY", "")
 _MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 genai.configure(api_key=_API_KEY)
-
-
-def sanitize_input(text: str, max_len: int = 4000) -> str:
-    """Strip control characters and enforce length to prevent prompt injection."""
-    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
-    return cleaned[:max_len]
 
 
 # ── Types ─────────────────────────────────────────────────────────────────────

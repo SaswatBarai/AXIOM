@@ -1,5 +1,6 @@
 import os
 
+import redis.asyncio as aioredis
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from utils.logger import logger
@@ -36,6 +37,17 @@ def return_connection(conn):
         _get_pool().putconn(conn)
     except Exception:
         conn.close()
+
+_redis: aioredis.Redis | None = None
+
+
+async def get_redis() -> aioredis.Redis:
+    global _redis
+    if _redis is None:
+        redis_url = os.getenv("REDIS_URL", "redis://:dev-redis-pass@redis:6379/0")
+        _redis = aioredis.from_url(redis_url, decode_responses=True)
+    return _redis
+
 
 def parse_vector(vec_str) -> list[float]:
     """Parse postgres vector format '[0.1,0.2,...]' into list of floats."""
