@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import multer from "multer";
+import { logger } from "../utils/logger";
 
 export class AppError extends Error {
   constructor(
@@ -29,6 +30,6 @@ export function errorHandler(
     return res.status(400).json({ error: msg });
   }
 
-  console.error(err);
+  logger.error(err);
   return res.status(500).json({ error: "Internal server error" });
 }

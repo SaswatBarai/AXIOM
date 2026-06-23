@@ -3,12 +3,13 @@ import type { Prisma } from "@axiom/database";
 import axios from "axios";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { logger } from "../utils/logger";
+import { requireEnv } from "../utils/env";
 import type { JobSearchInput, ScrapeRunInput } from "../utils/schemas";
 import { matchJobs } from "./ai.service";
 import { redis } from "./redis.service";
 
 const AI_URL    = process.env.AI_SERVICE_URL    ?? "http://localhost:8000";
-const AI_SECRET = process.env.AI_SERVICE_SECRET ?? "internal-secret";
+const AI_SECRET = requireEnv("AI_SERVICE_SECRET");
 
 const aiClient = axios.create({
   baseURL: AI_URL,
@@ -34,7 +35,7 @@ export async function searchJobs(input: JobSearchInput, userId?: string): Promis
       orderBy: { updatedAt: "desc" },
     });
     if (resume) {
-      const allJobs = await prisma.job.findMany({ where });
+      const allJobs = await prisma.job.findMany({ where, take: 500 });
       if (allJobs.length === 0) {
         return { jobs: [], total: 0, page: input.page, pageSize: input.pageSize };
       }
@@ -297,12 +298,23 @@ export async function getRecommendedJobs(userId: string, limit = 20) {
     return cached;
   }
 
+  // Exclude jobs the user already applied to or saved
+  const existingJobIds = new Set<string>();
+  const [existingApps, existingSaved] = await Promise.all([
+    prisma.application.findMany({ where: { userId }, select: { jobId: true } }),
+    prisma.savedJob.findMany({ where: { userId }, select: { jobId: true } }),
+  ]);
+  existingApps.forEach((a) => existingJobIds.add(a.jobId));
+  existingSaved.forEach((s) => existingJobIds.add(s.jobId));
+
   const matches = await matchJobs(resume.id);
   if (!matches) {
     throw new AppError(500, "Failed to compute job matches from AI service");
   }
 
-  const topMatches = matches.slice(0, limit);
+  const topMatches = matches
+    .filter((m) => !existingJobIds.has(m.job_id))
+    .slice(0, limit);
   const jobIds = topMatches.map((m) => m.job_id);
   const jobs = await prisma.job.findMany({
     where: { id: { in: jobIds } },
@@ -339,6 +351,15 @@ export async function matchSingleJob(userId: string, jobId: string) {
     throw new AppError(404, "Job not found");
   }
 
+  // Check if user already applied or saved this job
+  const [existingApp, existingSaved] = await Promise.all([
+    prisma.application.findUnique({ where: { userId_jobId: { userId, jobId } } }),
+    prisma.savedJob.findUnique({ where: { userId_jobId: { userId, jobId } } }),
+  ]);
+  if (existingApp) {
+    throw new AppError(400, "You have already applied to this job");
+  }
+
   const matches = await matchJobs(resume.id, [jobId]);
   if (!matches || matches.length === 0) {
     throw new AppError(500, "Failed to compute job match from AI service");
@@ -350,5 +371,6 @@ export async function matchSingleJob(userId: string, jobId: string) {
     matchScore: match.score,
     matchedSkills: match.matched_skills,
     missingSkills: match.missing_skills,
+    alreadySaved: !!existingSaved,
   };
 }

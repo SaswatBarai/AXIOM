@@ -3,9 +3,10 @@ import { z } from "zod";
 const password = z
   .string()
   .min(8, "Password must be at least 8 characters")
+  .regex(/[a-z]/, "Password must contain a lowercase letter")
   .regex(/[A-Z]/, "Password must contain an uppercase letter")
   .regex(/[0-9]/, "Password must contain a number")
-  .regex(/[^A-Za-z0-9]/, "Password must contain a special character");
+  .regex(/[!@#$%^&*()_+{}[\]:;<>,.?~\\/-]/, "Password must contain a special character");
 
 export const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(60),
@@ -142,8 +143,8 @@ export const updateApplicationSchema = z.object({
 
 export const listApplicationsSchema = z.object({
   status: z.enum(APPLICATION_STATUSES).optional(),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
+  dateFrom: z.string().datetime({ offset: true }).optional(),
+  dateTo: z.string().datetime({ offset: true }).optional(),
 });
 
 export type CreateApplicationInput = z.infer<typeof createApplicationSchema>;
@@ -234,5 +235,17 @@ export const notificationAlertSchema = z.object({
     remote:   z.boolean().optional(),
   }).default({}),
   frequency: z.enum(["instant", "daily", "weekly"]).default("daily"),
+});
+
+export const updateNotificationAlertSchema = z.object({
+  name:      z.string().min(1).max(100).optional(),
+  filters:   z.object({
+    keywords: z.string().max(200).optional(),
+    location: z.string().max(100).optional(),
+    jobType:  z.string().optional(),
+    remote:   z.boolean().optional(),
+  }).optional(),
+  frequency: z.enum(["instant", "daily", "weekly"]).optional(),
+  active:    z.boolean().optional(),
 });
 

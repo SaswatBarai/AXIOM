@@ -10,7 +10,7 @@ from services.interview_service import ALL_CATEGORIES, CATEGORY_TOPICS, generate
 
 router = APIRouter()
 
-_SECRET = os.getenv("AI_SERVICE_SECRET", "internal-secret")
+_SECRET = os.getenv("AI_SERVICE_SECRET")
 
 
 def _verify(secret: str | None) -> None:
@@ -24,7 +24,7 @@ class GenerateRequest(BaseModel):
     job_title:       str              = Field(..., min_length=1, max_length=200)
     job_description: str              = Field(default="", max_length=8000)
     difficulty:      str              = Field(default="medium", pattern="^(easy|medium|hard)$")
-    sections:        list[str] | None = None
+    sections:        list[str] | None = Field(default=None, max_length=10)
     count:           int              = Field(default=10, ge=1, le=30)
 
 

@@ -11,7 +11,7 @@ const transporter = !resend
   ? nodemailer.createTransport({
       host:   process.env["SMTP_HOST"]     ?? "smtp.ethereal.email",
       port:   Number(process.env["SMTP_PORT"]   ?? 587),
-      secure: process.env["SMTP_SECURE"]   === "true",
+      secure: process.env["SMTP_SECURE"]   !== "false",
       auth: {
         user: process.env["SMTP_USER"]  ?? "",
         pass: process.env["SMTP_PASS"]  ?? "",
@@ -82,6 +82,32 @@ const TEMPLATES: Record<string, (d: TemplateData) => { subject: string; html: st
         <p style="margin-top:24px;color:#6b7280;font-size:12px">
           <a href="${d["unsubscribeUrl"]}" style="color:#6b7280">Unsubscribe from this alert</a>
         </p>
+      </div>`,
+  }),
+
+  "otp-verify": (d) => ({
+    subject: "Verify your AXIOM email address",
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:32px">
+        <h2 style="color:#7c3aed">Verify your email</h2>
+        <p style="color:#374151">Hi ${d["name"]}, use the code below to verify your email address.</p>
+        <div style="text-align:center;margin:24px 0;padding:16px;background:#f5f3ff;border-radius:12px;border:1px solid #e0e7ff">
+          <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#7c3aed">${d["otp"]}</span>
+        </div>
+        <p style="color:#6b7280;font-size:13px">Code expires in 15 minutes. If you didn't create an account, please ignore this email.</p>
+      </div>`,
+  }),
+
+  "otp-reset": (d) => ({
+    subject: "Reset your AXIOM password",
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:32px">
+        <h2 style="color:#7c3aed">Password Reset</h2>
+        <p style="color:#374151">Hi ${d["name"]}, use the code below to reset your password.</p>
+        <div style="text-align:center;margin:24px 0;padding:16px;background:#f5f3ff;border-radius:12px;border:1px solid #e0e7ff">
+          <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#7c3aed">${d["otp"]}</span>
+        </div>
+        <p style="color:#6b7280;font-size:13px">Code expires in 15 minutes. If you didn't request this, please ignore this email.</p>
       </div>`,
   }),
 

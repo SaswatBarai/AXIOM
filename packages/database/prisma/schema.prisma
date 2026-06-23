@@ -203,7 +203,7 @@ model ChatMessage {
 
   createdAt DateTime @default(now())
 
-  @@index([userId, sessionId])
+  @@index([userId, sessionId, createdAt])
   @@map("chat_messages")
 }
 
@@ -222,6 +222,7 @@ model CareerRoadmap {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([userId, targetRole, version])
   @@index([userId])
   @@map("career_roadmaps")
 }
@@ -289,11 +290,12 @@ model AuditLog {
   ipAddress  String?
   userAgent  String?
 
-  admin  User     @relation("AdminAuditLogs", fields: [adminId], references: [id])
+  admin  User     @relation("AdminAuditLogs", fields: [adminId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 
   @@index([adminId])
   @@index([action])
   @@index([targetType, targetId])
+  @@index([createdAt])
   @@map("audit_logs")
 }

@@ -13,6 +13,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages ./packages
+COPY --from=deps /app/pnpm-workspace.yaml /app/package.json /app/pnpm-lock.yaml ./
 COPY apps/api ./apps/api
 RUN pnpm --filter @axiom/database db:generate
 RUN pnpm --filter @axiom/api build

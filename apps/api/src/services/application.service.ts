@@ -1,8 +1,15 @@
-import { prisma } from "@axiom/database";
+import { prisma, Prisma } from "@axiom/database";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { logger } from "../utils/logger";
 import { redis } from "./redis.service";
+import { CacheKey } from "../utils/constants";
 import type { ApplicationStatus } from "@axiom/database";
+
+interface ApplicationStats {
+  counts: Record<ApplicationStatus, number>;
+  successRate: number;
+  avgTimeToInterviewDays: number;
+}
 
 const ALLOWED_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
   SAVED: ["APPLIED", "WITHDRAWN", "REJECTED"],
@@ -53,7 +60,7 @@ export async function createApplication(
   });
 
   // Invalidate stats cache
-  await redis.del(`applications:stats:${userId}`);
+  await redis.del(CacheKey.appStats(userId));
 
   return app;
 }
@@ -62,9 +69,11 @@ export async function listApplications(
   userId: string,
   status?: ApplicationStatus,
   dateFrom?: string,
-  dateTo?: string
+  dateTo?: string,
+  page = 1,
+  pageSize = 20
 ) {
-  const where: any = { userId };
+  const where: Prisma.ApplicationWhereInput = { userId };
 
   if (status) {
     where.status = status;
@@ -76,11 +85,19 @@ export async function listApplications(
     if (dateTo) where.createdAt.lte = new Date(dateTo);
   }
 
-  return prisma.application.findMany({
-    where,
-    include: { job: true },
-    orderBy: { updatedAt: "desc" },
-  });
+  const skip = (page - 1) * pageSize;
+  const [applications, total] = await Promise.all([
+    prisma.application.findMany({
+      where,
+      include: { job: true },
+      orderBy: { updatedAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.application.count({ where }),
+  ]);
+
+  return { applications, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
 export async function getApplication(id: string, userId: string) {
@@ -122,7 +139,7 @@ export async function updateApplication(
     throw new AppError(403, "Forbidden");
   }
 
-  const updateData: any = {};
+  const updateData: Prisma.ApplicationUpdateInput = {};
   if (data.notes !== undefined) updateData.notes = data.notes;
   if (data.coverLetter !== undefined) updateData.coverLetter = data.coverLetter;
 
@@ -145,13 +162,13 @@ export async function updateApplication(
     }
 
     // Parse existing timeline
-    let timelineList: any[] = [];
+    let timelineList: Array<{ status: string; at: string; note?: string }> = [];
     try {
       const rawTimeline = app.timeline;
       if (typeof rawTimeline === "string") {
         timelineList = JSON.parse(rawTimeline) || [];
       } else if (Array.isArray(rawTimeline)) {
-        timelineList = rawTimeline;
+        timelineList = rawTimeline as Array<{ status: string; at: string; note?: string }>;;
       }
     } catch {
       timelineList = [];
@@ -179,7 +196,7 @@ export async function updateApplication(
   });
 
   // Invalidate stats cache
-  await redis.del(`applications:stats:${userId}`);
+  await redis.del(CacheKey.appStats(userId));
 
   return updatedApp;
 }
@@ -200,14 +217,14 @@ export async function deleteApplication(id: string, userId: string) {
   await prisma.application.delete({ where: { id } });
 
   // Invalidate stats cache
-  await redis.del(`applications:stats:${userId}`);
+  await redis.del(CacheKey.appStats(userId));
 
   return { message: "Application deleted successfully", id };
 }
 
 export async function getStats(userId: string) {
-  const cacheKey = `applications:stats:${userId}`;
-  const cached = await redis.getJson<any>(cacheKey);
+  const cacheKey = CacheKey.appStats(userId);
+  const cached = await redis.getJson<ApplicationStats>(cacheKey);
   if (cached) {
     return cached;
   }
@@ -241,12 +258,12 @@ export async function getStats(userId: string) {
   let interviewCount = 0;
 
   apps.forEach((app) => {
-    let timelineList: any[] = [];
+    let timelineList: Array<{ status: string; at: string; note?: string }> = [];
     const rawTimeline = app.timeline;
     if (typeof rawTimeline === "string") {
       try { timelineList = JSON.parse(rawTimeline) || []; } catch { timelineList = []; }
     } else if (Array.isArray(rawTimeline)) {
-      timelineList = rawTimeline;
+      timelineList = rawTimeline as typeof timelineList;
     }
 
     if (Array.isArray(timelineList)) {

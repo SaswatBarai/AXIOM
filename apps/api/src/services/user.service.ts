@@ -1,7 +1,9 @@
 import { prisma } from "@axiom/database";
 import bcrypt from "bcryptjs";
 import { AppError } from "../middleware/errorHandler.middleware";
+import { redis } from "./redis.service";
 import { deleteFromS3, keyFromUrl } from "./s3.service";
+import { CacheKey } from "../utils/constants";
 import type {
   UpdateProfileInput,
   ChangePasswordInput,
@@ -53,7 +55,11 @@ export async function changePassword(userId: string, data: ChangePasswordInput) 
 
   const hashed = await bcrypt.hash(data.newPassword, 10);
   await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
-  return { message: "Password changed successfully" };
+
+  // Invalidate all existing sessions
+  await redis.del(CacheKey.refreshToken(userId));
+
+  return { message: "Password changed successfully. Please log in again." };
 }
 
 export async function deleteAccount(userId: string) {
@@ -82,7 +88,7 @@ export async function exportData(userId: string) {
   });
   if (!user) throw new AppError(404, "User not found");
   // Strip credentials before export
-  const { password: _, googleId: _g, ...safeUser } = user;
+  const { password: _, googleId: _g, chatHistory: _ch, ...safeUser } = user;
   return safeUser;
 }
 

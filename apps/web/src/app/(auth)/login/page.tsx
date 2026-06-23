@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/lib/api";
+import { api, setAccessToken } from "@/lib/api";
 import { setCredentials } from "@/store/authSlice";
 import type { AppDispatch } from "@/store";
 
@@ -36,8 +36,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { data } = await api.post("/auth/login", form);
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      setAccessToken(data.accessToken);
       dispatch(setCredentials({ user: data.user, accessToken: data.accessToken }));
       router.push("/dashboard");
     } catch (err: unknown) {

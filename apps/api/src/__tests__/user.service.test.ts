@@ -11,6 +11,9 @@ vi.mock("@axiom/database", () => ({
       findMany:   vi.fn(),
       count:      vi.fn(),
     },
+    resume: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     userPreferences: {
       findUnique: vi.fn(),
       create:     vi.fn(),
@@ -181,9 +184,6 @@ describe("exportData", () => {
       ...MOCK_USER,
       password: "$2a$10$hash",
       googleId: "google-id-123",
-      refreshToken: "token",
-      resetToken: null,
-      resetTokenExpiry: null,
       preferences: null,
       resumes: [],
       applications: [],
@@ -196,8 +196,7 @@ describe("exportData", () => {
 
     expect(result).not.toHaveProperty("password");
     expect(result).not.toHaveProperty("googleId");
-    expect(result).not.toHaveProperty("refreshToken");
-    expect(result).not.toHaveProperty("resetToken");
+    expect(result).not.toHaveProperty("chatHistory");
     expect(result).toHaveProperty("email");
   });
 

@@ -2,11 +2,22 @@ import { prisma } from "@axiom/database";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { uploadToS3, deleteFromS3, getPresignedUrl, keyFromUrl } from "./s3.service";
 import { parseResume as aiParseResume, analyzeResumeATS } from "./ai.service";
+import { logger } from "../utils/logger";
 import type { ParsedResume } from "@axiom/shared-types";
 import { v4 as uuid } from "uuid";
 
 const ALLOWED_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 const MAX_BYTES     = 5 * 1024 * 1024; // 5 MB
+
+function validateMagicBytes(buffer: Buffer, mimetype: string): boolean {
+  if (mimetype === "application/pdf") {
+    return buffer.length >= 4 && buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+  }
+  if (mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+    return buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4B && buffer[2] === 0x03 && buffer[3] === 0x04;
+  }
+  return false;
+}
 
 export async function uploadResume(
   userId: string,
@@ -18,6 +29,9 @@ export async function uploadResume(
   if (file.size > MAX_BYTES) {
     throw new AppError(413, "File size must be under 5 MB");
   }
+  if (!validateMagicBytes(file.buffer, file.mimetype)) {
+    throw new AppError(415, "File content does not match the expected type");
+  }
 
   const ext      = file.mimetype === "application/pdf" ? "pdf" : "docx";
   const s3Key    = `resumes/${userId}/${uuid()}.${ext}`;
@@ -27,7 +41,7 @@ export async function uploadResume(
   const resume = await prisma.resume.create({
     data: {
       userId,
-      fileName: file.originalname,
+      fileName: file.originalname.replace(/[<>:"/\\|?*]/g, "_").substring(0, 255),
       fileUrl,
       fileType: ext,
       version,
@@ -40,8 +54,10 @@ export async function uploadResume(
     await prisma.resume.update({
       where: { id: resume.id },
       data:  { parsedData: parsed as object },
+    }).catch((err) => {
+      logger.error({ err, resumeId: resume.id }, "Resume parse callback: failed to persist parsed data");
     });
-  }).catch(() => {/* already logged inside aiParseResume */});
+  }).catch((err) => logger.error({ err, resumeId: resume.id }, "Resume parse callback: AI parse failed"));
 
   return resume;
 }

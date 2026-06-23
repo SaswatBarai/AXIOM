@@ -22,6 +22,7 @@ vi.mock("../middleware/auth.middleware", () => ({
     req.userId = "user-1";
     next();
   },
+  assertUserId: (req: any) => req.userId,
 }));
 
 import * as applicationService from "../services/application.service";
@@ -99,7 +100,8 @@ describe("POST /api/applications", () => {
 
 describe("GET /api/applications", () => {
   it("200 — returns applications list", async () => {
-    vi.mocked(applicationService.listApplications).mockResolvedValue([MOCK_APPLICATION] as any);
+    const mockResult = { applications: [MOCK_APPLICATION], total: 1, page: 1, pageSize: 20, totalPages: 1 };
+    vi.mocked(applicationService.listApplications).mockResolvedValue(mockResult as any);
 
     const res = await request(app).get("/api/applications");
 
@@ -109,23 +111,28 @@ describe("GET /api/applications", () => {
       "user-1",
       undefined,
       undefined,
-      undefined
+      undefined,
+      1,
+      20
     );
   });
 
   it("200 — forwards filters", async () => {
-    vi.mocked(applicationService.listApplications).mockResolvedValue([]);
+    const mockResult = { applications: [], total: 0, page: 1, pageSize: 20, totalPages: 0 };
+    vi.mocked(applicationService.listApplications).mockResolvedValue(mockResult as any);
 
     const res = await request(app)
       .get("/api/applications")
-      .query({ status: "APPLIED", dateFrom: "2026-01-01", dateTo: "2026-06-01" });
+      .query({ status: "APPLIED", dateFrom: "2026-01-01T00:00:00.000Z", dateTo: "2026-06-01T00:00:00.000Z" });
 
     expect(res.status).toBe(200);
     expect(applicationService.listApplications).toHaveBeenCalledWith(
       "user-1",
       "APPLIED",
-      "2026-01-01",
-      "2026-06-01"
+      "2026-01-01T00:00:00.000Z",
+      "2026-06-01T00:00:00.000Z",
+      1,
+      20
     );
   });
 

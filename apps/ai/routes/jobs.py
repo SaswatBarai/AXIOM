@@ -23,7 +23,7 @@ from utils.logger import logger
 
 router = APIRouter()
 
-AI_SECRET = os.getenv("AI_SERVICE_SECRET", "internal-secret")
+AI_SECRET = os.getenv("AI_SERVICE_SECRET")
 
 # Per-source kill switches — set SCRAPER_<SOURCE>_ENABLED=false to disable
 _SOURCE_ENABLED: dict[str, bool] = {

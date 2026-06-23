@@ -12,6 +12,7 @@ vi.mock("@axiom/database", () => ({
       update: vi.fn(),
       delete: vi.fn(),
       count: vi.fn(),
+      aggregate: vi.fn().mockResolvedValue({ _max: { version: null } }),
     },
   },
 }));
@@ -58,7 +59,7 @@ const makePdfFile = (sizeBytes = 1024): Express.Multer.File =>
     fieldname: "resume",
     originalname: "cv.pdf",
     mimetype: "application/pdf",
-    buffer: Buffer.alloc(sizeBytes),
+    buffer: Buffer.concat([Buffer.from("%PDF-1.4\n"), Buffer.alloc(Math.max(0, sizeBytes - 9), "x")]),
     size: sizeBytes,
   } as Express.Multer.File);
 
@@ -83,7 +84,7 @@ describe("uploadResume", () => {
   });
 
   it("increments version based on existing resume count", async () => {
-    vi.mocked(prisma.resume.count).mockResolvedValue(3);
+    vi.mocked(prisma.resume.aggregate).mockResolvedValue({ _max: { version: 3 } } as never);
     vi.mocked(prisma.resume.create).mockResolvedValue({ ...MOCK_RESUME, version: 4 } as never);
 
     await uploadResume("user-1", makePdfFile());
@@ -110,8 +111,9 @@ describe("uploadResume", () => {
       ...makePdfFile(),
       mimetype: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       originalname: "cv.docx",
+      buffer: Buffer.concat([Buffer.from("PK\u0003\u0004"), Buffer.alloc(1016, "x")]),
     } as Express.Multer.File;
-    vi.mocked(prisma.resume.count).mockResolvedValue(0);
+    vi.mocked(prisma.resume.aggregate).mockResolvedValue({ _max: { version: null } } as never);
     vi.mocked(prisma.resume.create).mockResolvedValue({ ...MOCK_RESUME, fileType: "docx" } as never);
 
     await uploadResume("user-1", docx);

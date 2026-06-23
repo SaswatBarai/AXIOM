@@ -46,11 +46,17 @@ export function useResume() {
   }
 
   async function deleteResume(id: string) {
-    await api.delete(`/resumes/${id}`);
+    const prev = resumes;
     dispatch(setResumes(resumes.filter((r) => r.id !== id)));
-    if (activeResume?.id === id) {
-      const next = resumes.find((r) => r.id !== id);
-      if (next) dispatch(setActiveResume(next));
+    try {
+      await api.delete(`/resumes/${id}`);
+      if (activeResume?.id === id) {
+        const next = prev.find((r) => r.id !== id);
+        if (next) dispatch(setActiveResume(next));
+      }
+    } catch {
+      dispatch(setResumes(prev));
+      setError("Failed to delete resume");
     }
   }
 

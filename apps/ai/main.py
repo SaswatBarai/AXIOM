@@ -13,6 +13,14 @@ from utils.logger import logger
 
 from services.embedding import preload_model
 
+# Fail fast if internal secret is not set
+_AI_SERVICE_SECRET = os.getenv("AI_SERVICE_SECRET")
+if not _AI_SERVICE_SECRET:
+    msg = "CRITICAL: AI_SERVICE_SECRET environment variable is not set"
+    logger.error(msg)
+    raise RuntimeError(msg)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("AXIOM AI service starting up")

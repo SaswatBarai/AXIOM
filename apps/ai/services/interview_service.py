@@ -15,6 +15,13 @@ _API_KEY    = os.getenv("GEMINI_API_KEY", "")
 _MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 genai.configure(api_key=_API_KEY)
 
+
+def sanitize_input(text: str, max_len: int = 4000) -> str:
+    """Strip control characters and enforce length to prevent prompt injection."""
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+    return cleaned[:max_len]
+
+
 # ── Types ─────────────────────────────────────────────────────────────────────
 
 Difficulty = Literal["easy", "medium", "hard"]
@@ -152,11 +159,9 @@ def build_prompt(
     )
     diff_example = _DIFF_EXAMPLES.get(difficulty, "")
     return textwrap.dedent(f"""
-        {_SYSTEM}
-
-        Job Title: {job_title}
+        Job Title: {sanitize_input(job_title, 200)}
         Job Description (excerpt):
-        {job_description[:1200]}
+        {sanitize_input(job_description, 1200)}
 
         Difficulty level: {difficulty} ({diff_example})
 
@@ -201,7 +206,7 @@ def generate_questions(
     count          = max(1, min(count, 30))
     section_counts = _resolve_sections(sections, job_title, count)
     prompt         = build_prompt(job_title, job_description, difficulty, section_counts)
-    model          = genai.GenerativeModel(_MODEL_NAME)
+    model          = genai.GenerativeModel(_MODEL_NAME, system_instruction=_SYSTEM)
     config         = genai.types.GenerationConfig(temperature=0.7, max_output_tokens=2000)
 
     last_err: Exception | None = None

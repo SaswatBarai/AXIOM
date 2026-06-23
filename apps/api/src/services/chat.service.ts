@@ -3,11 +3,12 @@ import { prisma } from "@axiom/database";
 import { redis } from "./redis.service";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { logger } from "../utils/logger";
+import { requireEnv } from "../utils/env";
 import type { IncomingMessage } from "http";
 import type { Response } from "express";
 
 const AI_URL    = process.env.AI_SERVICE_URL    ?? "http://localhost:8000";
-const AI_SECRET = process.env.AI_SERVICE_SECRET ?? "internal-secret";
+const AI_SECRET = requireEnv("AI_SERVICE_SECRET");
 
 // 20 msg/hour free tier; override with env var for pro
 const HOURLY_QUOTA = process.env.NODE_ENV === "development"
@@ -71,15 +72,16 @@ export async function deleteSession(userId: string, sessionId: string): Promise<
 
 async function persistMessage(userId: string, sessionId: string, role: string, content: string) {
   await prisma.chatMessage.create({ data: { userId, sessionId, role, content } });
-  // Cap history at MAX_HISTORY by deleting oldest
-  const count = await prisma.chatMessage.count({ where: { userId, sessionId } });
-  if (count > MAX_HISTORY) {
-    const oldest = await prisma.chatMessage.findFirst({
-      where: { userId, sessionId },
-      orderBy: { createdAt: "asc" },
-    });
-    if (oldest) await prisma.chatMessage.delete({ where: { id: oldest.id } });
-  }
+  // Keep only the MAX_HISTORY most recent messages
+  const idsToKeep = await prisma.chatMessage.findMany({
+    where: { userId, sessionId },
+    orderBy: { createdAt: "desc" },
+    take: MAX_HISTORY,
+    select: { id: true },
+  });
+  await prisma.chatMessage.deleteMany({
+    where: { userId, sessionId, id: { notIn: idsToKeep.map((m) => m.id) } },
+  });
 }
 
 // ── Proxy SSE stream to client ────────────────────────────────────────────────

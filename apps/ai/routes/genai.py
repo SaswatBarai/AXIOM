@@ -13,7 +13,7 @@ from utils.logger import logger
 
 router = APIRouter()
 
-_SECRET = os.getenv("AI_SERVICE_SECRET", "internal-secret")
+_SECRET = os.getenv("AI_SERVICE_SECRET")
 
 
 def _verify(secret: str) -> None:
@@ -25,17 +25,17 @@ def _verify(secret: str) -> None:
 
 class GenerateRequest(BaseModel):
     parsed_resume:   dict[str, Any]
-    job_description: str = Field(..., min_length=10)
-    company_name:    str = Field(..., min_length=1)
-    job_title:       str = Field(..., min_length=1)
+    job_description: str = Field(..., min_length=10, max_length=8000)
+    company_name:    str = Field(..., min_length=1, max_length=200)
+    job_title:       str = Field(..., min_length=1, max_length=200)
     tone:            Literal["formal", "friendly", "direct"] = "formal"
 
 
 class ExportRequest(BaseModel):
-    letter_body:    str = Field(..., min_length=10)
-    candidate_name: str = Field(default="Candidate")
-    job_title:      str = Field(default="")
-    company_name:   str = Field(default="")
+    letter_body:    str = Field(..., min_length=10, max_length=10000)
+    candidate_name: str = Field(default="Candidate", max_length=200)
+    job_title:      str = Field(default="", max_length=200)
+    company_name:   str = Field(default="", max_length=200)
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────

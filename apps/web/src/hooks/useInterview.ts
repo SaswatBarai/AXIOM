@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 
 export type Difficulty = "easy" | "medium" | "hard";
@@ -34,6 +34,13 @@ export function useInterview() {
   const [marks, setMarks]           = useState<Record<number, Mark>>({});
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState<string | null>(null);
+  const marksRef = useRef(marks);
+  marksRef.current = marks;
+  useEffect(() => {
+    if (sessionId && Object.keys(marks).length > 0) {
+      persistMarks(sessionId, marks);
+    }
+  }, [marks, sessionId]);
 
   const generate = useCallback(async (
     jobTitle:       string,
@@ -108,17 +115,12 @@ export function useInterview() {
   }, []);
 
   const setMark = useCallback((idx: number, mark: Mark) => {
-    setMarks((prev) => {
-      const updated = { ...prev, [idx]: mark };
-      if (sessionId) persistMarks(sessionId, updated);
-      return updated;
-    });
-  }, [sessionId, persistMarks]);
+    setMarks((prev) => ({ ...prev, [idx]: mark }));
+  }, []);
 
   const resetMarks = useCallback(() => {
     setMarks({});
-    if (sessionId) persistMarks(sessionId, {});
-  }, [sessionId, persistMarks]);
+  }, []);
 
   const deleteSession = useCallback(async (id: string) => {
     try {

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate.middleware";
+import { rateLimit } from "../middleware/rateLimit.middleware";
 import { coverLetterGenerateSchema, coverLetterExportSchema, coverLetterSaveSchema } from "../utils/schemas";
 import {
   generateHandler,
@@ -12,10 +13,10 @@ import {
 
 const router = Router();
 
-router.post("/:applicationId/generate", requireAuth, validate(coverLetterGenerateSchema), generateHandler);
+router.post("/:applicationId/generate", requireAuth, rateLimit(10, 1), validate(coverLetterGenerateSchema), generateHandler);
 router.get("/:applicationId",           requireAuth, getSavedHandler);
 router.put("/:applicationId",           requireAuth, validate(coverLetterSaveSchema), saveHandler);
-router.post("/export/pdf",              requireAuth, validate(coverLetterExportSchema), exportPdfHandler);
-router.post("/export/docx",             requireAuth, validate(coverLetterExportSchema), exportDocxHandler);
+router.post("/export/pdf",              requireAuth, rateLimit(10, 1), validate(coverLetterExportSchema), exportPdfHandler);
+router.post("/export/docx",             requireAuth, rateLimit(10, 1), validate(coverLetterExportSchema), exportDocxHandler);
 
 export default router;

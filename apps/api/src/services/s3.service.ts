@@ -62,10 +62,19 @@ export async function getPresignedUrl(key: string, expiresIn = 3600): Promise<st
 
 /** Extract the S3 key from a stored file URL */
 export function keyFromUrl(url: string): string {
-  if (ENDPOINT) {
-    // http://localhost:9000/axiom-resumes/resumes/uid/file.pdf → resumes/uid/file.pdf
-    return url.split(`/${BUCKET}/`)[1] ?? url;
+  try {
+    const parsed = new URL(url);
+    const prefix = `/${BUCKET}/`;
+    if (parsed.pathname.startsWith(prefix)) {
+      return parsed.pathname.slice(prefix.length);
+    }
+  } catch {
+    // fall through to fallback
   }
-  // https://axiom-resumes.s3.amazonaws.com/resumes/uid/file.pdf → resumes/uid/file.pdf
-  return url.split(".amazonaws.com/")[1] ?? url;
+  // Legacy fallback for non-URL-parseable paths
+  const idx = url.indexOf(`/${BUCKET}/`);
+  if (idx !== -1) return url.slice(idx + BUCKET.length + 2);
+  const amazonIdx = url.indexOf(".amazonaws.com/");
+  if (amazonIdx !== -1) return url.slice(amazonIdx + ".amazonaws.com/".length);
+  return url;
 }

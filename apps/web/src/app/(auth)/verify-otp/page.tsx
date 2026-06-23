@@ -76,7 +76,8 @@ function VerifyOtpForm() {
     setLoading(true);
     try {
       if (mode === "reset") {
-        router.push(`/reset-password?email=${encodeURIComponent(email)}&otp=${otp}`);
+        sessionStorage.setItem("resetOtp", otp);
+        router.push(`/reset-password?email=${encodeURIComponent(email)}`);
       } else {
         await api.post("/auth/verify-email", { email, otp });
         setSuccess(true);

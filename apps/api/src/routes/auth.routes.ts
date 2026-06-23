@@ -20,24 +20,40 @@ import {
   resetPasswordSchema,
   refreshSchema,
 } from "../utils/schemas";
+import { RATE_LIMIT } from "../utils/constants";
 
 const router: IRouter = Router();
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === "development" ? 1000 : 5,
-  message: { error: "Too many attempts, please try again in 15 minutes." },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+function mkLimiter(max: number, msg: string, keyFn?: (req: any) => string) {
+  return rateLimit({
+    windowMs: RATE_LIMIT.AUTH_WINDOW_MS,
+    max: process.env.NODE_ENV === "development" ? 1000 : max,
+    message: { error: msg },
+    standardHeaders: true,
+    legacyHeaders: false,
+    ...(keyFn ? { keyGenerator: keyFn } : {}),
+  });
+}
+
+const authLimiter = mkLimiter(RATE_LIMIT.AUTH_MAX, "Too many attempts, please try again in 15 minutes.");
+const loginLimiter = mkLimiter(
+  RATE_LIMIT.AUTH_MAX,
+  "Too many login attempts for this account.",
+  (req) => req.body?.email ?? req.ip,
+);
+const emailLimiter = mkLimiter(
+  RATE_LIMIT.AUTH_MAX,
+  "Too many attempts for this account. Please try again later.",
+  (req) => req.body?.email ?? req.ip,
+);
 
 router.post("/register",        authLimiter, validate(registerSchema),       registerHandler);
-router.post("/verify-email",    authLimiter, validate(verifyEmailSchema),     verifyEmailHandler);
-router.post("/login",           authLimiter, validate(loginSchema),           loginHandler);
+router.post("/verify-email",    emailLimiter, validate(verifyEmailSchema),     verifyEmailHandler);
+router.post("/login",           loginLimiter, validate(loginSchema),           loginHandler);
 router.post("/refresh",        authLimiter,  validate(refreshSchema),          refreshHandler);
-router.post("/logout",                       requireAuth,                      logoutHandler);
-router.post("/forgot-password", authLimiter, validate(forgotPasswordSchema),  forgotPasswordHandler);
-router.post("/reset-password",  authLimiter, validate(resetPasswordSchema),   resetPasswordHandler);
-router.get( "/me",                           requireAuth,                      meHandler);
+router.post("/logout",         authLimiter,  requireAuth,                      logoutHandler);
+router.post("/forgot-password", emailLimiter, validate(forgotPasswordSchema),  forgotPasswordHandler);
+router.post("/reset-password",  emailLimiter, validate(resetPasswordSchema),   resetPasswordHandler);
+router.get( "/me",             authLimiter,  requireAuth,                      meHandler);
 
 export default router;

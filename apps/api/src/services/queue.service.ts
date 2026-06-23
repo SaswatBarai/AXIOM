@@ -130,25 +130,29 @@ export async function dispatchJobAlerts(jobId: string, jobTitle: string, jobLoca
       const kw = filters.keywords.toLowerCase();
       if (!jobTitle.toLowerCase().includes(kw) && !jobLocation.toLowerCase().includes(kw)) continue;
     }
-    if (alert.frequency === "daily" && alert.lastSentAt) {
-      if (alert.lastSentAt.toDateString() === now.toDateString()) continue;
-    }
-    await enqueueEmail({
-      to:       alert.user.email,
-      template: "job-alert",
-      data: {
-        name:           alert.user.name ?? "there",
-        alertName:      alert.name,
-        count:          1,
-        url:            `${process.env["FRONTEND_URL"] ?? "http://localhost:3000"}/dashboard/jobs`,
-        unsubscribeUrl: `${process.env["FRONTEND_URL"] ?? "http://localhost:3000"}/dashboard/settings`,
-      },
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.jobAlert.findUnique({ where: { id: alert.id } });
+      if (!current) return;
+      if (current.frequency === "daily" && current.lastSentAt) {
+        if (current.lastSentAt.toDateString() === now.toDateString()) return;
+      }
+      await enqueueEmail({
+        to:       alert.user.email,
+        template: "job-alert",
+        data: {
+          name:           alert.user.name ?? "there",
+          alertName:      alert.name,
+          count:          1,
+          url:            `${process.env["FRONTEND_URL"] ?? "http://localhost:3000"}/dashboard/jobs`,
+          unsubscribeUrl: `${process.env["FRONTEND_URL"] ?? "http://localhost:3000"}/dashboard/settings`,
+        },
+      });
+      await enqueueNotification({
+        userId:  alert.user.id,
+        type:    "JOB_ALERT",
+        payload: { jobId, jobTitle, alertId: alert.id, alertName: alert.name },
+      });
+      await tx.jobAlert.update({ where: { id: alert.id }, data: { lastSentAt: now } });
     });
-    await enqueueNotification({
-      userId:  alert.user.id,
-      type:    "JOB_ALERT",
-      payload: { jobId, jobTitle, alertId: alert.id, alertName: alert.name },
-    });
-    await prisma.jobAlert.update({ where: { id: alert.id }, data: { lastSentAt: now } });
   }
 }

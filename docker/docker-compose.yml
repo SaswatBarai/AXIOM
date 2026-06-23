@@ -91,7 +91,7 @@ services:
       /bin/sh -c "
         mc alias set local http://minio:9000 minioadmin minioadmin &&
         mc mb --ignore-existing local/axiom-resumes &&
-        mc anonymous set download local/axiom-resumes
+        mc anonymous set private local/axiom-resumes
       "
 
   # ── Elasticsearch ─────────────────────────────────────────
@@ -112,6 +112,116 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  # ── DB Migrate (runs migrations before API starts) ────────
+  db-migrate:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    container_name: axiom-db-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://axiom_user:axiom_pass@postgres:5432/axiom
+    command: npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma
+
+  # ── AI service ────────────────────────────────────────────
+  ai:
+    build:
+      context: ..
+      dockerfile: apps/ai/Dockerfile
+    container_name: axiom-ai
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://axiom_user:axiom_pass@postgres:5432/axiom
+      - REDIS_URL=redis://redis:6379/0
+      - KAFKA_BROKERS=kafka:9092
+      - GEMINI_API_KEY=placeholder
+      - GEMINI_MODEL=gemini-2.5-flash-lite
+      - OPENAI_API_KEY=your_openai_key
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
+      - AWS_S3_BUCKET=axiom-resumes
+      - JWT_SECRET_KEY=dev_jwt_secret_change_in_production
+      - AI_SERVICE_PORT=8000
+      - AI_SERVICE_SECRET=dev-ai-secret-change-in-production
+    ports:
+      - "8000:8000"
+
+  # ── API (Backend) ─────────────────────────────────────────
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    container_name: axiom-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      db-migrate:
+        condition: service_completed_successfully
+    environment:
+      - DATABASE_URL=postgresql://axiom_user:axiom_pass@postgres:5432/axiom
+      - REDIS_URL=redis://redis:6379/0
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET_KEY=dev_jwt_secret_change_in_production
+      - JWT_REFRESH_SECRET=dev_jwt_refresh_secret_change_in_production
+      - JWT_EXPIRY=7d
+      - S3_ENDPOINT=http://minio:9000
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
+      - AWS_S3_BUCKET=axiom-resumes
+      - NODE_ENV=development
+      - API_PORT=4000
+      - FRONTEND_URL=http://web:3000
+      - AI_SERVICE_URL=http://ai:8000
+      - AI_SERVICE_SECRET=dev-ai-secret-change-in-production
+      - KAFKA_ENABLED=false
+      - EMAIL_FROM=AXIOM <noreply@axiom.dev>
+    ports:
+      - "4000:4000"
+
+  # ── Web (Frontend) ────────────────────────────────────────
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    container_name: axiom-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - API_URL=http://api:4000
+    ports:
+      - "3000:3000"
+
+  # ── Nginx Reverse Proxy ───────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: axiom-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - web
+      - api
+      - ai
 
 volumes:
   postgres_data:

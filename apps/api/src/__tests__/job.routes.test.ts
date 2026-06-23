@@ -29,6 +29,7 @@ vi.mock("../middleware/auth.middleware", () => ({
     }
     next();
   },
+  assertUserId: (req: any) => req.userId,
 }));
 
 import * as jobService from "../services/job.service";

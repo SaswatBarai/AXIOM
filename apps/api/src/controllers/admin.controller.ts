@@ -1,5 +1,6 @@
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware";
+import { assertUserId } from "../middleware/auth.middleware";
 import * as adminService from "../services/admin.service";
 import { auditLog } from "../services/admin.service";
 import { listUsers } from "../services/user.service";
@@ -30,8 +31,8 @@ export async function changeRoleHandler(req: AuthRequest, res: Response, next: N
   try {
     const id = param(req, "id");
     const beforeUser = await adminService.getUserById(id);
-    const user = await adminService.updateUserRole(id, req.body.role, req.userId!);
-    await auditLog(req.userId!, "CHANGE_ROLE", "USER", id, { role: beforeUser.role }, { role: user.role }, req);
+    const user = await adminService.updateUserRole(id, req.body.role, assertUserId(req));
+    await auditLog(assertUserId(req), "CHANGE_ROLE", "USER", id, { role: beforeUser.role }, { role: user.role }, req);
     res.json({ user });
   } catch (err) { next(err); }
 }
@@ -40,7 +41,7 @@ export async function suspendUserHandler(req: AuthRequest, res: Response, next: 
   try {
     const id = param(req, "id");
     const user = await adminService.suspendUser(id);
-    await auditLog(req.userId!, "SUSPEND_USER", "USER", id, { suspendedAt: null }, { suspendedAt: user.suspendedAt }, req);
+    await auditLog(assertUserId(req), "SUSPEND_USER", "USER", id, { suspendedAt: null }, { suspendedAt: user.suspendedAt }, req);
     res.json({ user });
   } catch (err) { next(err); }
 }
@@ -48,8 +49,9 @@ export async function suspendUserHandler(req: AuthRequest, res: Response, next: 
 export async function unsuspendUserHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const id = param(req, "id");
+    const beforeUser = await adminService.getUserById(id);
     const user = await adminService.unsuspendUser(id);
-    await auditLog(req.userId!, "UNSUSPEND_USER", "USER", id, { suspendedAt: new Date() }, { suspendedAt: null }, req);
+    await auditLog(assertUserId(req), "UNSUSPEND_USER", "USER", id, { suspendedAt: beforeUser.suspendedAt }, { suspendedAt: null }, req);
     res.json({ user });
   } catch (err) { next(err); }
 }
@@ -58,8 +60,8 @@ export async function deleteUserHandler(req: AuthRequest, res: Response, next: N
   try {
     const id = param(req, "id");
     const beforeUser = await adminService.getUserById(id);
-    await adminService.deleteUser(id, req.userId!);
-    await auditLog(req.userId!, "DELETE_USER", "USER", id, beforeUser, null, req);
+    await adminService.deleteUser(id, assertUserId(req));
+    await auditLog(assertUserId(req), "DELETE_USER", "USER", id, beforeUser, null, req);
     res.json({ success: true });
   } catch (err) { next(err); }
 }

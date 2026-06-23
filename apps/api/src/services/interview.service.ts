@@ -3,9 +3,10 @@ import { prisma } from "@axiom/database";
 import { redis } from "./redis.service";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { logger } from "../utils/logger";
+import { requireEnv } from "../utils/env";
 
 const AI_URL    = process.env.AI_SERVICE_URL    ?? "http://localhost:8000";
-const AI_SECRET = process.env.AI_SERVICE_SECRET ?? "internal-secret";
+const AI_SECRET = requireEnv("AI_SERVICE_SECRET");
 const CACHE_TTL = 3_600; // 1h — questions are deterministic per (title+difficulty+sections)
 
 const aiClient = axios.create({

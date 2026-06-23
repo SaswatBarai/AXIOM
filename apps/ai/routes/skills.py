@@ -8,7 +8,7 @@ from utils.logger import logger
 
 router = APIRouter()
 
-AI_SECRET = os.getenv("AI_SERVICE_SECRET", "internal-secret")
+AI_SECRET = os.getenv("AI_SERVICE_SECRET")
 
 
 def _check_secret(secret: str) -> None:

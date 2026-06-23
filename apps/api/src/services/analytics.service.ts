@@ -41,6 +41,10 @@ export interface FunnelStage {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function dateWhere(days: number) {
   if (days === 0) return {};
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -60,7 +64,7 @@ export async function getOverview(
 ): Promise<OverviewData> {
   const cacheKey = `analytics:overview:${userId}:${days}`;
   const cached   = await redis.get(cacheKey);
-  if (cached) return JSON.parse(cached) as OverviewData;
+  if (cached) { const v = JSON.parse(cached); if (!isRecord(v)) throw new Error("Invalid cache: overview"); return v as unknown as OverviewData; }
 
   const where = { userId, ...dateWhere(days) };
 
@@ -148,7 +152,7 @@ export async function getApplicationsMonthly(
 export async function getSkillsDemand(userId: string): Promise<SkillDemandPoint[]> {
   const cacheKey = `analytics:skills:global`;
   const cached   = await redis.get(cacheKey);
-  if (cached) return JSON.parse(cached) as SkillDemandPoint[];
+  if (cached) { const v = JSON.parse(cached); if (!Array.isArray(v)) throw new Error("Invalid cache: skills demand"); return v as unknown as SkillDemandPoint[]; }
 
   type Row = { skill: string; count: bigint };
   const rows = await prisma.$queryRaw<Row[]>`

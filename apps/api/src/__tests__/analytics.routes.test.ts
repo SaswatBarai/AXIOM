@@ -18,6 +18,7 @@ vi.mock("../middleware/auth.middleware", () => ({
     req.userId = "user-1";
     next();
   },
+  assertUserId: (req: any) => req.userId,
 }));
 
 import * as analyticsService from "../services/analytics.service";

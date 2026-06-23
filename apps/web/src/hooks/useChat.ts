@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -40,6 +40,7 @@ export function useChat() {
     // Append empty assistant bubble (will stream into it)
     setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
 
+    abortRef.current?.abort();
     abortRef.current = new AbortController();
 
     try {
@@ -164,6 +165,11 @@ export function useChat() {
       }
       return updated;
     });
+  }, []);
+
+  // Abort on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
   }, []);
 
   return {

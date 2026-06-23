@@ -14,6 +14,7 @@ vi.mock("../middleware/auth.middleware", () => ({
     req.userId = "user-1";
     next();
   },
+  assertUserId: (req: any) => req.userId,
 }));
 
 import * as skillService from "../services/skill.service";

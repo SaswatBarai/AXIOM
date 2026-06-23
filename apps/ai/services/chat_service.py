@@ -15,6 +15,12 @@ genai.configure(api_key=_API_KEY)
 
 _MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
+
+def sanitize_input(text: str, max_len: int = 4000) -> str:
+    """Strip control characters and enforce length to prevent prompt injection."""
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+    return cleaned[:max_len]
+
 # ── PII patterns ──────────────────────────────────────────────────────────────
 
 _PII_PATTERNS = [
@@ -95,6 +101,8 @@ async def stream_chat(
     saved_jobs: list[dict] | None = None,
 ) -> AsyncGenerator[str, None]:
     """Yields text chunks as they arrive from Gemini."""
+    safe_msg = sanitize_input(message)
+
     context_parts: list[str] = []
     if resume_parsed:
         ctx = _build_resume_context(resume_parsed)
@@ -108,14 +116,14 @@ async def stream_chat(
         context_parts.append(f"[Conversation so far]\n{_build_history_text(history)}")
 
     context_block = "\n\n".join(context_parts)
-    full_prompt = (
-        f"{_SYSTEM_PROMPT}\n\n{context_block}\n\nUser: {message}\nAssistant:"
+    user_content = (
+        f"{context_block}\n\nUser: {safe_msg}\nAssistant:"
         if context_block
-        else f"{_SYSTEM_PROMPT}\n\nUser: {message}\nAssistant:"
+        else f"User: {safe_msg}\nAssistant:"
     )
 
-    model = genai.GenerativeModel(_MODEL_NAME)
-    response = model.generate_content(full_prompt, stream=True)
+    model = genai.GenerativeModel(_MODEL_NAME, system_instruction=_SYSTEM_PROMPT)
+    response = model.generate_content(user_content, stream=True)
     for chunk in response:
         text = chunk.text if hasattr(chunk, "text") else ""
         if text:
@@ -124,16 +132,17 @@ async def stream_chat(
 
 async def get_session_title(first_message: str) -> str:
     """Generate a short session title from the first user message."""
+    safe_msg = sanitize_input(first_message, 500)
     model = genai.GenerativeModel(_MODEL_NAME)
     prompt = (
-        f"Summarize the following career question in 4-6 words as a chat session title. "
-        f"Return only the title, no punctuation.\n\nQuestion: {first_message}"
+        "Summarize the following career question in 4-6 words as a chat session title. "
+        "Return only the title, no punctuation.\n\nQuestion: " + safe_msg
     )
     try:
         resp = model.generate_content(prompt)
         return resp.text.strip()[:80]
     except Exception:
-        return first_message[:60]
+        return safe_msg[:60]
 
 
 def new_session_id() -> str:

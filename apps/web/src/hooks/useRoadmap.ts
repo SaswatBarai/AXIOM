@@ -114,8 +114,7 @@ export function useRoadmap() {
       setCurrent((prev) => prev ? { ...prev, progress: data.progress } : prev);
       setStats(data.stats);
     } catch {
-      // Revert on failure
-      setCurrent(current);
+      setCurrent((prev) => prev ? { ...prev, progress: current.progress } : prev);
       setStats(computeStats(current));
       setError("Failed to save progress");
     }

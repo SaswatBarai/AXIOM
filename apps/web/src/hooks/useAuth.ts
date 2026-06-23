@@ -4,7 +4,7 @@ import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 import { setCredentials, clearCredentials, setLoading } from "@/store/authSlice";
-import { api } from "@/lib/api";
+import { api, setAccessToken } from "@/lib/api";
 
 export function useAuth() {
   const dispatch = useDispatch<AppDispatch>();
@@ -13,37 +13,24 @@ export function useAuth() {
   );
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-    if (!token) {
-      dispatch(setLoading(false));
-      return;
-    }
     if (isAuthenticated) {
       dispatch(setLoading(false));
       return;
     }
     api
-      .get("/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+      .get("/auth/me", { withCredentials: true })
       .then(({ data }) => {
-        dispatch(setCredentials({ user: data.user, accessToken: token }));
+        dispatch(setCredentials({ user: data.user, accessToken: "" }));
       })
       .catch(() => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        setAccessToken(null);
         dispatch(clearCredentials());
       });
   }, [dispatch, isAuthenticated]);
 
-  function logout() {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      api
-        .post("/auth/logout", {}, { headers: { Authorization: `Bearer ${token}` } })
-        .catch(() => {});
-    }
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    dispatch(clearCredentials());
+  async function logout() {
+    try { await api.post("/auth/logout", {}, { withCredentials: true }); }
+    finally { setAccessToken(null); dispatch(clearCredentials()); }
   }
 
   return { user, accessToken, isAuthenticated, isLoading, logout };

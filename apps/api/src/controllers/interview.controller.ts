@@ -1,5 +1,6 @@
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware";
+import { assertUserId } from "../middleware/auth.middleware";
 import {
   generateInterviewQuestions,
   listSessions,
@@ -11,7 +12,7 @@ import {
 
 export async function generateHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const userId = req.userId!;
+    const userId = assertUserId(req);
     const { jobTitle, jobDescription = "", difficulty = "medium", sections = [], count = 10 } = req.body as {
       jobTitle:        string;
       jobDescription?: string;
@@ -37,7 +38,7 @@ export async function generateHandler(req: AuthRequest, res: Response, next: Nex
 
 export async function listSessionsHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const sessions = await listSessions(req.userId!);
+    const sessions = await listSessions(assertUserId(req));
     res.json({ sessions });
   } catch (err) {
     next(err);
@@ -46,7 +47,7 @@ export async function listSessionsHandler(req: AuthRequest, res: Response, next:
 
 export async function getSessionHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const session = await getSession(req.userId!, req.params["sessionId"] as string);
+    const session = await getSession(assertUserId(req), req.params["sessionId"] as string);
     res.json({ session });
   } catch (err) {
     next(err);
@@ -55,7 +56,7 @@ export async function getSessionHandler(req: AuthRequest, res: Response, next: N
 
 export async function deleteSessionHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    await deleteSession(req.userId!, req.params["sessionId"] as string);
+    await deleteSession(assertUserId(req), req.params["sessionId"] as string);
     res.json({ success: true });
   } catch (err) {
     next(err);
@@ -65,7 +66,7 @@ export async function deleteSessionHandler(req: AuthRequest, res: Response, next
 export async function saveMarksHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const result = await saveMarks(
-      req.userId!,
+      assertUserId(req),
       req.params["sessionId"] as string,
       req.body.marks as Record<string, "correct" | "review" | null>,
     );

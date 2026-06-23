@@ -1,9 +1,10 @@
 import axios from "axios";
 import type { ParsedResume, ATSScore } from "@axiom/shared-types";
 import { logger } from "../utils/logger";
+import { requireEnv } from "../utils/env";
 
 const AI_URL    = process.env.AI_SERVICE_URL    ?? "http://localhost:8000";
-const AI_SECRET = process.env.AI_SERVICE_SECRET ?? "internal-secret";
+const AI_SECRET = requireEnv("AI_SERVICE_SECRET");
 
 const aiClient = axios.create({
   baseURL: AI_URL,

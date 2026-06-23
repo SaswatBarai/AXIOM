@@ -6,11 +6,6 @@ import { api } from "@/lib/api";
 import { setCredentials } from "@/store/authSlice";
 import type { UserProfile, UserPreferences } from "@axiom/shared-types";
 
-function authHeader() {
-  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export function useProfile() {
   const dispatch = useDispatch();
   const [profile, setProfile]     = useState<UserProfile | null>(null);
@@ -22,8 +17,8 @@ export function useProfile() {
     try {
       setIsLoading(true);
       const [profileRes, prefsRes] = await Promise.all([
-        api.get("/users/me", { headers: authHeader() }),
-        api.get("/users/me/preferences", { headers: authHeader() }),
+        api.get("/users/me"),
+        api.get("/users/me/preferences"),
       ]);
       setProfile(profileRes.data.user);
       setPrefs(prefsRes.data.preferences);
@@ -37,7 +32,7 @@ export function useProfile() {
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
   async function updateProfile(data: Partial<UserProfile>) {
-    const res = await api.put("/users/me", data, { headers: authHeader() });
+    const res = await api.put("/users/me", data);
     const updated = res.data.user;
     setProfile(updated);
     // keep Redux user in sync
@@ -47,17 +42,17 @@ export function useProfile() {
   }
 
   async function changePassword(currentPassword: string, newPassword: string) {
-    await api.patch("/users/me/password", { currentPassword, newPassword }, { headers: authHeader() });
+    await api.patch("/users/me/password", { currentPassword, newPassword });
   }
 
   async function updatePreferences(data: Partial<UserPreferences>) {
-    const res = await api.put("/users/me/preferences", data, { headers: authHeader() });
+    const res = await api.put("/users/me/preferences", data);
     setPrefs(res.data.preferences);
     return res.data.preferences;
   }
 
   async function deleteAccount() {
-    await api.delete("/users/me", { headers: authHeader() });
+    await api.delete("/users/me");
   }
 
   return { profile, prefs, isLoading, error, updateProfile, changePassword, updatePreferences, deleteAccount, refetch: fetchProfile };

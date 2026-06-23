@@ -146,8 +146,8 @@ describe("login", () => {
 describe("refresh", () => {
   it("rotates refresh token and returns new tokens", async () => {
     const token = jwt.signRefreshToken("user-1");
-    vi.mocked(redis.get).mockResolvedValue(token);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1", role: "USER" } as never);
+    vi.mocked(redis.getdel).mockResolvedValue(token);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1", role: "USER", emailVerified: true, suspendedAt: null } as never);
 
     const result = await refresh(token);
 
@@ -158,7 +158,7 @@ describe("refresh", () => {
 
   it("throws 401 for revoked token (not in redis)", async () => {
     const token = jwt.signRefreshToken("user-1");
-    vi.mocked(redis.get).mockResolvedValue(null);
+    vi.mocked(redis.getdel).mockResolvedValue(null);
 
     await expect(refresh(token)).rejects.toMatchObject({ statusCode: 401 });
   });
@@ -209,6 +209,7 @@ describe("forgotPassword", () => {
 describe("resetPassword", () => {
   it("resets password and clears OTP", async () => {
     vi.mocked(redis.get).mockResolvedValue("654321");
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
     vi.mocked(prisma.user.update).mockResolvedValue(mockUser as never);
 
     const result = await resetPassword({
@@ -218,7 +219,7 @@ describe("resetPassword", () => {
     });
 
     expect(prisma.user.update).toHaveBeenCalledOnce();
-    expect(redis.del).toHaveBeenCalledOnce();
+    expect(redis.del).toHaveBeenCalledTimes(2);
     expect(result.message).toMatch(/reset successfully/i);
   });
 

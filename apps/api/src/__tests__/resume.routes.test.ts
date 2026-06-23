@@ -19,6 +19,7 @@ vi.mock("../middleware/auth.middleware", () => ({
     next();
   },
   requireRole: () => (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+  assertUserId: (req: any) => req.userId,
 }));
 
 import * as resumeService from "../services/resume.service";

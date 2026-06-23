@@ -16,6 +16,12 @@ genai.configure(api_key=_API_KEY)
 
 Tone = Literal["formal", "friendly", "direct"]
 
+
+def sanitize_input(text: str, max_len: int = 4000) -> str:
+    """Strip control characters and enforce length to prevent prompt injection."""
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+    return cleaned[:max_len]
+
 # ── Few-shot examples (voice anchors) ─────────────────────────────────────────
 
 _FEW_SHOTS = """
@@ -89,21 +95,17 @@ def build_prompt(
     }[tone]
 
     return textwrap.dedent(f"""
-        {_SYSTEM}
-
-        {_FEW_SHOTS}
-
         ---
         TASK: Write a cover letter body for the following:
 
-        Target Role: {job_title} at {company_name}
+        Target Role: {sanitize_input(job_title, 200)} at {sanitize_input(company_name, 200)}
         Tone: {tone_note}
 
         Candidate Resume Summary:
         {resume_snippet}
 
         Job Description (excerpt):
-        {job_description[:1500]}
+        {sanitize_input(job_description, 1500)}
 
         Write the cover letter body paragraphs now (no salutation, no sign-off):
     """).strip()
@@ -118,7 +120,8 @@ def generate_cover_letter(
     job_title: str,
     tone: Tone = "formal",
 ) -> str:
-    model  = genai.GenerativeModel(_MODEL_NAME)
+    system_inst = f"{_SYSTEM}\n\n{_FEW_SHOTS}"
+    model  = genai.GenerativeModel(_MODEL_NAME, system_instruction=system_inst)
     prompt = build_prompt(parsed_resume, job_description, company_name, job_title, tone)
     config = genai.types.GenerationConfig(temperature=0.7, max_output_tokens=600)
     resp   = model.generate_content(prompt, generation_config=config)

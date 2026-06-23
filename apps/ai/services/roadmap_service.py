@@ -15,6 +15,13 @@ _API_KEY    = os.getenv("GEMINI_API_KEY", "")
 _MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 genai.configure(api_key=_API_KEY)
 
+
+def sanitize_input(text: str, max_len: int = 4000) -> str:
+    """Strip control characters and enforce length to prevent prompt injection."""
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+    return cleaned[:max_len]
+
+
 # ── Types ─────────────────────────────────────────────────────────────────────
 
 class RoadmapStep(TypedDict):
@@ -99,9 +106,7 @@ def build_prompt(
     matched_str = ", ".join(matched[:15]) if matched else "none listed"
 
     return textwrap.dedent(f"""
-        {_SYSTEM}
-
-        Target Role: {target_role}
+        Target Role: {sanitize_input(target_role, 200)}
         Total weeks: {weeks}
 
         Skills already mastered (DO NOT include in roadmap):
@@ -155,7 +160,7 @@ def generate_roadmap(
         skill_list = [("Review and deepen existing skills", "nice_to_have")]
 
     prompt = build_prompt(target_role, skill_list, len(skill_list), matched_all)
-    model  = genai.GenerativeModel(_MODEL_NAME)
+    model  = genai.GenerativeModel(_MODEL_NAME, system_instruction=_SYSTEM)
     config = genai.types.GenerationConfig(temperature=0.5, max_output_tokens=3000)
 
     last_err: Exception | None = None

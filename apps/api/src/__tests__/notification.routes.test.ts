@@ -21,6 +21,7 @@ vi.mock("../middleware/auth.middleware", () => ({
     req.userId = "user-1";
     next();
   },
+  assertUserId: (req: any) => req.userId,
 }));
 
 import * as notifService from "../services/notification.service";

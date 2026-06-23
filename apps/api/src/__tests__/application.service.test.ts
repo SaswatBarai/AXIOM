@@ -13,6 +13,7 @@ import { redis } from "../services/redis.service";
   findMany: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  count: vi.fn(),
 };
 
 // Inject mock properties on redis
@@ -98,12 +99,15 @@ describe("createApplication", () => {
 describe("listApplications", () => {
   it("lists all applications with filters", async () => {
     vi.mocked(prisma.application.findMany).mockResolvedValue([MOCK_APPLICATION] as any);
+    vi.mocked(prisma.application.count).mockResolvedValue(1);
 
     const list = await listApplications(
       "user-1",
       "SAVED",
       "2026-01-01T00:00:00.000Z",
-      "2026-06-01T00:00:00.000Z"
+      "2026-06-01T00:00:00.000Z",
+      1,
+      20
     );
 
     expect(prisma.application.findMany).toHaveBeenCalledWith({
@@ -117,8 +121,10 @@ describe("listApplications", () => {
       },
       include: { job: true },
       orderBy: { updatedAt: "desc" },
+      skip: 0,
+      take: 20,
     });
-    expect(list).toHaveLength(1);
+    expect(list.applications).toHaveLength(1);
   });
 });
 
@@ -171,7 +177,7 @@ describe("updateApplication", () => {
         notes: "Updated Note",
         status: "APPLIED",
         appliedAt: expect.any(Date),
-        timeline: expect.any(String),
+        timeline: expect.any(Array),
       }),
       include: { job: true },
     });
@@ -203,8 +209,9 @@ describe("updateApplication", () => {
     await updateApplication("app-1", "user-1", { status: "APPLIED" });
 
     const updateCall = vi.mocked(prisma.application.update).mock.calls[0]?.[0];
-    const parsedTimeline = JSON.parse(updateCall?.data.timeline as string);
-    expect(parsedTimeline.length).toBe(50);
+    const timeline = updateCall?.data.timeline as Array<unknown>;
+    expect(Array.isArray(timeline)).toBe(true);
+    expect(timeline.length).toBe(50);
   });
 
   it("handles malformed or invalid JSON timeline gracefully by resetting it", async () => {
@@ -215,10 +222,10 @@ describe("updateApplication", () => {
     await updateApplication("app-1", "user-1", { status: "APPLIED" });
 
     const updateCall = vi.mocked(prisma.application.update).mock.calls[0]?.[0];
-    const parsedTimeline = JSON.parse(updateCall?.data.timeline as string);
-    expect(Array.isArray(parsedTimeline)).toBe(true);
-    expect(parsedTimeline.length).toBe(1);
-    expect(parsedTimeline[0].status).toBe("APPLIED");
+    const timeline = updateCall?.data.timeline as Array<unknown>;
+    expect(Array.isArray(timeline)).toBe(true);
+    expect(timeline.length).toBe(1);
+    expect((timeline[0] as { status: string }).status).toBe("APPLIED");
   });
 });
 

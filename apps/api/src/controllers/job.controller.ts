@@ -1,5 +1,6 @@
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware";
+import { assertUserId } from "../middleware/auth.middleware";
 import * as jobService from "../services/job.service";
 import type { JobSearchInput, ScrapeRunInput } from "../utils/schemas";
 
@@ -20,23 +21,23 @@ export async function getJobHandler(req: AuthRequest, res: Response, next: NextF
 
 export async function saveJobHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const result = await jobService.saveJob(req.userId!, req.params["id"] as string);
+    const result = await jobService.saveJob(assertUserId(req), req.params["id"] as string);
     res.status(201).json(result);
   } catch (err) { next(err); }
 }
 
 export async function unsaveJobHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const result = await jobService.unsaveJob(req.userId!, req.params["id"] as string);
+    const result = await jobService.unsaveJob(assertUserId(req), req.params["id"] as string);
     res.json(result);
   } catch (err) { next(err); }
 }
 
 export async function listSavedJobsHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const page     = Number(req.query["page"])     || 1;
-    const pageSize = Number(req.query["pageSize"]) || 20;
-    const result = await jobService.listSavedJobs(req.userId!, page, pageSize);
+    const page     = Math.max(1, Number(req.query["page"])     || 1);
+    const pageSize = Math.min(50, Math.max(1, Number(req.query["pageSize"]) || 20));
+    const result = await jobService.listSavedJobs(assertUserId(req), page, pageSize);
     res.json(result);
   } catch (err) { next(err); }
 }
@@ -51,15 +52,15 @@ export async function runScrapeHandler(req: AuthRequest, res: Response, next: Ne
 
 export async function getRecommendedJobsHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const limit = Number(req.query["limit"]) || 20;
-    const recommended = await jobService.getRecommendedJobs(req.userId!, limit);
+    const limit = Math.min(50, Math.max(1, Number(req.query["limit"]) || 20));
+    const recommended = await jobService.getRecommendedJobs(assertUserId(req), limit);
     res.json(recommended);
   } catch (err) { next(err); }
 }
 
 export async function matchSingleJobHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const match = await jobService.matchSingleJob(req.userId!, req.params["id"] as string);
+    const match = await jobService.matchSingleJob(assertUserId(req), req.params["id"] as string);
     res.json(match);
   } catch (err) { next(err); }
 }

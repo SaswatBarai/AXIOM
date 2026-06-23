@@ -7,14 +7,14 @@ from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from services.chat_service import stream_chat, get_session_title, new_session_id
 from utils.logger import logger
 
 router = APIRouter()
 
-_SECRET = os.getenv("AI_SERVICE_SECRET", "internal-secret")
+_SECRET = os.getenv("AI_SERVICE_SECRET")
 
 DAILY_MSG_QUOTA = int(os.getenv("CHAT_DAILY_QUOTA", "200"))
 
@@ -28,15 +28,15 @@ def _verify(secret: str) -> None:
 
 class ChatRequest(BaseModel):
     session_id: str | None = None
-    message: str
-    history: list[dict[str, str]] = []
+    message: str = Field(..., max_length=4000)
+    history: list[dict[str, str]] = Field(default_factory=list, max_length=50)
     resume_parsed: dict[str, Any] | None = None
-    saved_jobs: list[dict[str, Any]] = []
+    saved_jobs: list[dict[str, Any]] = Field(default_factory=list, max_length=20)
     is_new_session: bool = False
 
 
 class SessionTitleRequest(BaseModel):
-    first_message: str
+    first_message: str = Field(..., max_length=500)
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────

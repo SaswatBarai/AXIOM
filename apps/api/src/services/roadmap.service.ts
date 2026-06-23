@@ -2,9 +2,10 @@ import { prisma } from "@axiom/database";
 import { redis } from "./redis.service";
 import axios from "axios";
 import { AppError } from "../middleware/errorHandler.middleware";
+import { requireEnv } from "../utils/env";
 
 const AI_URL    = process.env.AI_SERVICE_URL    ?? "http://localhost:8000";
-const AI_SECRET = process.env.AI_SERVICE_SECRET ?? "internal-secret";
+const AI_SECRET = requireEnv("AI_SERVICE_SECRET");
 
 const aiClient = axios.create({
   baseURL: AI_URL,
@@ -43,24 +44,25 @@ export async function generateRoadmap(
     await redis.set(cacheKey, JSON.stringify(steps), 3600);
   }
 
-  // Find latest version for this user + targetRole
-  const latest = await prisma.careerRoadmap.findFirst({
-    where:   { userId, targetRole },
-    orderBy: { version: "desc" },
-    select:  { version: true },
-  });
-  const nextVersion = (latest?.version ?? 0) + 1;
+  const roadmap = await prisma.$transaction(async (tx) => {
+    const latest = await tx.careerRoadmap.findFirst({
+      where:   { userId, targetRole },
+      orderBy: { version: "desc" },
+      select:  { version: true },
+    });
+    const nextVersion = (latest?.version ?? 0) + 1;
 
-  const roadmap = await prisma.careerRoadmap.create({
-    data: {
-      userId,
-      title:      `${targetRole} — ${weeks}-week roadmap`,
-      targetRole,
-      weeks,
-      version:    nextVersion,
-      content:    steps as object,
-      progress:   {},
-    },
+    return tx.careerRoadmap.create({
+      data: {
+        userId,
+        title:      `${targetRole} — ${weeks}-week roadmap`,
+        targetRole,
+        weeks,
+        version:    nextVersion,
+        content:    steps as object,
+        progress:   {},
+      },
+    });
   });
 
   return { roadmap, isNew: true };

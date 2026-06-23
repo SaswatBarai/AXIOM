@@ -1,8 +1,12 @@
 """Resume text extraction and structured data parsing."""
 
+import asyncio
 import io
+import ipaddress
 import re
+import socket
 from typing import Optional
+from urllib.parse import urlparse
 
 import httpx
 import pdfplumber
@@ -76,8 +80,44 @@ GPA_RE   = re.compile(r"GPA[\s:]*([0-4]\.\d{1,2})", re.IGNORECASE)
 
 # ── File download ─────────────────────────────────────────────────────────────
 
+async def _is_safe_url(url: str) -> bool:
+    """Validate URL is HTTPS and doesn't resolve to a private/internal IP."""
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        return False
+
+    hostname = parsed.hostname
+    if not hostname:
+        return False
+
+    # Resolve hostname to IPs in thread pool to avoid blocking event loop
+    loop = asyncio.get_running_loop()
+    try:
+        addrinfo = await loop.run_in_executor(
+            None, socket.getaddrinfo, hostname, 443, socket.AF_UNSPEC, socket.SOCK_STREAM,
+        )
+    except socket.gaierror:
+        return False
+
+    for family, _, _, _, sockaddr in addrinfo:
+        ip_str = sockaddr[0]
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            return False
+
+        # Block private, loopback, link-local, reserved, multicast
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+            return False
+
+    return True
+
+
 async def download_file(url: str) -> bytes:
     """Download a file from a URL (S3 presigned or MinIO)."""
+    if not await _is_safe_url(url):
+        raise ValueError(f"Blocked potentially unsafe URL: {url[:120]}")
+
     async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
         resp = await client.get(url)
         resp.raise_for_status()

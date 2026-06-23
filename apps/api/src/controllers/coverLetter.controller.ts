@@ -1,11 +1,12 @@
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware";
+import { assertUserId } from "../middleware/auth.middleware";
 import * as clService from "../services/coverLetter.service";
 
 export async function generateHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const result = await clService.generateCoverLetter(
-      req.userId!,
+      assertUserId(req),
       req.body.resumeId as string,
       req.params["applicationId"] as string,
       req.body.jobDescription as string,
@@ -47,14 +48,14 @@ export async function exportDocxHandler(req: AuthRequest, res: Response, next: N
 
 export async function getSavedHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const letter = await clService.getSavedLetter(req.userId!, req.params["applicationId"] as string);
+    const letter = await clService.getSavedLetter(assertUserId(req), req.params["applicationId"] as string);
     res.json({ letter });
   } catch (err) { next(err); }
 }
 
 export async function saveHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    await clService.saveLetter(req.userId!, req.params["applicationId"] as string, req.body.letter as string);
+    await clService.saveLetter(assertUserId(req), req.params["applicationId"] as string, req.body.letter as string);
     res.json({ success: true });
   } catch (err) { next(err); }
 }

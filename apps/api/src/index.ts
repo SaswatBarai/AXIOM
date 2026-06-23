@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import compression from "compression";
+import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
 import { xss } from "express-xss-sanitizer";
 import { v4 as uuid } from "uuid";
@@ -39,6 +40,7 @@ function requireEnv(name: string): string {
 }
 
 requireEnv("JWT_SECRET_KEY");
+requireEnv("AI_SERVICE_SECRET");
 
 const app: Application = express();
 const PORT = process.env.API_PORT ?? 4000;
@@ -62,7 +64,7 @@ app.use(
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: process.env.NODE_ENV === "development" ? 10000 : 100,
+    max: process.env.NODE_ENV === "development" ? 1000 : 100,
     message: { error: "Too many requests, please try again later." },
     standardHeaders: true,
     legacyHeaders: false,
@@ -71,6 +73,9 @@ app.use(
 
 // ── Compression ─────────────────────────────────────────────
 app.use(compression());
+
+// ── Cookie parsing ──────────────────────────────────────────
+app.use(cookieParser());
 
 // ── Parsing & sanitization ──────────────────────────────────
 app.use(express.json({ limit: "1mb" }));
@@ -155,6 +160,14 @@ async function bootstrap() {
   await verifyPgVector();
   const httpServer = http.createServer(app);
   initSocketIO(httpServer);
+  httpServer.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      logger.error(`Port ${PORT} is already in use`);
+    } else {
+      logger.error("Failed to start server", err);
+    }
+    process.exit(1);
+  });
   httpServer.listen(PORT, () => {
     logger.info(`API running on http://localhost:${PORT}`);
   });
@@ -179,6 +192,16 @@ async function shutdown(signal: string) {
     process.exit(1);
   }
 }
+
+// ── Crash safety net ─────────────────────────────────────────
+process.on("unhandledRejection", (reason) => {
+  logger.error({ err: reason }, "UNHANDLED_REJECTION — crashing to avoid undefined state");
+  process.exit(1);
+});
+process.on("uncaughtException", (err) => {
+  logger.error({ err }, "UNCAUGHT_EXCEPTION");
+  process.exit(1);
+});
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));

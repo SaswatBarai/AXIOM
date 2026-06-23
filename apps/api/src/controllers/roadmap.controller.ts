@@ -1,5 +1,6 @@
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware";
+import { assertUserId } from "../middleware/auth.middleware";
 import * as roadmapService from "../services/roadmap.service";
 
 export async function generateHandler(
@@ -11,7 +12,7 @@ export async function generateHandler(
       gapReport:  Record<string, unknown>;
       weeks:      number;
     };
-    const result = await roadmapService.generateRoadmap(req.userId!, targetRole, gapReport ?? {}, weeks ?? 12);
+    const result = await roadmapService.generateRoadmap(assertUserId(req), targetRole, gapReport ?? {}, weeks ?? 12);
     res.status(201).json(result);
   } catch (err) { next(err); }
 }
@@ -20,7 +21,7 @@ export async function listHandler(
   req: AuthRequest, res: Response, next: NextFunction,
 ): Promise<void> {
   try {
-    const roadmaps = await roadmapService.listRoadmaps(req.userId!);
+    const roadmaps = await roadmapService.listRoadmaps(assertUserId(req));
     res.json({ roadmaps });
   } catch (err) { next(err); }
 }
@@ -30,7 +31,7 @@ export async function getHandler(
 ): Promise<void> {
   try {
     const id      = req.params["roadmapId"] as string;
-    const roadmap = await roadmapService.getRoadmap(req.userId!, id);
+    const roadmap = await roadmapService.getRoadmap(assertUserId(req), id);
     res.json({ roadmap });
   } catch (err) { next(err); }
 }
@@ -42,7 +43,7 @@ export async function markStepHandler(
     const id   = req.params["roadmapId"] as string;
     const week = Number(req.params["week"]);
     const { done } = req.body as { done: boolean };
-    const result = await roadmapService.markStep(req.userId!, id, week, done);
+    const result = await roadmapService.markStep(assertUserId(req), id, week, done);
     res.json(result);
   } catch (err) { next(err); }
 }
@@ -52,7 +53,7 @@ export async function deleteHandler(
 ): Promise<void> {
   try {
     const id = req.params["roadmapId"] as string;
-    await roadmapService.deleteRoadmap(req.userId!, id);
+    await roadmapService.deleteRoadmap(assertUserId(req), id);
     res.json({ message: "Roadmap deleted" });
   } catch (err) { next(err); }
 }

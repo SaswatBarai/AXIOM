@@ -1,3 +1,5 @@
+"use client";
+
 import axios from "axios";
 
 export const api = axios.create({
@@ -6,32 +8,41 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach access token from localStorage on every request
+// Attach access token from Redux on every request
+let _accessToken: string | null = null;
+export function setAccessToken(token: string | null) {
+  _accessToken = token;
+}
+
 api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("accessToken");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (_accessToken) {
+    config.headers.Authorization = `Bearer ${_accessToken}`;
   }
   return config;
 });
 
-// Auto-refresh on 401
+// Auto-refresh on 401 — with mutex to prevent concurrent refresh calls
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
+      if (refreshPromise === null) {
+        refreshPromise = axios
+          .post("/api/auth/refresh", {}, { withCredentials: true })
+          .then(({ data }) => data)
+          .finally(() => { refreshPromise = null; });
+      }
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        const { data } = await axios.post("/api/auth/refresh", { refreshToken });
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
+        const data = await refreshPromise;
+        setAccessToken(data.accessToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(original);
       } catch {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        setAccessToken(null);
         window.location.href = "/login";
       }
     }

@@ -13,7 +13,7 @@ from services.roadmap_service import (
 
 router = APIRouter()
 
-_SECRET = os.getenv("AI_SERVICE_SECRET", "internal-secret")
+_SECRET = os.getenv("AI_SERVICE_SECRET")
 
 
 def _verify(secret: str | None) -> None:
@@ -48,7 +48,7 @@ class GenerateResponse(BaseModel):
 
 
 class ProgressRequest(BaseModel):
-    steps:    list[dict]
+    steps:    list[dict] = Field(..., max_length=100)
     progress: dict
 
 

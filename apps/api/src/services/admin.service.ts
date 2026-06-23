@@ -1,6 +1,7 @@
 import { prisma } from "@axiom/database";
 import { redis } from "./redis.service";
 import { AppError } from "../middleware/errorHandler.middleware";
+import { CacheKey } from "../utils/constants";
 import type { Request } from "express";
 import type { UserRole } from "@prisma/client";
 
@@ -102,7 +103,7 @@ export async function suspendUser(userId: string) {
     data: { suspendedAt: new Date() },
     select: { id: true, email: true, name: true, suspendedAt: true },
   });
-  await redis.del("user:suspended:" + userId);
+  await redis.del(CacheKey.suspension(userId));
   return user;
 }
 
@@ -114,7 +115,7 @@ export async function unsuspendUser(userId: string) {
     data: { suspendedAt: null },
     select: { id: true, email: true, name: true, suspendedAt: true },
   });
-  await redis.del("user:suspended:" + userId);
+  await redis.del(CacheKey.suspension(userId));
   return user;
 }
 
@@ -125,7 +126,7 @@ export async function deleteUser(userId: string, adminId: string) {
   if (user.role === "ADMIN") throw new AppError(400, "Cannot delete an admin account");
 
   await prisma.user.delete({ where: { id: userId } });
-  await redis.del("user:suspended:" + userId);
+  await redis.del(CacheKey.suspension(userId));
   return { success: true };
 }
 

@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
+import { rateLimit } from "express-rate-limit";
 import { requireAuth } from "../middleware/auth.middleware";
 import {
   uploadResumeHandler,
@@ -13,6 +14,14 @@ import { analyzeResumeSchema } from "../utils/schemas";
 
 const router: IRouter = Router();
 
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: process.env.NODE_ENV === "development" ? 1000 : 10,
+  message: { error: "Too many uploads. Please try again in an hour." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Memory storage — buffer goes straight to S3, nothing written to disk
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -25,7 +34,7 @@ const upload = multer({
   },
 });
 
-router.post(  "/",           requireAuth, upload.single("resume"),          uploadResumeHandler);
+router.post(  "/",           requireAuth, uploadLimiter, upload.single("resume"), uploadResumeHandler);
 router.get(   "/",           requireAuth,                                   listResumesHandler);
 router.get(   "/:id",        requireAuth,                                   getResumeHandler);
 router.delete("/:id",        requireAuth,                                   deleteResumeHandler);
