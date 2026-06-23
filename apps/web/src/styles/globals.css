@@ -10,42 +10,113 @@ html {
   --font-mono: "JetBrains Mono", "Courier New", monospace;
 
   /* ── Brand colors (Orange Theme) ──────── */
-  --color-brand:        #f97316;
-  --color-brand-hover:  #ea580c;
-  --color-brand-active: #c2410c;
+  --color-brand:        var(--brand);
+  --color-brand-hover:  var(--brand-hover);
+  --color-brand-active: var(--brand-active);
 
   /* ── Background scale ──────────────────────────── */
-  --color-bg-base:      #09090b; /* zinc-950 */
-  --color-bg-card:      #18181b; /* zinc-900 */
-  --color-bg-elevated:  #27272a; /* zinc-800 */
-  --color-bg-hover:     #3f3f46; /* zinc-700 */
+  --color-bg-base:      var(--bg-base);
+  --color-bg-card:      var(--bg-card);
+  --color-bg-elevated:  var(--bg-elevated);
+  --color-bg-hover:     var(--bg-hover);
 
   /* ── Border scale ──────────────────────────────── */
-  --color-border-subtle: #27272a; /* zinc-800 */
-  --color-border-medium: #3f3f46; /* zinc-700 */
-  --color-border-strong: #52525b; /* zinc-600 */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-medium: var(--border-medium);
+  --color-border-strong: var(--border-strong);
+
+  /* ── Text scale ────────────────────────────────── */
+  --color-text-primary:   var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary:  var(--text-tertiary);
+  --color-text-muted:     var(--text-muted);
+  --color-text-subtle:    var(--text-subtle);
 
   /* ── Semantic ──────────────────────────────────── */
-  --color-success: #10B981; /* emerald-500 */
-  --color-warning: #F59E0B; /* amber-500  */
-  --color-danger:  #EF4444; /* red-500    */
-  --color-info:    #3B82F6; /* blue-500   */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger:  #EF4444;
+  --color-info:    #3B82F6;
 
   /* ── Animation ─────────────────────────────────── */
   --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Base */
+/* ── Light mode (default) ──────────────────────────── */
+:root {
+  --brand:        #f97316;
+  --brand-hover:  #ea580c;
+  --brand-active: #c2410c;
+
+  --bg-base:     #ffffff;
+  --bg-card:     #f4f4f5;
+  --bg-elevated: #e4e4e7;
+  --bg-hover:    #d4d4d8;
+
+  --border-subtle: #e4e4e7;
+  --border-medium: #d4d4d8;
+  --border-strong: #a1a1aa;
+
+  --text-primary:   #09090b;
+  --text-secondary: #3f3f46;
+  --text-tertiary:  #52525b;
+  --text-muted:     #71717a;
+  --text-subtle:    #a1a1aa;
+
+  --grid-dot-color: rgba(9, 9, 11, 0.045);
+  --spotlight-color: rgba(249, 115, 22, 0.05);
+}
+
+/* ── Dark mode ─────────────────────────────────────── */
+.dark {
+  --brand:        #f97316;
+  --brand-hover:  #ea580c;
+  --brand-active: #c2410c;
+
+  --bg-base:     #09090b;
+  --bg-card:     #18181b;
+  --bg-elevated: #27272a;
+  --bg-hover:    #3f3f46;
+
+  --border-subtle: #27272a;
+  --border-medium: #3f3f46;
+  --border-strong: #52525b;
+
+  --text-primary:   #ffffff;
+  --text-secondary: #d4d4d8;
+  --text-tertiary:  #a1a1aa;
+  --text-muted:     #71717a;
+  --text-subtle:    #52525b;
+
+  --grid-dot-color: rgba(255, 255, 255, 0.035);
+  --spotlight-color: rgba(255, 255, 255, 0.03);
+}
+
+/* ── Base styles ───────────────────────────────────── */
 * {
-  border-color: var(--color-border-subtle);
+  border-color: var(--border-subtle);
 }
 
 body {
-  background-color: var(--color-bg-base);
-  color: #ffffff;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Theme transition ──────────────────────────────── */
+*,
+*::before,
+*::after {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none;
+  }
 }
 
 /* Lenis smooth scrolling core styles */
@@ -72,8 +143,7 @@ html.lenis body {
 
 /* Premium Background Design System */
 .bg-grid-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: radial-gradient(var(--grid-dot-color) 1px, transparent 1px);
 }
 
 .ambient-glow-orb {
@@ -103,7 +173,7 @@ html.lenis body {
   animation: float-slow-2 28s ease-in-out infinite;
 }
 
-/* Skeleton shimmer — premium linear sweep, replaces aggressive pulse */
+/* Skeleton shimmer */
 @keyframes skeleton-shimmer {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%);  }

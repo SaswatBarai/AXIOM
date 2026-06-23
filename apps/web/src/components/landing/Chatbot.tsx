@@ -85,13 +85,13 @@ export function Chatbot() {
           <div className="lg:col-span-2 lg:sticky lg:top-28 space-y-6">
             <ScrollReveal>
               <div className="space-y-5">
-                <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.15em]">
+                <span className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.15em]">
                   AI Companion
                 </span>
-                <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.06]">
+                <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text-primary leading-[1.06]">
                   Your career<br />copilot,<br />always on
                 </h2>
-                <p className="text-sm text-zinc-400 leading-relaxed max-w-xs">
+                <p className="text-sm text-text-secondary leading-relaxed max-w-xs">
                   Draft cover letters, negotiate salary, prep for interviews, and fix your resume — all through a single chat interface powered by GPT-4o.
                 </p>
               </div>
@@ -100,7 +100,7 @@ export function Chatbot() {
             {/* Suggested prompts — now in the left column */}
             <ScrollReveal delay={0.1}>
               <div className="space-y-3 pt-2">
-                <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-[0.12em]">
+                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.12em]">
                   Try asking
                 </p>
                 <div className="flex flex-col gap-2">
@@ -108,10 +108,10 @@ export function Chatbot() {
                     <button
                       key={idx}
                       onClick={() => handleSend(prompt)}
-                      className="group flex items-center justify-between gap-3 text-left px-4 py-3 rounded-xl border border-zinc-800/60 bg-zinc-900/20 hover:border-zinc-700 hover:bg-zinc-900/40 text-xs text-zinc-400 hover:text-zinc-200 transition-all duration-200"
+                      className="group flex items-center justify-between gap-3 text-left px-4 py-3 rounded-xl border border-border-subtle bg-bg-card/40 hover:border-border-medium hover:bg-bg-card/75 text-xs text-text-secondary hover:text-text-primary transition-all duration-200"
                     >
                       <span className="leading-snug">{prompt}</span>
-                      <ArrowRight className="w-3 h-3 shrink-0 text-zinc-700 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all duration-200" />
+                      <ArrowRight className="w-3 h-3 shrink-0 text-text-muted group-hover:text-text-secondary group-hover:translate-x-0.5 transition-all duration-200" />
                     </button>
                   ))}
                 </div>
@@ -122,26 +122,26 @@ export function Chatbot() {
           {/* Right: chat window — 3 cols */}
           <div ref={sectionRef} className="lg:col-span-3">
             <ScrollReveal>
-              <div className="border border-zinc-800/70 bg-zinc-900/10 rounded-2xl overflow-hidden flex flex-col h-[560px] shadow-2xl">
+              <div className="border border-border-subtle bg-bg-card/10 rounded-2xl overflow-hidden flex flex-col h-[560px] shadow-2xl">
 
                 {/* Chat header */}
-                <div className="border-b border-zinc-900 px-5 py-4 flex items-center justify-between bg-zinc-950/60 shrink-0">
+                <div className="border-b border-border-subtle px-5 py-4 flex items-center justify-between bg-bg-base/60 shrink-0">
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
-                        <path d="M10 23L16 9L22 23" stroke="#09090b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                        <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="#09090b" strokeWidth="3" strokeLinecap="round" />
+                    <div className="w-7 h-7 rounded-md bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 32 32" fill="none" className="text-text-primary">
+                        <path d="M10 23L16 9L22 23" stroke="var(--text-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="var(--text-primary)" strokeWidth="3" strokeLinecap="round" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-white leading-none">AXIOM Copilot</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">AXIOM AI · Always online</p>
+                      <p className="text-xs font-bold text-text-primary leading-none">AXIOM Copilot</p>
+                      <p className="text-[10px] text-text-muted mt-0.5">AXIOM AI · Always online</p>
                     </div>
                   </div>
                   {/* Live indicator */}
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[10px] text-zinc-500 font-medium">Live</span>
+                    <span className="text-[10px] text-text-muted font-medium">Live</span>
                   </div>
                 </div>
 
@@ -166,18 +166,18 @@ export function Chatbot() {
                       >
                         {/* AI avatar dot */}
                         {msg.sender === "ai" && (
-                          <div className="w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 shrink-0 mr-2 mt-1 flex items-center justify-center">
+                          <div className="w-5 h-5 rounded-full bg-bg-elevated border border-border-subtle shrink-0 mr-2 mt-1 flex items-center justify-center">
                             <svg width="8" height="8" viewBox="0 0 32 32" fill="none">
-                              <path d="M10 23L16 9L22 23" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+                              <path d="M10 23L16 9L22 23" stroke="var(--text-primary)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="var(--text-primary)" strokeWidth="3.5" strokeLinecap="round" />
                             </svg>
                           </div>
                         )}
                         <div
                           className={`max-w-[82%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
                             msg.sender === "user"
-                              ? "bg-white text-black rounded-tr-sm font-medium"
-                              : "bg-zinc-900/80 text-zinc-200 rounded-tl-sm border border-zinc-800/60"
+                              ? "bg-text-primary text-bg-base rounded-tr-sm font-medium shadow-sm"
+                              : "bg-bg-card text-text-secondary rounded-tl-sm border border-border-subtle/80"
                           }`}
                         >
                           {msg.text}
@@ -196,17 +196,17 @@ export function Chatbot() {
                         transition={{ duration: 0.2 }}
                         className="flex justify-start items-end gap-2"
                       >
-                        <div className="w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 shrink-0 flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-full bg-bg-elevated border border-border-subtle shrink-0 flex items-center justify-center">
                           <svg width="8" height="8" viewBox="0 0 32 32" fill="none">
-                            <path d="M10 23L16 9L22 23" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+                            <path d="M10 23L16 9L22 23" stroke="var(--text-primary)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="12.5" y1="18.5" x2="19.5" y2="18.5" stroke="var(--text-primary)" strokeWidth="3.5" strokeLinecap="round" />
                           </svg>
                         </div>
-                        <div className="bg-zinc-900/80 border border-zinc-800/60 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center">
+                        <div className="bg-bg-card/85 border border-border-subtle/80 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center">
                           {[0, 150, 300].map((delay) => (
                             <span
                               key={delay}
-                              className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce"
+                              className="w-1.5 h-1.5 bg-border-strong rounded-full animate-bounce"
                               style={{ animationDelay: `${delay}ms` }}
                             />
                           ))}
@@ -217,7 +217,7 @@ export function Chatbot() {
                 </motion.div>
 
                 {/* Input bar */}
-                <div className="border-t border-zinc-900 px-4 py-3.5 bg-zinc-950/40 shrink-0">
+                <div className="border-t border-border-subtle px-4 py-3.5 bg-bg-base/40 shrink-0">
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -230,7 +230,7 @@ export function Chatbot() {
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       placeholder="Ask your copilot anything..."
-                      className="flex-1 bg-zinc-900/60 border-zinc-800 text-sm h-9 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:bg-zinc-900"
+                      className="flex-1 bg-bg-elevated/80 border-border-subtle text-sm h-9 text-text-primary placeholder:text-text-muted focus:border-border-medium focus:bg-bg-elevated"
                       disabled={isTyping}
                       aria-label="Message input"
                     />
@@ -254,14 +254,14 @@ export function Chatbot() {
 
         {/* Conversion CTA — after the demo interaction */}
         <ScrollReveal>
-          <div className="mt-14 flex flex-col sm:flex-row items-center justify-between gap-6 p-6 sm:p-8 rounded-2xl border border-zinc-800/60 bg-zinc-900/20">
+          <div className="mt-14 flex flex-col sm:flex-row items-center justify-between gap-6 p-6 sm:p-8 rounded-2xl border border-border-subtle bg-bg-card/20">
             <div className="text-center sm:text-left space-y-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 mb-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-brand" />
                 <span className="text-[10px] font-semibold text-brand uppercase tracking-widest">Full access in your dashboard</span>
               </div>
-              <h3 className="text-lg font-bold text-white">Ready to try the full copilot?</h3>
-              <p className="text-sm text-zinc-400">Ask anything. Get real answers. Land more interviews.</p>
+              <h3 className="text-lg font-bold text-text-primary">Ready to try the full copilot?</h3>
+              <p className="text-sm text-text-secondary">Ask anything. Get real answers. Land more interviews.</p>
             </div>
             <Link href="/signup" className="shrink-0 w-full sm:w-auto">
               <Button className="w-full bg-brand hover:bg-brand-hover text-black font-semibold h-11 px-7 text-sm flex items-center justify-center gap-2 group shadow-[0_0_24px_rgba(249,115,22,0.2)] hover:shadow-[0_0_32px_rgba(249,115,22,0.35)] transition-all duration-200">

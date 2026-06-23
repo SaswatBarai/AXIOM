@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import redis.asyncio as aioredis
@@ -39,13 +40,16 @@ def return_connection(conn):
         conn.close()
 
 _redis: aioredis.Redis | None = None
+_redis_lock = asyncio.Lock()
 
 
 async def get_redis() -> aioredis.Redis:
     global _redis
     if _redis is None:
-        redis_url = os.getenv("REDIS_URL", "redis://:dev-redis-pass@redis:6379/0")
-        _redis = aioredis.from_url(redis_url, decode_responses=True)
+        async with _redis_lock:
+            if _redis is None:
+                redis_url = os.getenv("REDIS_URL", "redis://:dev-redis-pass@redis:6379/0")
+                _redis = aioredis.from_url(redis_url, decode_responses=True)
     return _redis
 
 

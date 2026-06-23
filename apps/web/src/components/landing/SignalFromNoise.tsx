@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useScroll } from "framer-motion";
+import { useTheme } from "next-themes";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,12 @@ function buildParticles(): Particle[] {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function SignalFromNoise() {
+  const { resolvedTheme } = useTheme();
+  const themeRef = useRef(resolvedTheme);
+  useEffect(() => {
+    themeRef.current = resolvedTheme;
+  }, [resolvedTheme]);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boundsRef = useRef<[number, number]>([0, 10000]);
   const rafRef    = useRef(0);
@@ -165,7 +172,8 @@ export function SignalFromNoise() {
       const bcx = w / 2;
       const bcy = h / 2;
 
-      ctx.fillStyle = "#ffffff";
+      const isLightTheme = themeRef.current === "light";
+      ctx.fillStyle = isLightTheme ? "#09090b" : "#ffffff";
 
       for (const pt of particles) {
         // ── Drift (chaos phase only) ──────────────────────────────────────

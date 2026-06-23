@@ -51,16 +51,16 @@ export default function LoginPage() {
     <div className="flex h-full w-full">
 
       {/* ── LEFT: Visual Panel ─────────────────────────────── */}
-      <div className="hidden lg:flex w-[52%] flex-col justify-between p-12 relative overflow-hidden border-r border-zinc-800/50">
+      <div className="hidden lg:flex w-[52%] flex-col justify-between p-12 relative overflow-hidden border-r border-border-subtle/50">
         {/* Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_60%,transparent_100%)]" />
         {/* Spotlight */}
-        <div className="absolute top-[-10%] left-[30%] w-[500px] h-[500px] bg-white/4 rounded-full blur-[130px] pointer-events-none" />
+        <div className="absolute top-[-10%] left-[30%] w-[500px] h-[500px] bg-brand/5 rounded-full blur-[130px] pointer-events-none" />
 
         {/* Logo */}
         <Link href="/" className="relative z-10 flex items-center gap-2.5 w-fit group">
           <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
-          <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
+          <span className="font-bold text-xl tracking-tight text-text-primary">AXIOM</span>
         </Link>
 
         {/* Floating cards */}
@@ -73,18 +73,18 @@ export default function LoginPage() {
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               className="absolute top-0 left-0 w-52"
             >
-              <Card className="border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-5 shadow-2xl">
+              <Card className="border border-border-subtle bg-bg-card/80 backdrop-blur-sm p-5 shadow-2xl">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">ATS Score</span>
+                  <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">ATS Score</span>
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div className="flex items-end gap-2">
-                  <span className="text-4xl font-bold text-white">87</span>
-                  <span className="text-lg text-zinc-400 mb-1">%</span>
+                  <span className="text-4xl font-bold text-text-primary">87</span>
+                  <span className="text-lg text-text-secondary mb-1">%</span>
                 </div>
-                <div className="mt-3 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="mt-3 h-1.5 bg-bg-elevated rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-white rounded-full"
+                    className="h-full bg-text-primary rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: "87%" }}
                     transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
@@ -100,12 +100,12 @@ export default function LoginPage() {
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
               className="absolute top-8 right-0 w-48"
             >
-              <Card className="border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-4 shadow-2xl">
+              <Card className="border border-border-subtle bg-bg-card/80 backdrop-blur-sm p-4 shadow-2xl">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white">V</div>
+                  <div className="w-7 h-7 rounded bg-bg-elevated border border-border-subtle flex items-center justify-center text-xs font-bold text-text-primary">V</div>
                   <div>
-                    <div className="text-xs font-semibold text-white">Vercel</div>
-                    <div className="text-[10px] text-zinc-500">Remote</div>
+                    <div className="text-xs font-semibold text-text-primary">Vercel</div>
+                    <div className="text-[10px] text-text-muted">Remote</div>
                   </div>
                 </div>
                 <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">94% Match</Badge>
@@ -118,14 +118,14 @@ export default function LoginPage() {
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
               className="absolute bottom-10 left-6 w-56"
             >
-              <Card className="border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-4 shadow-2xl">
+              <Card className="border border-border-subtle bg-bg-card/80 backdrop-blur-sm p-4 shadow-2xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <Bot className="w-4 h-4 text-zinc-300" />
-                  <span className="text-xs font-semibold text-white">Career Copilot</span>
+                  <Bot className="w-4 h-4 text-text-secondary" />
+                  <span className="text-xs font-semibold text-text-primary">Career Copilot</span>
                   <span className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  &ldquo;Your profile matches <span className="text-white font-medium">23 new roles</span> this week.&rdquo;
+                <p className="text-[11px] text-text-secondary leading-relaxed">
+                  &ldquo;Your profile matches <span className="text-text-primary font-medium">23 new roles</span> this week.&rdquo;
                 </p>
               </Card>
             </motion.div>
@@ -136,19 +136,19 @@ export default function LoginPage() {
               transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
               className="absolute bottom-0 right-4 w-40"
             >
-              <Card className="border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-4 shadow-2xl">
+              <Card className="border border-border-subtle bg-bg-card/80 backdrop-blur-sm p-4 shadow-2xl">
                 <div className="flex items-center gap-1.5 mb-2">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-xs text-zinc-400">This month</span>
+                  <span className="text-xs text-text-secondary">This month</span>
                 </div>
                 <div className="flex gap-3">
                   <div>
-                    <div className="text-lg font-bold text-white">127</div>
-                    <div className="text-[10px] text-zinc-500">Applied</div>
+                    <div className="text-lg font-bold text-text-primary">127</div>
+                    <div className="text-[10px] text-text-muted">Applied</div>
                   </div>
                   <div>
-                    <div className="text-lg font-bold text-white">12</div>
-                    <div className="text-[10px] text-zinc-500">Interviews</div>
+                    <div className="text-lg font-bold text-text-primary">12</div>
+                    <div className="text-[10px] text-text-muted">Interviews</div>
                   </div>
                 </div>
               </Card>
@@ -161,17 +161,17 @@ export default function LoginPage() {
         <div className="relative z-10 space-y-3">
           <div className="flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="w-4 h-4 fill-white text-white" />
+              <Star key={i} className="w-4 h-4 fill-text-primary text-text-primary" />
             ))}
           </div>
-          <p className="text-sm text-zinc-300 leading-relaxed max-w-xs">
+          <p className="text-sm text-text-secondary leading-relaxed max-w-xs">
             &ldquo;AXIOM helped me land interviews at Stripe and Vercel within two weeks of uploading my resume.&rdquo;
           </p>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white">S</div>
+            <div className="w-8 h-8 rounded-full bg-bg-elevated border border-border-subtle flex items-center justify-center text-xs font-bold text-text-primary">S</div>
             <div>
-              <div className="text-xs font-semibold text-white">Sarah K.</div>
-              <div className="text-[11px] text-zinc-500">Software Engineer · Stripe</div>
+              <div className="text-xs font-semibold text-text-primary">Sarah K.</div>
+              <div className="text-[11px] text-text-muted">Software Engineer · Stripe</div>
             </div>
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function LoginPage() {
       {/* ── RIGHT: Form Panel ──────────────────────────────── */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
         {/* Subtle spotlight */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-white/3 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-brand/5 rounded-full blur-[120px] pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -191,17 +191,17 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden flex items-center justify-center gap-2.5 mb-8 group">
             <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black">A</div>
-            <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
+            <span className="font-bold text-xl tracking-tight text-text-primary">AXIOM</span>
           </Link>
 
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-1.5">Welcome back</h1>
-            <p className="text-sm text-zinc-400">Sign in to your account to continue</p>
+            <h1 className="text-3xl font-bold text-text-primary mb-1.5">Welcome back</h1>
+            <p className="text-sm text-text-secondary">Sign in to your account to continue</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-zinc-300">Email address</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-text-secondary">Email address</Label>
               <Input
                 id="email"
                 type="email"
@@ -209,14 +209,14 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
-                className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-white/20 focus-visible:border-zinc-600 h-11"
+                className="bg-bg-elevated border-border-subtle text-text-primary placeholder:text-text-muted focus-visible:ring-brand/20 focus-visible:border-border-medium h-11"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</Label>
-                <Link href="/forgot-password" className="text-xs text-zinc-500 hover:text-white transition-colors">
+                <Label htmlFor="password" className="text-sm font-medium text-text-secondary">Password</Label>
+                <Link href="/forgot-password" className="text-xs text-text-muted hover:text-text-primary transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -228,12 +228,12 @@ export default function LoginPage() {
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   required
-                  className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-white/20 focus-visible:border-zinc-600 h-11 pr-10"
+                  className="bg-bg-elevated border-border-subtle text-text-primary placeholder:text-text-muted focus-visible:ring-brand/20 focus-visible:border-border-medium h-11 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-550 hover:text-white transition-colors cursor-pointer flex items-center justify-center p-0.5"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors cursor-pointer flex items-center justify-center p-0.5"
                   title={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -268,10 +268,10 @@ export default function LoginPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-zinc-800" />
+              <span className="w-full border-t border-border-subtle" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-[#09090B] px-3 text-zinc-600">or</span>
+              <span className="bg-bg-base px-3 text-text-muted">or</span>
             </div>
           </div>
 
@@ -282,16 +282,16 @@ export default function LoginPage() {
               { icon: Briefcase, label: "Job Matcher" },
               { icon: FileText, label: "Resume AI" },
             ].map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-xs text-zinc-400">
+              <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-card border border-border-subtle rounded-full text-xs text-text-secondary">
                 <Icon className="w-3.5 h-3.5" />
                 {label}
               </div>
             ))}
           </div>
 
-          <p className="text-center text-sm text-zinc-500">
+          <p className="text-center text-sm text-text-secondary">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-white font-medium hover:underline underline-offset-4">
+            <Link href="/signup" className="text-text-primary font-medium hover:text-brand hover:underline underline-offset-4">
               Sign up free
             </Link>
           </p>

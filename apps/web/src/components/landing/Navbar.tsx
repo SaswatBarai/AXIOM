@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_ITEMS = [
   { label: "Features",  href: "/#features"  },
@@ -108,7 +109,7 @@ export function Navbar() {
     <nav
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         scrolled
-          ? "bg-bg-base/90 backdrop-blur-xl border-b border-zinc-800/70 shadow-[0_1px_0_0_rgba(255,255,255,0.04)]"
+          ? "bg-bg-base/90 backdrop-blur-xl border-b border-border-subtle/70 shadow-sm"
           : "bg-transparent border-b border-transparent"
       }`}
     >
@@ -117,7 +118,7 @@ export function Navbar() {
           <div className="group-hover:scale-105 transition-transform duration-200">
             <AxiomLogo size={32} />
           </div>
-          <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
+          <span className="font-bold text-xl tracking-tight text-text-primary">AXIOM</span>
         </Link>
 
         {/* Desktop nav */}
@@ -131,8 +132,8 @@ export function Navbar() {
                 href={item.href}
                 className={`text-sm transition-colors duration-200 ${
                   isActive
-                    ? "text-white font-medium"
-                    : "text-zinc-400 hover:text-white"
+                    ? "text-text-primary font-medium"
+                    : "text-text-secondary hover:text-text-primary"
                 }`}
               >
                 {item.label}
@@ -143,8 +144,9 @@ export function Navbar() {
 
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           <Link href="/login">
-            <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-800/60 text-sm h-9 px-4">
+            <Button variant="ghost" className="text-text-tertiary hover:text-text-primary hover:bg-bg-elevated/60 text-sm h-9 px-4">
               Sign In
             </Button>
           </Link>
@@ -158,7 +160,7 @@ export function Navbar() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-2 text-zinc-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-md"
+          className="md:hidden p-2 text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20 rounded-md"
           aria-label={isOpen ? "Close menu" : "Open menu"}
           aria-expanded={isOpen}
           aria-controls="mobile-menu"
@@ -175,7 +177,7 @@ export function Navbar() {
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
-          className="md:hidden absolute top-16 left-0 w-full bg-bg-base/98 border-b border-zinc-800/80 py-6 px-6 flex flex-col gap-5 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200"
+          className="md:hidden absolute top-16 left-0 w-full bg-bg-base/98 border-b border-border-subtle/80 py-6 px-6 flex flex-col gap-5 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200"
         >
           <nav className="flex flex-col gap-1">
             {NAV_ITEMS.map((item) => {
@@ -187,8 +189,8 @@ export function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className={`text-sm py-2.5 px-3 rounded-lg transition-colors ${
                     activeSection === id
-                      ? "text-white bg-zinc-800/60"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                      ? "text-text-primary bg-bg-elevated/60"
+                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50"
                   }`}
                 >
                   {item.label}
@@ -196,13 +198,18 @@ export function Navbar() {
               );
             })}
           </nav>
-          <hr className="border-zinc-800/60" />
+          <hr className="border-border-subtle/60" />
           <div className="flex flex-col gap-2.5">
-            <Link href="/login" className="w-full" onClick={() => setIsOpen(false)}>
-              <Button variant="ghost" className="w-full text-zinc-300 hover:text-white justify-center border border-zinc-800 h-10">
-                Sign In
-              </Button>
-            </Link>
+            <div className="flex items-center justify-between gap-2.5">
+              <Link href="/login" className="flex-1" onClick={() => setIsOpen(false)}>
+                <Button variant="ghost" className="w-full text-text-secondary hover:text-text-primary justify-center border border-border-subtle h-10">
+                  Sign In
+                </Button>
+              </Link>
+              <div className="border border-border-subtle rounded-lg flex items-center justify-center h-10 w-10 shrink-0 bg-bg-card/30">
+                <ThemeToggle />
+              </div>
+            </div>
             <Link href="/signup" className="w-full" onClick={() => setIsOpen(false)}>
               <Button className="w-full bg-brand hover:bg-brand-hover text-black font-semibold justify-center h-10">
                 Get Started

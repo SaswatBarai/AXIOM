@@ -67,7 +67,7 @@ function Spotlight({ children, className = "" }: { children: React.ReactNode; cl
     >
       <div
         className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{ background: `radial-gradient(300px circle at ${pos.x}px ${pos.y}px, rgba(255,255,255,0.03), transparent 80%)` }}
+        style={{ background: `radial-gradient(300px circle at ${pos.x}px ${pos.y}px, var(--spotlight-color), transparent 80%)` }}
       />
       {children}
     </div>
@@ -90,7 +90,7 @@ function ScoreCounter({ target, inView }: { target: number; inView: boolean }) {
     return () => cancelAnimationFrame(raf);
   }, [inView, target]);
   return (
-    <span className="text-5xl font-extrabold tracking-tight text-white tabular-nums leading-none">
+    <span className="text-5xl font-extrabold tracking-tight text-text-primary tabular-nums leading-none">
       {count}%
     </span>
   );
@@ -101,10 +101,10 @@ function AnimBar({ label, value, delay, inView }: { label: string; value: number
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-[10px]">
-        <span className="text-zinc-500">{label}</span>
-        <span className="text-zinc-300 font-bold tabular-nums">{value}%</span>
+        <span className="text-text-muted">{label}</span>
+        <span className="text-text-secondary font-bold tabular-nums">{value}%</span>
       </div>
-      <div className="h-[3px] bg-zinc-900 rounded-full overflow-hidden">
+      <div className="h-[3px] bg-bg-elevated rounded-full overflow-hidden">
         <motion.div
           className="h-full rounded-full bg-gradient-to-r from-brand to-orange-300"
           initial={{ width: 0 }}
@@ -133,9 +133,9 @@ function TabSwitcher({ active, onChange }: { active: TabId; onChange: (t: TabId)
   }, [active]);
 
   return (
-    <div ref={containerRef} className="relative inline-flex p-1 bg-zinc-950 border border-zinc-800/80 rounded-xl shrink-0">
+    <div ref={containerRef} className="relative inline-flex p-1 bg-bg-base border border-border-subtle/80 rounded-xl shrink-0">
       <motion.div
-        className="absolute top-1 bottom-1 bg-white rounded-lg pointer-events-none"
+        className="absolute top-1 bottom-1 bg-bg-card shadow-sm border border-border-subtle/40 rounded-lg pointer-events-none"
         animate={{ left: pill.left, width: pill.width }}
         transition={{ type: "spring", stiffness: 420, damping: 34 }}
       />
@@ -145,7 +145,7 @@ function TabSwitcher({ active, onChange }: { active: TabId; onChange: (t: TabId)
           ref={(el) => { btnRefs.current[idx] = el; }}
           onClick={() => onChange(tab.id)}
           className={`relative z-10 px-7 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors duration-150 whitespace-nowrap ${
-            active === tab.id ? "text-black" : "text-zinc-500 hover:text-zinc-300"
+            active === tab.id ? "text-text-primary font-bold" : "text-text-muted hover:text-text-secondary"
           }`}
         >
           {tab.label}
@@ -169,31 +169,31 @@ function ResumeTab() {
       <div className="space-y-5">
 
         {/* File parsed pill */}
-        <div className="flex items-center justify-between gap-4 bg-zinc-950/60 border border-zinc-800/60 rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between gap-4 bg-bg-base/60 border border-border-subtle/60 rounded-xl px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
-              <FileText className="w-3.5 h-3.5 text-zinc-400" />
+            <div className="w-8 h-8 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center shrink-0">
+              <FileText className="w-3.5 h-3.5 text-text-secondary" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white leading-none">CV_JOHN_DOE_2026.pdf</p>
-              <p className="text-[10px] text-zinc-600 mt-0.5">2 pages · 45 KB · parsed 2m ago</p>
+              <p className="text-xs font-bold text-text-primary leading-none">CV_JOHN_DOE_2026.pdf</p>
+              <p className="text-[10px] text-text-muted mt-0.5">2 pages · 45 KB · parsed 2m ago</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-[9px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded px-2 py-0.5">
               ✓ READY
             </span>
-            <button className="flex items-center gap-1.5 text-[10px] text-zinc-500 hover:text-white border border-zinc-800 hover:border-zinc-700 rounded-lg px-2.5 py-1.5 transition-all duration-200">
+            <button className="flex items-center gap-1.5 text-[10px] text-text-secondary hover:text-text-primary border border-border-subtle hover:border-border-medium rounded-lg px-2.5 py-1.5 transition-all duration-200">
               <RotateCcw className="w-2.5 h-2.5" /> Re-analyze
             </button>
           </div>
         </div>
 
         {/* Score breakdown */}
-        <div className="bg-zinc-950/40 border border-zinc-800/60 rounded-2xl p-6 space-y-4">
+        <div className="bg-bg-base/40 border border-border-subtle/60 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">Score breakdown</p>
-            <span className="text-[10px] text-zinc-700">vs. industry avg (72%)</span>
+            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Score breakdown</p>
+            <span className="text-[10px] text-text-subtle">vs. industry avg (72%)</span>
           </div>
           {CAT_BARS.map((b) => (
             <AnimBar key={b.label} label={b.label} value={b.value} delay={b.delay} inView={inView} />
@@ -202,7 +202,7 @@ function ResumeTab() {
 
         {/* Recommendations */}
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest px-1 pb-1">
+          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest px-1 pb-1">
             3 Recommendations
           </p>
           {RECS.map(({ severity, icon: Icon, text }, i) => (
@@ -213,15 +213,15 @@ function ResumeTab() {
               transition={{ duration: 0.35, delay: 0.55 + i * 0.09 }}
               className={`flex items-start gap-3 rounded-xl px-4 py-3 border text-[11px] leading-snug ${
                 severity === "brand"
-                  ? "bg-brand/5 border-brand/15 text-zinc-300"
+                  ? "bg-brand/5 border-brand/15 text-text-secondary"
                   : severity === "amber"
-                  ? "bg-amber-400/5 border-amber-400/15 text-zinc-400"
-                  : "bg-zinc-900/30 border-zinc-800 text-zinc-500"
+                  ? "bg-amber-400/5 border-amber-400/15 text-text-secondary"
+                  : "bg-bg-card/30 border-border-subtle text-text-muted"
               }`}
             >
               <Icon
                 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
-                  severity === "brand" ? "text-brand" : severity === "amber" ? "text-amber-400" : "text-zinc-600"
+                  severity === "brand" ? "text-brand" : severity === "amber" ? "text-amber-400" : "text-text-muted"
                 }`}
               />
               {text}
@@ -234,11 +234,11 @@ function ResumeTab() {
       <div className="space-y-4">
 
         {/* Ring card */}
-        <Spotlight className="border border-zinc-800/70 bg-zinc-900/10 hover:border-zinc-700 rounded-2xl p-7 transition-all duration-300">
+        <Spotlight className="border border-border-subtle bg-bg-card/20 hover:border-border-medium rounded-2xl p-7 transition-all duration-300">
           <div className="relative z-10 space-y-5">
 
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">ATS Report</span>
+              <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">ATS Report</span>
               <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold px-2.5 hover:bg-emerald-500/10">
                 EXCELLENT
               </Badge>
@@ -248,7 +248,7 @@ function ResumeTab() {
             <div className="flex flex-col items-center gap-3 py-1">
               <div className="relative w-36 h-36">
                 <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="#27272a" strokeWidth="5.5" />
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg-elevated)" strokeWidth="5.5" />
                   <motion.circle
                     cx="60" cy="60" r="52"
                     fill="none" stroke="#f97316" strokeWidth="5.5" strokeLinecap="round"
@@ -260,24 +260,24 @@ function ResumeTab() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <ScoreCounter target={87} inView={inView} />
-                  <span className="text-[9px] text-zinc-600 uppercase tracking-widest font-semibold mt-1">
+                  <span className="text-[9px] text-text-muted uppercase tracking-widest font-semibold mt-1">
                     ATS Score
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+              <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
                 <ChevronRight className="w-3 h-3 text-emerald-400" style={{ transform: "rotate(-45deg)" }} />
                 Top 10% among applicants
               </div>
             </div>
 
             {/* Benchmark bar */}
-            <div className="space-y-2 border-t border-zinc-900 pt-4">
+            <div className="space-y-2 border-t border-border-subtle pt-4">
               <div className="flex justify-between text-[10px]">
-                <span className="text-zinc-600">Industry benchmark</span>
-                <span className="text-zinc-500 font-semibold">72% average</span>
+                <span className="text-text-muted">Industry benchmark</span>
+                <span className="text-text-secondary font-semibold">72% average</span>
               </div>
-              <div className="relative h-[3px] bg-zinc-900 rounded-full overflow-hidden">
+              <div className="relative h-[3px] bg-bg-elevated rounded-full overflow-hidden">
                 <motion.div
                   className="h-full rounded-full bg-gradient-to-r from-brand to-orange-300"
                   initial={{ width: 0 }}
@@ -287,9 +287,9 @@ function ResumeTab() {
               </div>
               {/* Benchmark tick */}
               <div className="relative h-1.5">
-                <div className="absolute top-0 w-px h-full bg-zinc-700" style={{ left: "72%" }} />
+                <div className="absolute top-0 w-px h-full bg-border-medium" style={{ left: "72%" }} />
                 <span
-                  className="absolute top-0 text-[8px] text-zinc-700 -translate-x-1/2"
+                  className="absolute top-0 text-[8px] text-text-muted -translate-x-1/2"
                   style={{ left: "72%" }}
                 >
                   avg
@@ -364,20 +364,20 @@ function JobsTab() {
     <div className="space-y-4">
 
       {/* Search + filter bar */}
-      <div className="border border-zinc-800/70 bg-zinc-900/10 rounded-2xl p-4 space-y-3">
+      <div className="border border-border-subtle bg-bg-card/20 rounded-2xl p-4 space-y-3">
         <div className="flex flex-col sm:flex-row gap-2.5">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
             <Input
               readOnly
               defaultValue="Frontend Engineer · Next.js · TypeScript"
               aria-label="Demo search — not interactive"
-              className="pl-10 bg-zinc-950/80 border-zinc-800/60 h-10 text-zinc-400 text-sm cursor-default select-none pointer-events-none"
+              className="pl-10 bg-bg-base/85 border-border-subtle/60 h-10 text-text-secondary text-sm cursor-default select-none pointer-events-none"
             />
           </div>
           <Button
             disabled
-            className="bg-brand/60 text-black/60 h-10 px-6 font-semibold text-sm flex items-center gap-2 cursor-default shrink-0"
+            className="bg-brand text-black h-10 px-6 font-semibold text-sm flex items-center gap-2 cursor-default shrink-0 opacity-80"
           >
             <Search className="w-3.5 h-3.5" />
             Search
@@ -389,22 +389,22 @@ function JobsTab() {
           {FILTERS.map((f) => (
             <span
               key={f}
-              className="text-[10px] font-semibold text-zinc-400 bg-zinc-900/60 border border-zinc-700/60 rounded-full px-3 py-1 leading-none cursor-default select-none"
+              className="text-[10px] font-semibold text-text-secondary bg-bg-card border border-border-subtle rounded-full px-3 py-1 leading-none cursor-default select-none"
             >
               {f} ×
             </span>
           ))}
-          <span className="text-[10px] text-zinc-600 cursor-default ml-1">+ Add filter</span>
+          <span className="text-[10px] text-text-muted cursor-default ml-1">+ Add filter</span>
         </div>
       </div>
 
       {/* Result meta */}
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+        <div className="flex items-center gap-2 text-[11px] text-text-muted">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
           47 new matches this week · sorted by ATS score
         </div>
-        <span className="text-[10px] text-zinc-700">Updated 2m ago</span>
+        <span className="text-[10px] text-text-subtle">Updated 2m ago</span>
       </div>
 
       {/* Job cards */}
@@ -443,17 +443,17 @@ function JobCard({
       <Spotlight
         className={`border rounded-2xl p-5 transition-all duration-200 cursor-pointer ${
           topMatch
-            ? "border-brand/25 bg-zinc-900/15 hover:border-brand/40 shadow-[0_0_28px_rgba(249,115,22,0.08)]"
-            : "border-zinc-800/70 bg-zinc-900/10 hover:border-zinc-700"
+            ? "border-brand/25 bg-bg-card/30 hover:border-brand/40 shadow-[0_0_28px_rgba(249,115,22,0.08)]"
+            : "border-border-subtle bg-bg-card/20 hover:border-border-medium"
         }`}
       >
         <div className="relative z-10 flex items-center gap-4">
           {/* Company dot */}
           <div
-            className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center text-[11px] font-extrabold border border-white/10"
+            className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center text-[11px] font-extrabold border border-border-subtle/50"
             style={{
-              background: job.dot === "#e2e8f0" ? "#1c1c1c" : `${job.dot}22`,
-              color: job.dot,
+              background: job.dot === "#e2e8f0" ? "var(--bg-elevated)" : `${job.dot}22`,
+              color: job.dot === "#e2e8f0" ? "var(--text-primary)" : job.dot,
             }}
           >
             {job.company[0]}
@@ -462,18 +462,18 @@ function JobCard({
           {/* Title + company */}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-bold text-white truncate">{job.title}</p>
+              <p className="text-sm font-bold text-text-primary truncate">{job.title}</p>
               {topMatch && (
                 <Badge className="bg-brand/10 text-brand border border-brand/20 text-[8px] font-bold shrink-0 hover:bg-brand/10 hidden sm:flex">
                   BEST MATCH
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-zinc-500 mt-0.5">{job.company}</p>
+            <p className="text-xs text-text-muted mt-0.5">{job.company}</p>
           </div>
 
           {/* Meta — desktop */}
-          <div className="hidden lg:flex items-center gap-4 text-[11px] text-zinc-500 shrink-0">
+          <div className="hidden lg:flex items-center gap-4 text-[11px] text-text-muted shrink-0">
             <span className="flex items-center gap-1.5">
               <MapPin className="w-3 h-3 shrink-0" />{job.location}
             </span>
@@ -491,7 +491,7 @@ function JobCard({
               className={`text-[10px] font-bold px-2.5 border ${
                 job.matchScore >= 90
                   ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10"
-                  : "bg-zinc-800/60 text-zinc-300 border-zinc-700 hover:bg-zinc-800/60"
+                  : "bg-bg-elevated text-text-secondary border border-border-subtle hover:bg-bg-hover"
               }`}
             >
               {job.matchScore}%
@@ -501,20 +501,20 @@ function JobCard({
               aria-label={saved ? "Unsave" : "Save"}
               className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 ${
                 saved
-                  ? "border-white/20 bg-white/10 text-white"
-                  : "border-zinc-800 text-zinc-600 hover:text-zinc-300 hover:border-zinc-700"
+                  ? "border-border-medium bg-bg-elevated text-text-primary"
+                  : "border-border-subtle text-text-muted hover:text-text-secondary hover:border-border-medium"
               }`}
             >
-              <Heart className={`w-3.5 h-3.5 transition-all ${saved ? "fill-white" : ""}`} />
+              <Heart className={`w-3.5 h-3.5 transition-all ${saved ? "fill-current" : ""}`} />
             </button>
-            <button className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 rounded-lg px-3 h-8 transition-all duration-200">
+            <button className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary border border-border-subtle hover:border-border-medium rounded-lg px-3 h-8 transition-all duration-200">
               View <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
         </div>
 
         {/* Mobile meta */}
-        <div className="lg:hidden relative z-10 flex flex-wrap gap-3 mt-3 pt-3 border-t border-zinc-900 text-[11px] text-zinc-500">
+        <div className="lg:hidden relative z-10 flex flex-wrap gap-3 mt-3 pt-3 border-t border-border-subtle text-[11px] text-text-muted">
           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
           <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{job.salary}</span>
           <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{job.type}</span>
@@ -530,7 +530,7 @@ export function Showcase() {
 
   return (
     <section id="showcase" className="py-28 px-6 bg-bg-base relative">
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-zinc-800/80 to-transparent" />
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border-subtle/80 to-transparent" />
 
       <div className="max-w-7xl mx-auto space-y-14">
 
@@ -538,13 +538,13 @@ export function Showcase() {
         <ScrollReveal>
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
             <div className="space-y-4 max-w-xl">
-              <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.15em]">
+              <span className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.15em]">
                 Interactive Showcase
               </span>
-              <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.06]">
+              <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text-primary leading-[1.06]">
                 See AXIOM<br />in action
               </h2>
-              <p className="text-base text-zinc-400 leading-relaxed">
+              <p className="text-base text-text-secondary leading-relaxed">
                 Explore the Resume Analyzer or the Smart Job Search — both powered by the same AI engine behind your dashboard.
               </p>
             </div>

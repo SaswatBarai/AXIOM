@@ -39,7 +39,7 @@ function StatCounter({ stat, isInView }: { stat: Stat; isInView: boolean }) {
   }, [isInView, stat.raw, stat.duration, isDecimal]);
 
   return (
-    <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white tabular-nums">
+    <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text-primary tabular-nums">
       {isDecimal ? count.toFixed(1) : count}{stat.suffix}
     </span>
   );
@@ -52,11 +52,11 @@ export function Stats() {
   return (
     <section className="relative py-16 px-6 bg-bg-base overflow-hidden">
       {/* Top separator */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-zinc-800/80 to-transparent" />
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border-subtle/80 to-transparent" />
       {/* Bottom separator */}
-      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-zinc-800/80 to-transparent" />
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border-subtle/80 to-transparent" />
       {/* Subtle background tint */}
-      <div className="absolute inset-0 bg-zinc-900/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-bg-card/20 pointer-events-none" />
 
       <div ref={ref} className="relative max-w-6xl mx-auto">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-0">
@@ -67,15 +67,15 @@ export function Stats() {
               <div
                 key={stat.label}
                 className={`flex flex-col items-center text-center px-8 py-6 ${
-                  !isLast ? "border-r border-zinc-800/60" : ""
+                  !isLast ? "border-r border-border-subtle/60" : ""
                 }`}
               >
-                <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
+                <div className="w-9 h-9 rounded-xl bg-bg-card border border-border-subtle flex items-center justify-center mb-4">
                   <Icon className="w-4 h-4 text-brand" />
                 </div>
                 <StatCounter stat={stat} isInView={isInView} />
-                <p className="text-sm font-semibold text-zinc-300 mt-1.5">{stat.label}</p>
-                <p className="text-[11px] text-zinc-600 mt-0.5 leading-snug max-w-[130px]">{stat.sublabel}</p>
+                <p className="text-sm font-semibold text-text-secondary mt-1.5">{stat.label}</p>
+                <p className="text-[11px] text-text-muted mt-0.5 leading-snug max-w-[130px]">{stat.sublabel}</p>
               </div>
             );
           })}

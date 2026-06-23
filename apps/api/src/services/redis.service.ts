@@ -66,6 +66,10 @@ class RedisService {
     await this.client.expire(key, ttlSeconds);
   }
 
+  async pexpire(key: string, ttlMs: number): Promise<void> {
+    await this.client.pExpire(key, ttlMs);
+  }
+
   async ttl(key: string): Promise<number> {
     return this.client.ttl(key);
   }

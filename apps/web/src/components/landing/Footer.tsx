@@ -60,7 +60,7 @@ export function Footer() {
   }
 
   return (
-    <footer id="footer" className="border-t border-zinc-900 bg-bg-base pt-16 pb-10 px-6">
+    <footer id="footer" className="border-t border-border-subtle bg-bg-base pt-16 pb-10 px-6">
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
 
@@ -68,9 +68,9 @@ export function Footer() {
           <div className="lg:col-span-2 space-y-5">
             <Link href="/" className="flex items-center gap-2.5 w-fit">
               <AxiomLogo size={28} />
-              <span className="font-bold text-lg tracking-tight text-white">AXIOM</span>
+              <span className="font-bold text-lg tracking-tight text-text-primary">AXIOM</span>
             </Link>
-            <p className="text-sm text-zinc-500 leading-relaxed max-w-sm">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-sm">
               AI-powered career copilot. Analyze resume compatibility, match jobs semantically,
               prep for interviews, and track every application — all in one place.
             </p>
@@ -79,11 +79,11 @@ export function Footer() {
           {/* Nav columns */}
           {Object.entries(navLinks).map(([group, links]) => (
             <div key={group} className="space-y-4">
-              <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-[0.12em]">{group}</h4>
+              <h4 className="text-xs font-semibold text-text-muted uppercase tracking-[0.12em]">{group}</h4>
               <ul className="space-y-2.5">
                 {links.map(({ label, href }) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm text-zinc-500 hover:text-zinc-200 transition-colors duration-200">
+                    <Link href={href} className="text-sm text-text-secondary hover:text-text-primary transition-colors duration-200">
                       {label}
                     </Link>
                   </li>
@@ -93,10 +93,10 @@ export function Footer() {
           ))}
         </div>
 
-        <hr className="border-zinc-900" />
+        <hr className="border-border-subtle" />
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-text-muted">
             © {new Date().getFullYear()} AXIOM. All rights reserved.
           </p>
 
@@ -120,7 +120,7 @@ export function Footer() {
                   onChange={(e) => { setEmail(e.target.value); setStatus("idle"); }}
                   required
                   disabled={status === "loading"}
-                  className="bg-zinc-900/50 border-zinc-800 text-sm h-9 w-full sm:w-56 text-zinc-300 placeholder:text-zinc-600 focus:border-zinc-600 disabled:opacity-50"
+                  className="bg-bg-elevated/50 border-border-subtle text-sm h-9 w-full sm:w-56 text-text-secondary placeholder:text-text-muted focus:border-border-medium disabled:opacity-50"
                   aria-label="Newsletter email"
                 />
                 <Button

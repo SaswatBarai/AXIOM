@@ -18,11 +18,11 @@ export function CallToAction() {
   return (
     <section className="py-20 px-6 bg-bg-base">
       {/* Separator */}
-      <div className="max-w-7xl mx-auto mb-20 h-px bg-gradient-to-r from-transparent via-zinc-800/60 to-transparent" />
+      <div className="max-w-7xl mx-auto mb-20 h-px bg-gradient-to-r from-transparent via-border-subtle/60 to-transparent" />
 
       <div className="max-w-4xl mx-auto">
         <ScrollReveal>
-          <div className="relative rounded-3xl border border-zinc-800/70 bg-zinc-900/25 p-12 md:p-16 text-center overflow-hidden">
+          <div className="relative rounded-3xl border border-border-subtle bg-bg-card/25 p-12 md:p-16 text-center overflow-hidden">
 
             {/* Brand glow at top */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[160px] bg-brand/[0.08] rounded-full blur-[80px] pointer-events-none" />
@@ -32,7 +32,7 @@ export function CallToAction() {
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                backgroundImage: "radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)",
+                backgroundImage: "radial-gradient(var(--grid-dot-color) 1px, transparent 1px)",
                 backgroundSize: "24px 24px",
                 maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, #000 50%, transparent 100%)",
                 WebkitMaskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, #000 50%, transparent 100%)",
@@ -41,19 +41,19 @@ export function CallToAction() {
 
             <div className="relative z-10 flex flex-col items-center gap-7">
               {/* Label */}
-              <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.15em]">
+              <span className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.15em]">
                 Get Started Today
               </span>
 
               {/* Headline */}
-              <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.06]">
+              <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text-primary leading-[1.06]">
                 Start landing interviews
                 <br />
                 in days, not months.
               </h2>
 
               {/* Sub copy */}
-              <p className="text-base text-zinc-400 max-w-md leading-relaxed">
+              <p className="text-base text-text-secondary max-w-md leading-relaxed">
                 Join 14,000+ job seekers using AXIOM to optimize their resume,
                 match smarter, and move faster through every application.
               </p>
@@ -64,7 +64,7 @@ export function CallToAction() {
                   {AVATARS.map((av) => (
                     <div
                       key={av.initials}
-                      className="w-8 h-8 rounded-full border-2 border-zinc-900 flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                      className="w-8 h-8 rounded-full border-2 border-bg-base flex items-center justify-center text-[10px] font-bold text-white shrink-0"
                       style={{ backgroundColor: av.color }}
                     >
                       {av.initials}
@@ -78,7 +78,7 @@ export function CallToAction() {
                     </svg>
                   ))}
                 </div>
-                <span className="text-xs text-zinc-400">4.9 / 5 from early users</span>
+                <span className="text-xs text-text-secondary">4.9 / 5 from early users</span>
               </div>
 
               {/* CTA */}
@@ -94,15 +94,15 @@ export function CallToAction() {
                     </Button>
                   </motion.div>
                 </Link>
-                <div className="flex flex-col sm:flex-row items-center gap-2 text-xs text-zinc-500">
+                <div className="flex flex-col sm:flex-row items-center gap-2 text-xs text-text-muted">
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> No credit card
                   </span>
-                  <span className="hidden sm:block text-zinc-700">·</span>
+                  <span className="hidden sm:block text-border-medium">·</span>
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Free tier forever
                   </span>
-                  <span className="hidden sm:block text-zinc-700">·</span>
+                  <span className="hidden sm:block text-border-medium">·</span>
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Cancel anytime
                   </span>

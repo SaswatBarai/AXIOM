@@ -55,23 +55,23 @@ export default function SignupPage() {
     <div className="flex h-full w-full">
 
       {/* ── LEFT: Visual Panel ─────────────────────────────── */}
-      <div className="hidden lg:flex w-[52%] flex-col justify-between p-8 relative overflow-hidden border-r border-zinc-800/50">
+      <div className="hidden lg:flex w-[52%] flex-col justify-between p-8 relative overflow-hidden border-r border-border-subtle/50">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_60%,transparent_100%)]" />
-        <div className="absolute top-[-10%] left-[30%] w-[500px] h-[500px] bg-white/4 rounded-full blur-[130px] pointer-events-none" />
+        <div className="absolute top-[-10%] left-[30%] w-[500px] h-[500px] bg-brand/5 rounded-full blur-[130px] pointer-events-none" />
 
         <Link href="/" className="relative z-10 flex items-center gap-2.5 w-fit group">
           <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
-          <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
+          <span className="font-bold text-xl tracking-tight text-text-primary">AXIOM</span>
         </Link>
 
         {/* How it works steps */}
         <div className="relative z-10 flex-1 flex flex-col justify-center gap-4 py-6">
           <div className="space-y-1.5 mb-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">How it works</span>
+              <Sparkles className="w-3.5 h-3.5 text-text-muted" />
+              <span className="text-[11px] font-semibold text-text-muted uppercase tracking-widest">How it works</span>
             </div>
-            <h2 className="text-xl font-bold text-white leading-snug">
+            <h2 className="text-xl font-bold text-text-primary leading-snug">
               From resume upload<br />to dream job in days.
             </h2>
           </div>
@@ -83,50 +83,50 @@ export default function SignupPage() {
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
-                className="flex items-center gap-3 p-3 rounded-xl border border-zinc-800/60 bg-zinc-900/40 backdrop-blur-sm hover:border-zinc-700 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-xl border border-border-subtle bg-bg-card/40 backdrop-blur-sm hover:border-border-medium transition-colors"
               >
-                <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                  <step.icon className="w-4 h-4 text-zinc-300" />
+                <div className="w-8 h-8 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center shrink-0">
+                  <step.icon className="w-4 h-4 text-text-secondary" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Step {i + 1}</div>
-                  <div className="text-sm font-semibold text-white">{step.title}</div>
-                  <div className="text-xs text-zinc-500 leading-snug">{step.desc}</div>
+                  <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Step {i + 1}</div>
+                  <div className="text-sm font-semibold text-text-primary">{step.title}</div>
+                  <div className="text-xs text-text-secondary leading-snug">{step.desc}</div>
                 </div>
               </motion.div>
             ))}
           </div>
 
           {/* Stats bar */}
-          <div className="flex items-center gap-6 pt-4 border-t border-zinc-800/60">
+          <div className="flex items-center gap-6 pt-4 border-t border-border-subtle">
             {[
               { value: "14k+", label: "Users" },
               { value: "89%",  label: "Interview rate" },
               { value: "3.2×", label: "Faster search" },
             ].map((stat) => (
               <div key={stat.label}>
-                <div className="text-base font-bold text-white">{stat.value}</div>
-                <div className="text-[11px] text-zinc-500">{stat.label}</div>
+                <div className="text-base font-bold text-text-primary">{stat.value}</div>
+                <div className="text-[11px] text-text-muted">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Testimonial */}
-        <div className="relative z-10 p-4 rounded-xl border border-zinc-800/60 bg-zinc-900/30 space-y-2.5">
+        <div className="relative z-10 p-4 rounded-xl border border-border-subtle bg-bg-card/30 space-y-2.5">
           <div className="flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="w-3.5 h-3.5 fill-white text-white" />
+              <Star key={i} className="w-3.5 h-3.5 fill-text-primary text-text-primary" />
             ))}
           </div>
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <p className="text-sm text-text-secondary leading-relaxed">
             &ldquo;Within 10 days I had 4 callbacks. The AI resume coach is genuinely game-changing.&rdquo;
           </p>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white shrink-0">M</div>
+            <div className="w-7 h-7 rounded-full bg-bg-elevated border border-border-subtle flex items-center justify-center text-xs font-bold text-text-primary shrink-0">M</div>
             <div>
-              <div className="text-xs font-semibold text-white">Marcus T.</div>
-              <div className="text-[11px] text-zinc-500">Data Engineer · Google</div>
+              <div className="text-xs font-semibold text-text-primary">Marcus T.</div>
+              <div className="text-[11px] text-text-muted">Marcus T. · Google</div>
             </div>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function SignupPage() {
 
       {/* ── RIGHT: Form Panel ──────────────────────────────── */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-white/3 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-brand/5 rounded-full blur-[120px] pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -144,45 +144,45 @@ export default function SignupPage() {
         >
           <Link href="/" className="lg:hidden flex items-center justify-center gap-2.5 mb-8 group">
             <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black">A</div>
-            <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
+            <span className="font-bold text-xl tracking-tight text-text-primary">AXIOM</span>
           </Link>
 
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-1.5">Create Account</h1>
-            <p className="text-sm text-zinc-400">Start your career journey with AXIOM</p>
+            <h1 className="text-3xl font-bold text-text-primary mb-1.5">Create Account</h1>
+            <p className="text-sm text-text-secondary">Start your career journey with AXIOM</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-zinc-300">Full Name</Label>
+              <Label htmlFor="name" className="text-sm font-medium text-text-secondary">Full Name</Label>
               <Input
                 id="name" type="text" placeholder="John Doe"
                 value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
-                className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-white/20 focus-visible:border-zinc-600 h-11"
+                className="bg-bg-elevated border-border-subtle text-text-primary placeholder:text-text-muted focus-visible:ring-brand/20 focus-visible:border-border-medium h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-zinc-300">Email Address</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-text-secondary">Email Address</Label>
               <Input
                 id="email" type="email" placeholder="you@example.com"
                 value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required
-                className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-white/20 focus-visible:border-zinc-600 h-11"
+                className="bg-bg-elevated border-border-subtle text-text-primary placeholder:text-text-muted focus-visible:ring-brand/20 focus-visible:border-border-medium h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-text-secondary">Password</Label>
               <div className="relative">
                 <Input
                   id="password" type={showPassword ? "text" : "password"} placeholder="••••••••"
                   value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required
-                  className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-white/20 focus-visible:border-zinc-600 h-11 pr-10"
+                  className="bg-bg-elevated border-border-subtle text-text-primary placeholder:text-text-muted focus-visible:ring-brand/20 focus-visible:border-border-medium h-11 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-550 hover:text-white transition-colors cursor-pointer flex items-center justify-center p-0.5"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors cursor-pointer flex items-center justify-center p-0.5"
                   title={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -196,9 +196,9 @@ export default function SignupPage() {
                       <div key={req.label} className="flex items-center gap-1.5 text-[11px]">
                         {met
                           ? <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
-                          : <XCircle className="w-3 h-3 text-zinc-700 shrink-0" />
+                          : <XCircle className="w-3 h-3 text-text-muted shrink-0" />
                         }
-                        <span className={met ? "text-emerald-400" : "text-zinc-600"}>{req.label}</span>
+                        <span className={met ? "text-emerald-400" : "text-text-muted"}>{req.label}</span>
                       </div>
                     );
                   })}
@@ -210,13 +210,13 @@ export default function SignupPage() {
               <input
                 type="checkbox" id="terms" checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="w-4 h-4 mt-0.5 rounded border-zinc-700 bg-zinc-800 accent-white shrink-0"
+                className="w-4 h-4 mt-0.5 rounded border-border-subtle bg-bg-elevated accent-brand shrink-0"
               />
-              <label htmlFor="terms" className="text-xs text-zinc-500 leading-relaxed">
+              <label htmlFor="terms" className="text-xs text-text-secondary leading-relaxed">
                 I agree to the{" "}
-                <Link href="/terms" className="text-zinc-300 hover:text-white transition-colors">Terms</Link>
+                <Link href="/terms" className="text-text-primary hover:text-brand transition-colors">Terms</Link>
                 {" "}and{" "}
-                <Link href="/privacy" className="text-zinc-300 hover:text-white transition-colors">Privacy Policy</Link>
+                <Link href="/privacy" className="text-text-primary hover:text-brand transition-colors">Privacy Policy</Link>
               </label>
             </div>
 
@@ -244,9 +244,9 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-zinc-500 mt-6">
+          <p className="text-center text-sm text-text-secondary mt-6">
             Already have an account?{" "}
-            <Link href="/login" className="text-white font-medium hover:underline underline-offset-4">
+            <Link href="/login" className="text-text-primary font-medium hover:text-brand hover:underline underline-offset-4">
               Sign in
             </Link>
           </p>

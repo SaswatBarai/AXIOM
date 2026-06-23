@@ -89,8 +89,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("dark", poppins.variable)}>
-      <body className="bg-grid-dots bg-bg-base text-white relative min-h-screen overflow-x-hidden antialiased font-sans">
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
+      <body className="bg-grid-dots bg-bg-base text-text-primary relative min-h-screen overflow-x-hidden antialiased font-sans">
         {/* Clipped background container to prevent vertical scroll overflow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           <div className="absolute top-[10%] left-[5%] w-[600px] h-[600px] ambient-glow-orb animate-float-1 opacity-60" />

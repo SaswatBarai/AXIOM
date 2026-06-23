@@ -102,7 +102,7 @@ function VerifyOtpForm() {
         {[280, 460, 640, 820].map((size, i) => (
           <motion.div
             key={size}
-            className="absolute rounded-full border border-zinc-800/40"
+            className="absolute rounded-full border border-border-subtle/40"
             style={{ width: size, height: size }}
             animate={{ scale: [1, 1.04, 1], opacity: [0.35, 0.12, 0.35] }}
             transition={{ duration: 4 + i * 0.8, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
@@ -120,7 +120,7 @@ function VerifyOtpForm() {
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2.5 mb-10 group">
           <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
-          <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
+          <span className="font-bold text-xl tracking-tight text-text-primary">AXIOM</span>
         </Link>
 
         <AnimatePresence mode="wait">
@@ -139,8 +139,8 @@ function VerifyOtpForm() {
                 <MailCheck className="w-8 h-8 text-emerald-400" />
               </motion.div>
               <div>
-                <h2 className="text-xl font-bold text-white">Verified!</h2>
-                <p className="text-sm text-zinc-400 mt-1">Redirecting you to login…</p>
+                <h2 className="text-xl font-bold text-text-primary">Verified!</h2>
+                <p className="text-sm text-text-secondary mt-1">Redirecting you to login…</p>
               </div>
             </motion.div>
           ) : (
@@ -148,19 +148,19 @@ function VerifyOtpForm() {
               {/* Icon */}
               <div className="text-center space-y-4">
                 <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto shadow-xl"
+                   animate={{ y: [0, -6, 0] }}
+                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                   className="w-16 h-16 rounded-2xl bg-bg-elevated border border-border-subtle flex items-center justify-center mx-auto shadow-xl"
                 >
-                  <MailCheck className="w-8 h-8 text-zinc-300" />
+                  <MailCheck className="w-8 h-8 text-text-secondary" />
                 </motion.div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">
+                  <h1 className="text-2xl font-bold text-text-primary">
                     {mode === "reset" ? "Reset Your Password" : "Check your email"}
                   </h1>
-                  <p className="text-sm text-zinc-400 mt-1.5">
+                  <p className="text-sm text-text-secondary mt-1.5">
                     Enter the 6-digit code sent to{" "}
-                    <span className="text-white font-medium truncate">{email || "your email"}</span>
+                    <span className="text-text-primary font-medium truncate">{email || "your email"}</span>
                   </p>
                 </div>
               </div>
@@ -187,10 +187,10 @@ function VerifyOtpForm() {
                         onKeyDown={(e) => handleKeyDown(i, e)}
                         placeholder="·"
                         className={[
-                          "w-11 h-13 text-center font-bold text-xl rounded-xl border-2 transition-all duration-150 outline-none bg-zinc-900",
-                          "text-white placeholder:text-zinc-700",
-                          digit ? "border-zinc-500 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]" : "border-zinc-800",
-                          "focus:border-zinc-500 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.06)]",
+                          "w-11 h-13 text-center font-bold text-xl rounded-xl border-2 transition-all duration-150 outline-none bg-bg-elevated",
+                          "text-text-primary placeholder:text-text-muted",
+                          digit ? "border-border-medium" : "border-border-subtle",
+                          "focus:border-brand",
                         ].join(" ")}
                       />
                     </motion.div>
@@ -202,24 +202,24 @@ function VerifyOtpForm() {
                   {Array.from({ length: 6 }).map((_, i) => (
                     <motion.div
                       key={i}
-                      animate={{ width: i < filled ? 20 : 6, backgroundColor: i < filled ? "#ffffff" : "#3f3f46" }}
+                      animate={{ width: i < filled ? 20 : 6 }}
                       transition={{ duration: 0.2 }}
-                      className="h-1 rounded-full"
+                      className={`h-1 rounded-full ${i < filled ? "bg-text-primary" : "bg-border-subtle"}`}
                     />
                   ))}
                 </div>
               </div>
 
               {/* Resend */}
-              <div className="text-center text-sm text-zinc-500 space-y-1">
+              <div className="text-center text-sm text-text-muted space-y-1">
                 <p>Didn&apos;t get the code?</p>
                 {countdown > 0 ? (
                   <div className="flex items-center justify-center gap-1.5">
                     <div className="relative w-5 h-5">
                       <svg className="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
-                        <circle cx="10" cy="10" r="8" fill="none" stroke="#3f3f46" strokeWidth="2" />
+                        <circle cx="10" cy="10" r="8" fill="none" className="stroke-border-subtle" strokeWidth="2" />
                         <motion.circle
-                          cx="10" cy="10" r="8" fill="none" stroke="#71717a" strokeWidth="2"
+                          cx="10" cy="10" r="8" fill="none" className="stroke-text-secondary" strokeWidth="2"
                           strokeDasharray={50.3}
                           animate={{ strokeDashoffset: 50.3 - (50.3 * countdown / RESEND_SECONDS) }}
                           transition={{ duration: 0.5 }}
@@ -232,7 +232,7 @@ function VerifyOtpForm() {
                 ) : (
                   <button
                     type="button" onClick={handleResend} disabled={resending}
-                    className="text-zinc-200 hover:text-white font-medium transition-colors disabled:opacity-50"
+                    className="text-text-secondary hover:text-text-primary font-medium transition-colors disabled:opacity-50"
                   >
                     {resending ? "Sending…" : "Resend code"}
                   </button>
@@ -269,7 +269,7 @@ function VerifyOtpForm() {
 
               <Link
                 href={mode === "reset" ? "/forgot-password" : "/signup"}
-                className="flex items-center justify-center gap-1.5 text-sm text-zinc-500 hover:text-white transition-colors"
+                className="flex items-center justify-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 {mode === "reset" ? "Back to reset" : "Wrong email? Go back"}
@@ -286,7 +286,7 @@ export default function VerifyOtpPage() {
   return (
     <Suspense fallback={
       <div className="h-full w-full flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-brand/20 border-t-brand rounded-full animate-spin" />
       </div>
     }>
       <VerifyOtpForm />

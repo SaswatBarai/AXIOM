@@ -14,7 +14,7 @@ import { Footer } from "@/components/landing/Footer";
 export default function LandingPage() {
   return (
     <SmoothScroll>
-      <main className="min-h-screen bg-bg-base text-white">
+      <main className="min-h-screen bg-bg-base text-text-primary">
         {/* Canvas background — position:fixed, z-index:0, behind all content */}
         <SignalFromNoise />
 
