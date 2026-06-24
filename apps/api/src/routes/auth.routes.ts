@@ -5,6 +5,7 @@ import { requireAuth } from "../middleware/auth.middleware";
 import {
   registerHandler,
   verifyEmailHandler,
+  resendVerificationHandler,
   loginHandler,
   refreshHandler,
   logoutHandler,
@@ -49,6 +50,7 @@ const emailLimiter = mkLimiter(
 
 router.post("/register",        authLimiter, validate(registerSchema),       registerHandler);
 router.post("/verify-email",    emailLimiter, validate(verifyEmailSchema),     verifyEmailHandler);
+router.post("/resend-verification", emailLimiter, validate(forgotPasswordSchema), resendVerificationHandler);
 router.post("/login",           loginLimiter, validate(loginSchema),           loginHandler);
 router.post("/refresh",        authLimiter,  validate(refreshSchema),          refreshHandler);
 router.post("/logout",         authLimiter,  requireAuth,                      logoutHandler);

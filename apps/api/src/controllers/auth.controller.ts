@@ -41,6 +41,13 @@ export async function verifyEmailHandler(req: AuthRequest, res: Response, next: 
   } catch (err) { next(err); }
 }
 
+export async function resendVerificationHandler(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const result = await authService.resendVerification(req.body.email);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
 export async function loginHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const result = await authService.login(req.body);

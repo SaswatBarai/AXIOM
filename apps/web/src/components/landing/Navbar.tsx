@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
 
 const NAV_ITEMS = [
   { label: "Features",  href: "/#features"  },
@@ -39,6 +40,7 @@ function AxiomLogo({ size = 32 }: { size?: number }) {
 }
 
 export function Navbar() {
+  const { isAuthenticated } = useAuth();
   const [isOpen, setIsOpen]         = useState(false);
   const [scrolled, setScrolled]     = useState(false);
   const [activeSection, setActive]  = useState<string>("");
@@ -145,16 +147,26 @@ export function Navbar() {
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          <Link href="/login">
-            <Button variant="ghost" className="text-text-tertiary hover:text-text-primary hover:bg-bg-elevated/60 text-sm h-9 px-4">
-              Sign In
-            </Button>
-          </Link>
-          <Link href="/signup">
-            <Button className="bg-brand hover:bg-brand-hover text-black font-semibold text-sm h-9 px-4 shadow-sm">
-              Get Started
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link href="/dashboard">
+              <Button className="bg-brand hover:bg-brand-hover text-black font-semibold text-sm h-9 px-4 shadow-sm">
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="ghost" className="text-text-tertiary hover:text-text-primary hover:bg-bg-elevated/60 text-sm h-9 px-4">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="bg-brand hover:bg-brand-hover text-black font-semibold text-sm h-9 px-4 shadow-sm">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -200,21 +212,36 @@ export function Navbar() {
           </nav>
           <hr className="border-border-subtle/60" />
           <div className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between gap-2.5">
-              <Link href="/login" className="flex-1" onClick={() => setIsOpen(false)}>
-                <Button variant="ghost" className="w-full text-text-secondary hover:text-text-primary justify-center border border-border-subtle h-10">
-                  Sign In
-                </Button>
-              </Link>
-              <div className="border border-border-subtle rounded-lg flex items-center justify-center h-10 w-10 shrink-0 bg-bg-card/30">
-                <ThemeToggle />
+            {isAuthenticated ? (
+              <div className="flex items-center justify-between gap-2.5">
+                <Link href="/dashboard" className="flex-1" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full bg-brand hover:bg-brand-hover text-black font-semibold justify-center h-10">
+                    Dashboard
+                  </Button>
+                </Link>
+                <div className="border border-border-subtle rounded-lg flex items-center justify-center h-10 w-10 shrink-0 bg-bg-card/30">
+                  <ThemeToggle />
+                </div>
               </div>
-            </div>
-            <Link href="/signup" className="w-full" onClick={() => setIsOpen(false)}>
-              <Button className="w-full bg-brand hover:bg-brand-hover text-black font-semibold justify-center h-10">
-                Get Started
-              </Button>
-            </Link>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-2.5">
+                  <Link href="/login" className="flex-1" onClick={() => setIsOpen(false)}>
+                    <Button variant="ghost" className="w-full text-text-secondary hover:text-text-primary justify-center border border-border-subtle h-10">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <div className="border border-border-subtle rounded-lg flex items-center justify-center h-10 w-10 shrink-0 bg-bg-card/30">
+                    <ThemeToggle />
+                  </div>
+                </div>
+                <Link href="/signup" className="w-full" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full bg-brand hover:bg-brand-hover text-black font-semibold justify-center h-10">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

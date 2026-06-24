@@ -23,7 +23,32 @@ function generateOtp(): string {
 
 export async function register(input: RegisterInput) {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
-  if (existing) throw new AppError(409, "Email already in use");
+  if (existing) {
+    if (existing.emailVerified) {
+      throw new AppError(409, "Email already in use");
+    }
+    const hashed = await bcrypt.hash(input.password, 10);
+    const user = await prisma.user.update({
+      where: { email: input.email },
+      data: {
+        name: input.name,
+        password: hashed,
+      },
+      select: { id: true, email: true, name: true, role: true },
+    });
+
+    const otp = generateOtp();
+    await redis.set(CacheKey.otp(input.email), otp, TTL.OTP);
+
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`[AUTH] OTP for ${input.email}: ${otp}`);
+    }
+
+    sendEmail({ to: input.email, template: "otp-verify", data: { name: input.name, otp } })
+      .catch((err) => logger.warn("Failed to send OTP email", err));
+
+    return { message: "Account created. Check your email for the verification code.", userId: user.id };
+  }
 
   const hashed = await bcrypt.hash(input.password, 10);
   const user = await prisma.user.create({
@@ -66,6 +91,24 @@ export async function verifyEmail(input: VerifyEmailInput) {
   await redis.del(CacheKey.otp(input.email));
 
   return { message: "Email verified successfully" };
+}
+
+export async function resendVerification(email: string) {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) throw new AppError(404, "User not found");
+  if (user.emailVerified) throw new AppError(400, "Email is already verified");
+
+  const otp = generateOtp();
+  await redis.set(CacheKey.otp(email), otp, TTL.OTP);
+
+  if (process.env.NODE_ENV !== "production") {
+    console.warn(`[AUTH] Resent OTP for ${email}: ${otp}`);
+  }
+
+  sendEmail({ to: email, template: "otp-verify", data: { name: user.name, otp } })
+    .catch((err) => logger.warn("Failed to send OTP email", err));
+
+  return { message: "Verification code resent successfully" };
 }
 
 // ── Login ─────────────────────────────────────────────────────────────────────

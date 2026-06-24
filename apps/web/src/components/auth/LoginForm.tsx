@@ -92,8 +92,21 @@ export function LoginForm() {
 
         {/* Error Message */}
         {error && (
-          <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-500 font-medium">
-            {error}
+          <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-500 font-medium transition-all">
+            {error === "Please verify your email before logging in" ? (
+              <span className="flex flex-col gap-1.5">
+                <span>{error}</span>
+                <Link
+                  href={`/verify-otp?email=${encodeURIComponent(form.email)}`}
+                  className="text-brand font-semibold hover:underline inline-flex items-center gap-1 mt-0.5"
+                >
+                  Verify your email now
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </span>
+            ) : (
+              error
+            )}
           </div>
         )}
 

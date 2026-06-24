@@ -1,11 +1,31 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { SignupHero } from "@/components/auth/SignupHero";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
 export default function SignupPage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, router]);
+
+  if (isLoading || isAuthenticated) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-bg-base text-text-primary">
+        <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-bg-base text-text-primary">
       {/* Left Column: Visual Panel */}

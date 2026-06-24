@@ -60,14 +60,18 @@ function VerifyOtpForm() {
     setResending(true);
     setError("");
     try {
-      await api.post("/auth/forgot-password", { email });
+      if (mode === "reset") {
+        await api.post("/auth/forgot-password", { email });
+      } else {
+        await api.post("/auth/resend-verification", { email });
+      }
       setCountdown(RESEND_SECONDS);
     } catch {
       setError("Failed to resend code.");
     } finally {
       setResending(false);
     }
-  }, [email]);
+  }, [email, mode]);
 
   async function handleSubmit() {
     const otp = digits.join("");

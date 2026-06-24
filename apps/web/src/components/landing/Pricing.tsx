@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, Minus, ShieldCheck, Star } from "lucide-react";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
 interface PricingPlan {
@@ -91,6 +92,7 @@ const AVATARS = [
 
 // ── Pricing card ──────────────────────────────────────────────────────────────
 function PricingCard({ plan, delay }: { plan: PricingPlan; delay: number }) {
+  const { isAuthenticated } = useAuth();
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, margin: "-80px" });
   const [coords, setCoords] = useState({ x: 0, y: 0 });
@@ -196,8 +198,20 @@ function PricingCard({ plan, delay }: { plan: PricingPlan; delay: number }) {
             </div>
           </div>
 
+          {/* Action CTA button */}
           <div className="relative z-10 pt-8 mt-auto">
-            <Link href={plan.ctaLink} className="w-full">
+            <Link
+              href={
+                isAuthenticated
+                  ? plan.name === "Free"
+                    ? "/dashboard"
+                    : plan.name === "Pro"
+                    ? "/dashboard/billing"
+                    : plan.ctaLink
+                  : plan.ctaLink
+              }
+              className="w-full"
+            >
               <Button
                 className={`w-full font-semibold py-5 text-sm transition-all duration-200 ${
                   plan.highlighted
@@ -205,7 +219,13 @@ function PricingCard({ plan, delay }: { plan: PricingPlan; delay: number }) {
                     : "bg-bg-elevated hover:bg-bg-hover text-text-primary border border-border-subtle"
                 }`}
               >
-                {plan.ctaText}
+                {isAuthenticated
+                  ? plan.name === "Free"
+                    ? "Go to Dashboard"
+                    : plan.name === "Pro"
+                    ? "Get Pro"
+                    : plan.ctaText
+                  : plan.ctaText}
               </Button>
             </Link>
           </div>
