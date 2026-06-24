@@ -440,3 +440,14 @@ model Payment {
   @@index([razorpayPaymentId])
   @@map("payments")
 }
+
+/** Processed Razorpay webhook deliveries — deduplication + replay protection. */
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  eventType   String
+  receivedAt  DateTime @default(now())
+
+  @@index([receivedAt])
+  @@map("webhook_events")
+}

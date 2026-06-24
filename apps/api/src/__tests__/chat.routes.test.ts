@@ -12,11 +12,22 @@ vi.mock("../services/chat.service", () => ({
 }));
 
 vi.mock("../middleware/auth.middleware", () => ({
-  requireAuth: (req: express.Request & { userId?: string }, _res: express.Response, next: express.NextFunction) => {
+  requireAuth: (req: express.Request & { userId?: string; userRole?: string }, _res: express.Response, next: express.NextFunction) => {
     req.userId = "user-1";
+    req.userRole = "USER";
     next();
   },
-  assertUserId: (req: any) => req.userId,
+  requireActiveSubscription: (
+    req: express.Request & { userId?: string; userRole?: string },
+    _res: express.Response,
+    next: express.NextFunction,
+  ) => {
+    if ((req as { premiumAllowed?: boolean }).premiumAllowed === false) {
+      return next(new AppError(403, "This feature requires an active Premium subscription", "PREMIUM_REQUIRED"));
+    }
+    next();
+  },
+  assertUserId: (req: express.Request & { userId?: string }) => req.userId!,
 }));
 
 import * as chatService from "../services/chat.service";
@@ -46,6 +57,22 @@ beforeEach(() => vi.clearAllMocks());
 // ── POST /api/chat (stream) ────────────────────────────────────────────────────
 
 describe("POST /api/chat", () => {
+  it("403 — denied without active subscription", async () => {
+    const deniedApp = express();
+    deniedApp.use((req, _res, next) => {
+      (req as { premiumAllowed?: boolean }).premiumAllowed = false;
+      next();
+    });
+    deniedApp.use(express.json());
+    deniedApp.use("/api/chat", chatRoutes);
+    deniedApp.use(errorHandler);
+
+    const res = await request(deniedApp).post("/api/chat").send({ message: "hi" });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("PREMIUM_REQUIRED");
+    expect(chatService.streamChatToClient).not.toHaveBeenCalled();
+  });
+
   it("200 — streams response", async () => {
     vi.mocked(chatService.streamChatToClient).mockImplementation(
       async (_userId, _sid, _msg, res) => {

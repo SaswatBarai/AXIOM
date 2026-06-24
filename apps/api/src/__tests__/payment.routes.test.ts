@@ -182,9 +182,9 @@ describe("POST /api/payments/create-subscription", () => {
     expect(res.body.subscriptionId).toBe("sub_XYZ");
   });
 
-  it("409 — refuses if user already has an active subscription", async () => {
+  it("409 — refuses duplicate open subscription", async () => {
     vi.mocked(paymentService.createSubscription).mockRejectedValue(
-      new AppError(409, "User already has an active subscription"),
+      new AppError(409, "You already have an open subscription. Cancel it or wait for the current period to end.", "SUBSCRIPTION_ALREADY_OPEN"),
     );
     const res = await request(app)
       .post("/api/payments/create-subscription")
@@ -248,10 +248,10 @@ describe("POST /api/payments/webhook", () => {
       .send(payload);
     expect(res.status).toBe(200);
     expect(paymentService.handleWebhook).toHaveBeenCalled();
-    const [body, sig] = vi.mocked(paymentService.handleWebhook).mock.calls[0]!;
+    const [body, meta] = vi.mocked(paymentService.handleWebhook).mock.calls[0]!;
     expect(Buffer.isBuffer(body)).toBe(true);
     expect((body as Buffer).toString("utf8")).toBe(payload);
-    expect(sig).toBe("abc123");
+    expect(meta).toMatchObject({ signature: "abc123" });
   });
 
   it("401 — bad webhook signature surfaces as 401", async () => {

@@ -4,6 +4,7 @@ import { redis } from "../services/redis.service";
 import { prisma } from "@axiom/database";
 import { CacheKey } from "../utils/constants";
 import { verifyToken, extractJti } from "../utils/jwt";
+import { hasPremiumAccess } from "../services/subscription.service";
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -77,14 +78,39 @@ export function requireRole(...roles: string[]) {
 }
 
 /**
- * Gate premium features behind an active paid subscription.
+ * Gate premium features behind a live paid subscription (DB-checked).
  *
- * 403 with `PREMIUM_REQUIRED` is intentional — the frontend uses that code to
- * pop a paywall modal instead of a generic "forbidden" error.
+ * Does NOT trust JWT role — validates subscription status, period end, and
+ * captured payment history on every request.
  */
-export function requirePremium(req: AuthRequest, _res: Response, next: NextFunction) {
-  if (req.userRole === "PREMIUM" || req.userRole === "ADMIN") return next();
-  return next(new AppError(403, "This feature requires a Premium subscription", "PREMIUM_REQUIRED"));
+export function requireActiveSubscription(req: AuthRequest, _res: Response, next: NextFunction) {
+  if (req.userRole === "ADMIN") return next();
+
+  (async () => {
+    try {
+      const userId = assertUserId(req);
+      const allowed = await hasPremiumAccess(userId, req.userRole);
+      if (!allowed) {
+        return next(
+          new AppError(
+            403,
+            "This feature requires an active Premium subscription",
+            "PREMIUM_REQUIRED",
+          ),
+        );
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  })();
+}
+
+/**
+ * @deprecated Use requireActiveSubscription — JWT role alone is not authoritative.
+ */
+export function requirePremium(req: AuthRequest, res: Response, next: NextFunction) {
+  return requireActiveSubscription(req, res, next);
 }
 
 /**

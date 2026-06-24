@@ -1,13 +1,12 @@
 /**
- * Razorpay payment + subscription service.
+ * Razorpay payment + subscription service (production-hardened).
  *
- * Two flows are supported:
- *   - one-time order   → createOrder → user pays → verifyOrderPayment → grant
- *   - recurring sub    → createSubscription → user pays → verifySubscriptionPayment → grant
- *
- * Webhook events extend / downgrade subscriptions out-of-band (renewal, failure,
- * cancellation). All side effects that flip user.role go through `grantPremium`
- * / `revokePremium` so the logic stays in one place.
+ * Security guarantees:
+ *  - Amount/currency always from server catalog
+ *  - HMAC signature + Razorpay API fetch before granting access
+ *  - DB transactions for grant paths (no duplicate premium)
+ *  - Webhook deduplication, timestamp checks, signature verification
+ *  - One-time orders grant premium via verify OR payment.captured webhook
  */
 import { prisma, type Prisma } from "@axiom/database";
 import type { Orders } from "razorpay/dist/types/orders";
@@ -23,7 +22,18 @@ import {
   verifyOrderSignature,
   verifySubscriptionSignature,
   verifyWebhookSignature,
+  fetchAndValidatePayment,
+  PaymentValidationError,
 } from "../utils/razorpay";
+import {
+  addMonths,
+  assertCanCreateSubscription,
+  grantPremiumRole,
+  revokePremiumRole,
+  WEBHOOK_MAX_AGE_MS,
+} from "./subscription.service";
+
+type Tx = Prisma.TransactionClient;
 
 // ── Razorpay error normalization ────────────────────────────────────────────
 
@@ -39,18 +49,14 @@ function razorpayErrorMessage(err: unknown): string {
   return "Razorpay request failed";
 }
 
-/**
- * Translates an SDK throw into a user-friendly AppError.
- *
- * Razorpay 4xxs come back with an `error.description` we can show; anything
- * else is bucketed as 502 (bad upstream). Placeholder env in dev surfaces as
- * 503 with a clear message so the user knows what to configure.
- */
 function wrapRazorpayError(err: unknown): AppError {
+  if (err instanceof PaymentValidationError) {
+    return new AppError(400, err.message, "PAYMENT_VALIDATION_FAILED");
+  }
   if (!RAZORPAY_IS_CONFIGURED) {
     return new AppError(
       503,
-      "Razorpay is not configured on this server. Set RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, and RAZORPAY_PLAN_* env vars to enable checkout.",
+      "Razorpay is not configured on this server.",
       "RAZORPAY_NOT_CONFIGURED",
     );
   }
@@ -65,13 +71,11 @@ function wrapRazorpayError(err: unknown): AppError {
 
 // ── Public DTOs ──────────────────────────────────────────────────────────────
 
-export interface CheckoutConfig {
-  keyId: string;
-}
+export interface CheckoutConfig { keyId: string; }
 
 export interface CreateOrderResult {
   orderId:  string;
-  amount:   number;     // paise
+  amount:   number;
   currency: "INR";
   plan:     PlanKey;
   keyId:    string;
@@ -91,6 +95,11 @@ export interface SubscriptionView {
   cancelAtPeriodEnd:  boolean;
 }
 
+export interface VerifyResult {
+  alreadyCaptured: boolean;
+  subscription:    SubscriptionView;
+}
+
 // ── Read helpers ─────────────────────────────────────────────────────────────
 
 export function getCheckoutConfig(): CheckoutConfig {
@@ -101,11 +110,8 @@ export async function getSubscription(userId: string): Promise<SubscriptionView>
   const sub = await prisma.subscription.findUnique({ where: { userId } });
   if (!sub) {
     return {
-      plan:               "FREE",
-      status:             "ACTIVE",
-      currentPeriodStart: null,
-      currentPeriodEnd:   null,
-      cancelAtPeriodEnd:  false,
+      plan: "FREE", status: "ACTIVE",
+      currentPeriodStart: null, currentPeriodEnd: null, cancelAtPeriodEnd: false,
     };
   }
   return {
@@ -119,17 +125,11 @@ export async function getSubscription(userId: string): Promise<SubscriptionView>
 
 export async function listPayments(userId: string) {
   return prisma.payment.findMany({
-    where:    { userId },
-    orderBy:  { createdAt: "desc" },
+    where:   { userId },
+    orderBy: { createdAt: "desc" },
     select: {
-      id:                true,
-      razorpayOrderId:   true,
-      razorpayPaymentId: true,
-      amount:            true,
-      currency:          true,
-      plan:              true,
-      status:            true,
-      createdAt:         true,
+      id: true, razorpayOrderId: true, razorpayPaymentId: true,
+      amount: true, currency: true, plan: true, status: true, createdAt: true,
     },
   });
 }
@@ -143,11 +143,11 @@ export async function createOrder(userId: string, plan: PlanKey): Promise<Create
   let order: Orders.RazorpayOrder;
   try {
     order = await razorpay.orders.create({
-      amount:           def.amountPaise,
-      currency:         "INR",
-      receipt:          `axiom_${userId}_${Date.now()}`,
-      notes:            { userId, plan },
-      partial_payment:  false,
+      amount:          def.amountPaise,
+      currency:        "INR",
+      receipt:         `axiom_${userId}_${Date.now()}`,
+      notes:           { userId, plan },
+      partial_payment: false,
     });
   } catch (err) {
     throw wrapRazorpayError(err);
@@ -164,45 +164,49 @@ export async function createOrder(userId: string, plan: PlanKey): Promise<Create
     },
   });
 
-  return {
-    orderId:  order.id,
-    amount:   def.amountPaise,
-    currency: "INR",
-    plan,
-    keyId:    RAZORPAY_KEY_ID,
-  };
+  logger.info(`payment order created: user=${userId} order=${order.id} plan=${plan}`);
+  return { orderId: order.id, amount: def.amountPaise, currency: "INR", plan, keyId: RAZORPAY_KEY_ID };
 }
 
 interface VerifyOrderInput {
-  userId:    string;
-  orderId:   string;
-  paymentId: string;
-  signature: string;
+  userId: string; orderId: string; paymentId: string; signature: string;
 }
 
-export async function verifyOrderPayment(input: VerifyOrderInput) {
+export async function verifyOrderPayment(input: VerifyOrderInput): Promise<VerifyResult> {
   if (!verifyOrderSignature(input.orderId, input.paymentId, input.signature)) {
     logger.warn(`payment verify: bad signature for order ${input.orderId}`);
     throw new AppError(400, "Invalid payment signature");
   }
 
   const payment = await prisma.payment.findUnique({ where: { razorpayOrderId: input.orderId } });
-  if (!payment)               throw new AppError(404, "Order not found");
+  if (!payment) throw new AppError(404, "Order not found");
   if (payment.userId !== input.userId) throw new AppError(403, "Order belongs to another user");
 
-  // Idempotency — re-running with same payment id is a no-op
   if (payment.status === "CAPTURED" && payment.razorpayPaymentId === input.paymentId) {
-    const sub = await getSubscription(input.userId);
-    return { alreadyCaptured: true, subscription: sub };
+    return { alreadyCaptured: true, subscription: await getSubscription(input.userId) };
+  }
+  if (payment.status === "CAPTURED") {
+    throw new AppError(409, "Order already paid with a different payment", "ORDER_ALREADY_PAID");
+  }
+
+  try {
+    await fetchAndValidatePayment(input.paymentId, {
+      amountPaise: payment.amount,
+      currency:    payment.currency,
+      orderId:     input.orderId,
+    });
+  } catch (err) {
+    throw wrapRazorpayError(err);
   }
 
   const plan = payment.plan as PlanKey;
-  const subscription = await grantPremium(input.userId, plan, {
+  const subscription = await grantPremiumTransactional(input.userId, plan, {
     razorpayPaymentId: input.paymentId,
     razorpayOrderId:   input.orderId,
     razorpaySignature: input.signature,
   });
 
+  logger.info(`payment verified: user=${input.userId} order=${input.orderId} payment=${input.paymentId}`);
   return { alreadyCaptured: false, subscription };
 }
 
@@ -212,33 +216,35 @@ export async function createSubscription(userId: string, plan: PlanKey): Promise
   const def = PLAN_CATALOG[plan];
   if (!def) throw new AppError(400, `Unknown plan: ${plan}`);
 
-  // Cancel any existing pending subscription on this user (defensive — Razorpay
-  // also enforces uniqueness, but the failure mode there is opaque).
+  await assertCanCreateSubscription(userId);
+
   const existing = await prisma.subscription.findUnique({ where: { userId } });
-  if (existing && existing.razorpaySubscriptionId && existing.status === "ACTIVE") {
-    throw new AppError(409, "User already has an active subscription");
+  if (existing?.razorpaySubscriptionId && existing.status === "PAST_DUE") {
+    try {
+      await razorpay.subscriptions.cancel(existing.razorpaySubscriptionId, false);
+    } catch (err) {
+      logger.warn(`cancel stale razorpay sub ${existing.razorpaySubscriptionId}: ${(err as Error).message}`);
+    }
   }
 
-  // total_count = 60 → ~5 years of monthly billing, plenty of headroom
   let sub: Subscriptions.RazorpaySubscription;
   try {
     sub = await razorpay.subscriptions.create({
-      plan_id:       def.razorpayPlanId,
+      plan_id:         def.razorpayPlanId,
       customer_notify: 1,
-      total_count:   60,
-      notes:         { userId, plan },
+      total_count:     60,
+      notes:           { userId, plan },
     });
   } catch (err) {
     throw wrapRazorpayError(err);
   }
 
-  // Persist a placeholder row so webhooks can find the user via subscription id
   await prisma.subscription.upsert({
     where:  { userId },
     update: {
       razorpaySubscriptionId: sub.id,
       plan,
-      status:             "PAST_DUE",  // becomes ACTIVE on first successful charge
+      status:             "PAST_DUE",
       currentPeriodStart: new Date(),
       currentPeriodEnd:   addMonths(new Date(), def.intervalMonths),
       cancelAtPeriodEnd:  false,
@@ -254,17 +260,15 @@ export async function createSubscription(userId: string, plan: PlanKey): Promise
     },
   });
 
+  logger.info(`subscription created: user=${userId} sub=${sub.id} plan=${plan}`);
   return { subscriptionId: sub.id, plan, keyId: RAZORPAY_KEY_ID };
 }
 
 interface VerifySubscriptionInput {
-  userId:         string;
-  subscriptionId: string;
-  paymentId:      string;
-  signature:      string;
+  userId: string; subscriptionId: string; paymentId: string; signature: string;
 }
 
-export async function verifySubscriptionPayment(input: VerifySubscriptionInput) {
+export async function verifySubscriptionPayment(input: VerifySubscriptionInput): Promise<VerifyResult> {
   if (!verifySubscriptionSignature(input.subscriptionId, input.paymentId, input.signature)) {
     logger.warn(`subscription verify: bad signature for ${input.subscriptionId}`);
     throw new AppError(400, "Invalid payment signature");
@@ -273,10 +277,9 @@ export async function verifySubscriptionPayment(input: VerifySubscriptionInput) 
   const sub = await prisma.subscription.findUnique({
     where: { razorpaySubscriptionId: input.subscriptionId },
   });
-  if (!sub)                          throw new AppError(404, "Subscription not found");
-  if (sub.userId !== input.userId)   throw new AppError(403, "Subscription belongs to another user");
+  if (!sub) throw new AppError(404, "Subscription not found");
+  if (sub.userId !== input.userId) throw new AppError(403, "Subscription belongs to another user");
 
-  // Already processed?
   const existingPayment = await prisma.payment.findUnique({
     where: { razorpayPaymentId: input.paymentId },
   });
@@ -287,37 +290,51 @@ export async function verifySubscriptionPayment(input: VerifySubscriptionInput) 
   const plan = sub.plan as PlanKey;
   const def  = PLAN_CATALOG[plan];
 
-  await prisma.payment.create({
-    data: {
-      userId:            input.userId,
-      subscriptionId:    sub.id,
-      razorpayOrderId:   `sub_${input.subscriptionId}_${input.paymentId}`, // synthetic — orderId is per-charge with subs
-      razorpayPaymentId: input.paymentId,
-      razorpaySignature: input.signature,
-      amount:            def.amountPaise,
-      currency:          "INR",
-      plan,
-      status:            "CAPTURED",
-    },
+  try {
+    await fetchAndValidatePayment(input.paymentId, {
+      amountPaise: def.amountPaise,
+      currency:    "INR",
+    });
+  } catch (err) {
+    throw wrapRazorpayError(err);
+  }
+
+  const subscription = await prisma.$transaction(async (tx) => {
+    const dup = await tx.payment.findUnique({ where: { razorpayPaymentId: input.paymentId } });
+    if (dup) return getSubscriptionInTx(tx, input.userId);
+
+    await tx.payment.create({
+      data: {
+        userId:            input.userId,
+        subscriptionId:    sub.id,
+        razorpayOrderId:   `sub_${input.subscriptionId}_${input.paymentId}`,
+        razorpayPaymentId: input.paymentId,
+        razorpaySignature: input.signature,
+        amount:            def.amountPaise,
+        currency:          "INR",
+        plan,
+        status:            "CAPTURED",
+      },
+    });
+
+    return activatePeriodInTx(tx, input.userId, plan);
   });
 
-  const view = await activatePeriod(input.userId, plan);
-  return { alreadyCaptured: false, subscription: view };
+  logger.info(`subscription verified: user=${input.userId} sub=${input.subscriptionId}`);
+  return { alreadyCaptured: false, subscription };
 }
 
 // ── Cancellation ─────────────────────────────────────────────────────────────
 
-export async function cancelSubscription(userId: string) {
+export async function cancelSubscription(userId: string): Promise<SubscriptionView> {
   const sub = await prisma.subscription.findUnique({ where: { userId } });
   if (!sub || sub.plan === "FREE") throw new AppError(404, "No active subscription to cancel");
 
   if (sub.razorpaySubscriptionId) {
     try {
-      // `cancel_at_cycle_end = 1` keeps the user on PREMIUM until period end
       await razorpay.subscriptions.cancel(sub.razorpaySubscriptionId, true);
     } catch (err) {
       logger.warn(`razorpay cancel failed for ${sub.razorpaySubscriptionId}: ${(err as Error).message}`);
-      // Fall through — still mark cancelAtPeriodEnd locally so cron can clean up
     }
   }
 
@@ -332,18 +349,43 @@ export async function cancelSubscription(userId: string) {
 // ── Webhook dispatch ─────────────────────────────────────────────────────────
 
 interface WebhookPayload {
-  event:   string;
-  payload: Record<string, { entity: Record<string, unknown> }>;
+  event:       string;
+  created_at?: number;
+  payload:     Record<string, { entity: Record<string, unknown> }>;
 }
 
-export async function handleWebhook(rawBody: Buffer | string, signatureHeader: string) {
-  if (!verifyWebhookSignature(rawBody, signatureHeader)) {
+export interface WebhookMeta {
+  eventId:   string;
+  signature: string;
+}
+
+export async function handleWebhook(
+  rawBody: Buffer | string,
+  meta: WebhookMeta,
+): Promise<{ ok: boolean; event: string; duplicate?: boolean }> {
+  if (!verifyWebhookSignature(rawBody, meta.signature)) {
     logger.warn("webhook: signature verification failed");
     throw new AppError(401, "Invalid webhook signature");
   }
 
   const body = typeof rawBody === "string" ? rawBody : rawBody.toString("utf8");
   const parsed = JSON.parse(body) as WebhookPayload;
+
+  if (parsed.created_at) {
+    const ageMs = Date.now() - parsed.created_at * 1000;
+    if (ageMs > WEBHOOK_MAX_AGE_MS) {
+      logger.warn(`webhook: stale event ${meta.eventId} age=${ageMs}ms`);
+      throw new AppError(400, "Webhook event too old", "WEBHOOK_STALE");
+    }
+  }
+
+  const duplicate = await recordWebhookEvent(meta.eventId, parsed.event);
+  if (duplicate) {
+    logger.info(`webhook: duplicate event ${meta.eventId}`);
+    return { ok: true, event: parsed.event, duplicate: true };
+  }
+
+  logger.info(`webhook received: event=${parsed.event} id=${meta.eventId}`);
 
   switch (parsed.event) {
     case "payment.captured":
@@ -364,64 +406,139 @@ export async function handleWebhook(rawBody: Buffer | string, signatureHeader: s
     default:
       logger.info(`webhook: ignoring event ${parsed.event}`);
   }
+
   return { ok: true, event: parsed.event };
 }
 
+/** Returns true if this event was already processed (idempotent). */
+async function recordWebhookEvent(eventId: string, eventType: string): Promise<boolean> {
+  try {
+    await prisma.webhookEvent.create({ data: { eventId, eventType } });
+    return false;
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === "P2002") return true;
+    throw err;
+  }
+}
+
 async function onPaymentCaptured(p: WebhookPayload) {
-  const pay = p.payload.payment?.entity as { id: string; order_id?: string } | undefined;
-  if (!pay) return;
-  const existing = await prisma.payment.findFirst({
-    where: { OR: [{ razorpayPaymentId: pay.id }, { razorpayOrderId: pay.order_id ?? "" }] },
-  });
+  const pay = p.payload.payment?.entity as {
+    id: string; order_id?: string; amount?: number; currency?: string; status?: string;
+  } | undefined;
+  if (!pay?.order_id) return;
+
+  const existing = await prisma.payment.findUnique({ where: { razorpayOrderId: pay.order_id } });
   if (!existing) return;
-  if (existing.status === "CAPTURED") return; // idempotent
-  await prisma.payment.update({
-    where: { id: existing.id },
-    data:  { status: "CAPTURED", razorpayPaymentId: pay.id },
+
+  if (existing.status === "CAPTURED" && existing.razorpayPaymentId === pay.id) return;
+
+  try {
+    await fetchAndValidatePayment(pay.id, {
+      amountPaise: existing.amount,
+      currency:    existing.currency,
+      orderId:     pay.order_id,
+    });
+  } catch (err) {
+    logger.warn(`webhook payment.captured validation failed: ${(err as Error).message}`);
+    return;
+  }
+
+  const plan = existing.plan as PlanKey;
+  await grantPremiumTransactional(existing.userId, plan, {
+    razorpayPaymentId: pay.id,
+    razorpayOrderId:   pay.order_id,
+    razorpaySignature: "webhook",
   });
+
+  logger.info(`webhook payment.captured granted premium: user=${existing.userId} order=${pay.order_id}`);
 }
 
 async function onPaymentFailed(p: WebhookPayload) {
   const pay = p.payload.payment?.entity as { id: string; order_id?: string } | undefined;
-  if (!pay) return;
-  const existing = await prisma.payment.findFirst({
-    where: { razorpayOrderId: pay.order_id ?? "" },
-  });
-  if (!existing) return;
-  await prisma.payment.update({
-    where: { id: existing.id },
-    data:  { status: "FAILED", razorpayPaymentId: pay.id },
-  });
-  // If subscription, mark PAST_DUE — cron + grace period handles the rest
-  if (existing.subscriptionId) {
-    await prisma.subscription.update({
-      where: { id: existing.subscriptionId },
-      data:  { status: "PAST_DUE" },
+  if (!pay?.order_id) return;
+
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.payment.findUnique({ where: { razorpayOrderId: pay.order_id! } });
+    if (!existing) return;
+    await tx.payment.update({
+      where: { id: existing.id },
+      data:  { status: "FAILED", razorpayPaymentId: pay.id },
     });
-  }
+    if (existing.subscriptionId) {
+      await tx.subscription.update({
+        where: { id: existing.subscriptionId },
+        data:  { status: "PAST_DUE" },
+      });
+    }
+  });
 }
 
 async function onSubscriptionCharged(p: WebhookPayload) {
   const subEntity = p.payload.subscription?.entity as
     | { id: string; current_start?: number; current_end?: number }
     | undefined;
+  const payEntity = p.payload.payment?.entity as
+    | { id: string; amount?: number; currency?: string; status?: string }
+    | undefined;
+
   if (!subEntity) return;
+
   const sub = await prisma.subscription.findUnique({
     where: { razorpaySubscriptionId: subEntity.id },
   });
   if (!sub) return;
-  const def = PLAN_CATALOG[sub.plan as PlanKey];
-  await prisma.subscription.update({
-    where: { id: sub.id },
-    data: {
-      status:             "ACTIVE",
-      currentPeriodStart: subEntity.current_start ? new Date(subEntity.current_start * 1000) : sub.currentPeriodStart,
-      currentPeriodEnd:   subEntity.current_end   ? new Date(subEntity.current_end   * 1000) : addMonths(new Date(), def.intervalMonths),
-    },
-  });
-  await prisma.user.update({
-    where: { id: sub.userId },
-    data:  { role: "PREMIUM" },
+
+  const plan = sub.plan as PlanKey;
+  const def  = PLAN_CATALOG[plan];
+
+  if (payEntity?.id) {
+    try {
+      await fetchAndValidatePayment(payEntity.id, {
+        amountPaise: def.amountPaise,
+        currency:    "INR",
+      });
+    } catch (err) {
+      logger.warn(`webhook subscription.charged payment validation failed: ${(err as Error).message}`);
+      return;
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (payEntity?.id) {
+      const syntheticOrderId = `sub_${subEntity.id}_${payEntity.id}`;
+      const exists = await tx.payment.findUnique({ where: { razorpayPaymentId: payEntity.id } });
+      if (!exists) {
+        await tx.payment.create({
+          data: {
+            userId:            sub.userId,
+            subscriptionId:    sub.id,
+            razorpayOrderId:   syntheticOrderId,
+            razorpayPaymentId: payEntity.id,
+            razorpaySignature: "webhook",
+            amount:            def.amountPaise,
+            currency:          "INR",
+            plan,
+            status:            "CAPTURED",
+          },
+        });
+      }
+    }
+
+    await tx.subscription.update({
+      where: { id: sub.id },
+      data: {
+        status:             "ACTIVE",
+        currentPeriodStart: subEntity.current_start
+          ? new Date(subEntity.current_start * 1000)
+          : sub.currentPeriodStart,
+        currentPeriodEnd: subEntity.current_end
+          ? new Date(subEntity.current_end * 1000)
+          : addMonths(new Date(), def.intervalMonths),
+        cancelAtPeriodEnd: false,
+      },
+    });
+    await grantPremiumRole(tx, sub.userId);
   });
 }
 
@@ -441,17 +558,17 @@ async function onSubscriptionCompleted(p: WebhookPayload) {
     where: { razorpaySubscriptionId: subEntity.id },
   });
   if (!sub) return;
-  await prisma.subscription.update({
-    where: { id: sub.id },
-    data:  { status: "EXPIRED" },
-  });
-  await prisma.user.update({
-    where: { id: sub.userId },
-    data:  { role: "USER" },
+
+  await prisma.$transaction(async (tx) => {
+    await tx.subscription.update({
+      where: { id: sub.id },
+      data:  { status: "EXPIRED" },
+    });
+    await revokePremiumRole(tx, sub.userId);
   });
 }
 
-// ── Internals: grant / revoke premium ────────────────────────────────────────
+// ── Transactional grant / activate ─────────────────────────────────────────────
 
 interface GrantArgs {
   razorpayPaymentId: string;
@@ -459,52 +576,65 @@ interface GrantArgs {
   razorpaySignature: string;
 }
 
-async function grantPremium(userId: string, plan: PlanKey, args: GrantArgs): Promise<SubscriptionView> {
+async function grantPremiumTransactional(
+  userId: string,
+  plan: PlanKey,
+  args: GrantArgs,
+): Promise<SubscriptionView> {
+  return prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.findUnique({ where: { razorpayOrderId: args.razorpayOrderId } });
+    if (!payment) throw new AppError(404, "Order not found");
+
+    if (payment.status === "CAPTURED" && payment.razorpayPaymentId === args.razorpayPaymentId) {
+      return getSubscriptionInTx(tx, userId);
+    }
+    if (payment.status === "CAPTURED") {
+      throw new AppError(409, "Order already paid", "ORDER_ALREADY_PAID");
+    }
+
+    const def = PLAN_CATALOG[plan];
+    const now = new Date();
+    const end = addMonths(now, def.intervalMonths);
+
+    await tx.payment.update({
+      where: { razorpayOrderId: args.razorpayOrderId },
+      data: {
+        razorpayPaymentId: args.razorpayPaymentId,
+        razorpaySignature: args.razorpaySignature,
+        status:            "CAPTURED",
+      },
+    });
+
+    await tx.subscription.upsert({
+      where:  { userId },
+      update: {
+        plan,
+        status:             "ACTIVE",
+        currentPeriodStart: now,
+        currentPeriodEnd:   end,
+        cancelAtPeriodEnd:  false,
+      },
+      create: {
+        userId,
+        plan,
+        status:             "ACTIVE",
+        currentPeriodStart: now,
+        currentPeriodEnd:   end,
+        cancelAtPeriodEnd:  false,
+      },
+    });
+
+    await grantPremiumRole(tx, userId);
+    return getSubscriptionInTx(tx, userId);
+  });
+}
+
+async function activatePeriodInTx(tx: Tx, userId: string, plan: PlanKey): Promise<SubscriptionView> {
   const def = PLAN_CATALOG[plan];
   const now = new Date();
   const end = addMonths(now, def.intervalMonths);
 
-  // Update existing pending Payment row to CAPTURED
-  await prisma.payment.update({
-    where: { razorpayOrderId: args.razorpayOrderId },
-    data: {
-      razorpayPaymentId: args.razorpayPaymentId,
-      razorpaySignature: args.razorpaySignature,
-      status:            "CAPTURED",
-    } satisfies Prisma.PaymentUpdateInput,
-  });
-
-  // Upsert subscription
-  await prisma.subscription.upsert({
-    where: { userId },
-    update: {
-      plan,
-      status:             "ACTIVE",
-      currentPeriodStart: now,
-      currentPeriodEnd:   end,
-      cancelAtPeriodEnd:  false,
-    },
-    create: {
-      userId,
-      plan,
-      status:             "ACTIVE",
-      currentPeriodStart: now,
-      currentPeriodEnd:   end,
-      cancelAtPeriodEnd:  false,
-    },
-  });
-
-  // Upgrade role last so a partial failure leaves the user downgraded, not falsely upgraded
-  await prisma.user.update({ where: { id: userId }, data: { role: "PREMIUM" } });
-
-  return getSubscription(userId);
-}
-
-async function activatePeriod(userId: string, plan: PlanKey): Promise<SubscriptionView> {
-  const def = PLAN_CATALOG[plan];
-  const now = new Date();
-  const end = addMonths(now, def.intervalMonths);
-  await prisma.subscription.update({
+  await tx.subscription.update({
     where: { userId },
     data: {
       status:             "ACTIVE",
@@ -513,12 +643,26 @@ async function activatePeriod(userId: string, plan: PlanKey): Promise<Subscripti
       cancelAtPeriodEnd:  false,
     },
   });
-  await prisma.user.update({ where: { id: userId }, data: { role: "PREMIUM" } });
-  return getSubscription(userId);
+  await grantPremiumRole(tx, userId);
+  return getSubscriptionInTx(tx, userId);
 }
 
-function addMonths(d: Date, months: number): Date {
-  const out = new Date(d.getTime());
-  out.setMonth(out.getMonth() + months);
-  return out;
+async function getSubscriptionInTx(tx: Tx, userId: string): Promise<SubscriptionView> {
+  const sub = await tx.subscription.findUnique({ where: { userId } });
+  if (!sub) {
+    return {
+      plan: "FREE", status: "ACTIVE",
+      currentPeriodStart: null, currentPeriodEnd: null, cancelAtPeriodEnd: false,
+    };
+  }
+  return {
+    plan:               sub.plan as SubscriptionView["plan"],
+    status:             sub.status as SubscriptionView["status"],
+    currentPeriodStart: sub.currentPeriodStart,
+    currentPeriodEnd:   sub.currentPeriodEnd,
+    cancelAtPeriodEnd:  sub.cancelAtPeriodEnd,
+  };
 }
+
+// Re-export for cron wiring
+export { reconcileExpiredSubscriptions } from "./subscription.service";

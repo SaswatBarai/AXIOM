@@ -1,52 +1,64 @@
 /**
- * Razorpay client singleton + plan mapping.
+ * Razorpay client singleton + plan mapping + signature verification.
  *
- * Reads RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET at module load. In dev these
- * are test-mode keys (rzp_test_*); in prod they come from AWS Secrets
- * Manager via the env. The secret is **never** sent to the frontend — only
- * `RAZORPAY_KEY_ID` is exposed via `/api/payments/checkout-config`.
+ * Secrets are read at module load. KEY_SECRET never leaves the server.
+ * WEBHOOK_SECRET is required — startup fails if missing (fail-closed).
  */
 import crypto from "crypto";
 import Razorpay from "razorpay";
 import { logger } from "./logger";
 
-const KEY_ID         = process.env.RAZORPAY_KEY_ID         ?? "rzp_test_placeholder";
-const KEY_SECRET     = process.env.RAZORPAY_KEY_SECRET     ?? "placeholder_secret";
-const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET ?? "placeholder_webhook_secret";
+function requireEnv(name: string): string {
+  const val = process.env[name]?.trim();
+  if (!val) {
+    throw new Error(`${name} must be set — payment webhooks cannot be secured without it`);
+  }
+  return val;
+}
 
-/** True iff the env still points at the dev placeholders. */
+const KEY_ID         = process.env.RAZORPAY_KEY_ID?.trim() ?? "";
+const KEY_SECRET     = process.env.RAZORPAY_KEY_SECRET?.trim() ?? "";
+const WEBHOOK_SECRET = process.env.NODE_ENV === "test"
+  ? (process.env.RAZORPAY_WEBHOOK_SECRET?.trim() ?? "")
+  : requireEnv("RAZORPAY_WEBHOOK_SECRET");
+
+/** True iff real API credentials are configured (not empty / placeholder). */
 export const RAZORPAY_IS_CONFIGURED =
-  !KEY_ID.endsWith("placeholder") && KEY_SECRET !== "placeholder_secret";
+  KEY_ID.length > 0 &&
+  !KEY_ID.endsWith("placeholder") &&
+  KEY_SECRET.length > 0 &&
+  KEY_SECRET !== "placeholder_secret";
 
 if (!RAZORPAY_IS_CONFIGURED && process.env.NODE_ENV === "production") {
-  // Loud fail in prod — silent fall-through in dev/test
   throw new Error("RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET must be set in production");
+}
+
+if (process.env.NODE_ENV !== "test" && !WEBHOOK_SECRET) {
+  throw new Error("RAZORPAY_WEBHOOK_SECRET must be set");
 }
 
 if (!RAZORPAY_IS_CONFIGURED) {
   logger.warn(
-    "[razorpay] running with placeholder credentials — set RAZORPAY_KEY_ID, " +
-    "RAZORPAY_KEY_SECRET, RAZORPAY_PLAN_MONTHLY/QUARTERLY/ANNUAL in apps/api/.env " +
-    "to enable real checkout. See docs/PaymentPlan.md.",
+    "[razorpay] running with placeholder API credentials — set RAZORPAY_KEY_ID, " +
+    "RAZORPAY_KEY_SECRET, RAZORPAY_PLAN_* in apps/api/.env to enable checkout.",
   );
 }
 
-export const razorpay = new Razorpay({ key_id: KEY_ID, key_secret: KEY_SECRET });
+export const razorpay = new Razorpay({
+  key_id:     KEY_ID || "rzp_test_placeholder",
+  key_secret: KEY_SECRET || "placeholder_secret",
+});
 
-export const RAZORPAY_KEY_ID = KEY_ID;
+export const RAZORPAY_KEY_ID = KEY_ID || "rzp_test_placeholder";
 
 // ── Plan catalog (single source of truth) ─────────────────────────────────────
 
 export type PlanKey = "MONTHLY" | "QUARTERLY" | "ANNUAL";
 
 export interface PlanDef {
-  /** Razorpay plan id (`plan_xxx`) — created once via dashboard / one-off script. */
   razorpayPlanId: string;
-  /** Display label */
   label: string;
-  /** Amount in paise (49900 = ₹499.00) */
   amountPaise: number;
-  /** Number of months covered per billing cycle. */
   intervalMonths: number;
 }
 
@@ -73,48 +85,77 @@ export const PLAN_CATALOG: Record<PlanKey, PlanDef> = {
 
 // ── Signature verification ────────────────────────────────────────────────────
 
-/**
- * Verify a checkout-flow signature:
- *   HMAC-SHA256(`${orderId}|${paymentId}`, KEY_SECRET)
- *
- * Used after the user completes the Razorpay modal — the frontend posts back
- * the three fields and we re-derive the expected signature.
- */
 export function verifyOrderSignature(
   orderId: string,
   paymentId: string,
   signatureHex: string,
 ): boolean {
   const payload = `${orderId}|${paymentId}`;
-  return safeEqualHex(signatureHex, hmacHex(KEY_SECRET, payload));
+  return safeEqualHex(signatureHex, hmacHex(KEY_SECRET || "placeholder_secret", payload));
 }
 
-/**
- * Verify a subscription-flow signature:
- *   HMAC-SHA256(`${paymentId}|${subscriptionId}`, KEY_SECRET)
- *
- * Razorpay sends `razorpay_subscription_id` instead of `razorpay_order_id`
- * when the modal was opened with `subscription_id`.
- */
 export function verifySubscriptionSignature(
   subscriptionId: string,
   paymentId: string,
   signatureHex: string,
 ): boolean {
   const payload = `${paymentId}|${subscriptionId}`;
-  return safeEqualHex(signatureHex, hmacHex(KEY_SECRET, payload));
+  return safeEqualHex(signatureHex, hmacHex(KEY_SECRET || "placeholder_secret", payload));
 }
 
-/**
- * Verify the X-Razorpay-Signature header on a webhook delivery:
- *   HMAC-SHA256(raw_body, WEBHOOK_SECRET)
- *
- * `rawBody` MUST be the raw bytes received over the wire — do not JSON.stringify
- * a parsed body, that would re-order keys and break the signature.
- */
 export function verifyWebhookSignature(rawBody: Buffer | string, signatureHex: string): boolean {
+  if (!WEBHOOK_SECRET) return false;
   const body = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody, "utf8");
   return safeEqualHex(signatureHex, hmacHex(WEBHOOK_SECRET, body));
+}
+
+// ── Razorpay API payment validation ───────────────────────────────────────────
+
+export interface PaymentExpectation {
+  amountPaise: number;
+  currency:    string;
+  orderId?:    string;
+}
+
+export interface RazorpayPaymentEntity {
+  id:              string;
+  status:          string;
+  amount:          number;
+  currency:        string;
+  order_id?:       string | null;
+  invoice_id?:     string | null;
+  error_code?:     string | null;
+  error_description?: string | null;
+}
+
+/** Fetch payment from Razorpay and validate amount/currency/order linkage. */
+export async function fetchAndValidatePayment(
+  paymentId: string,
+  expected: PaymentExpectation,
+): Promise<RazorpayPaymentEntity> {
+  const pay = (await razorpay.payments.fetch(paymentId)) as RazorpayPaymentEntity;
+
+  if (pay.status !== "captured") {
+    throw new PaymentValidationError(`Payment status is ${pay.status}, expected captured`);
+  }
+  if (pay.amount !== expected.amountPaise) {
+    throw new PaymentValidationError("Payment amount does not match plan price");
+  }
+  if (pay.currency !== expected.currency) {
+    throw new PaymentValidationError("Payment currency mismatch");
+  }
+  if (expected.orderId && pay.order_id !== expected.orderId) {
+    throw new PaymentValidationError("Payment is not linked to this order");
+  }
+
+  return pay;
+}
+
+export class PaymentValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PaymentValidationError";
+  }
 }
 
 // ── Internals ────────────────────────────────────────────────────────────────

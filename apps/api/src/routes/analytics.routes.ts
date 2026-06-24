@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth.middleware";
+import { requireAuth, requireActiveSubscription } from "../middleware/auth.middleware";
 import {
   overviewHandler,
   atsTrendHandler,
@@ -10,7 +10,7 @@ import {
 
 export const analyticsRoutes = Router();
 
-analyticsRoutes.use(requireAuth);
+analyticsRoutes.use(requireAuth, requireActiveSubscription);
 
 analyticsRoutes.get("/overview",               overviewHandler);
 analyticsRoutes.get("/ats-trend",              atsTrendHandler);

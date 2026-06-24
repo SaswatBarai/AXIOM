@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth.middleware";
+import { requireAuth, requireActiveSubscription } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate.middleware";
 import { notificationAlertSchema, updateNotificationAlertSchema } from "../utils/schemas";
 import {
@@ -16,8 +16,8 @@ notificationRoutes.get("/",                   listHandler);
 notificationRoutes.post("/read-all",          markAllReadHandler);
 notificationRoutes.post("/:id/read",          markReadHandler);
 
-// Job alerts
-notificationRoutes.post("/alerts",            validate(notificationAlertSchema), createAlertHandler);
-notificationRoutes.get("/alerts",             listAlertsHandler);
-notificationRoutes.patch("/alerts/:alertId",  validate(updateNotificationAlertSchema), updateAlertHandler);
-notificationRoutes.delete("/alerts/:alertId", deleteAlertHandler);
+// Job alerts (premium)
+notificationRoutes.post("/alerts",            requireActiveSubscription, validate(notificationAlertSchema), createAlertHandler);
+notificationRoutes.get("/alerts",             requireActiveSubscription, listAlertsHandler);
+notificationRoutes.patch("/alerts/:alertId",  requireActiveSubscription, validate(updateNotificationAlertSchema), updateAlertHandler);
+notificationRoutes.delete("/alerts/:alertId", requireActiveSubscription, deleteAlertHandler);

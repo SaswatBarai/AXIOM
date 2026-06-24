@@ -16,6 +16,7 @@ import jobRoutes from "./routes/job.routes";
 import applicationRoutes from "./routes/application.routes";
 import paymentRoutes from "./routes/payment.routes";
 import { webhookHandler as paymentWebhookHandler } from "./controllers/payment.controller";
+import { reconcileExpiredSubscriptions } from "./services/payment.service";
 import skillRoutes from "./routes/skill.routes";
 import chatRoutes from "./routes/chat.routes";
 import coverLetterRoutes from "./routes/coverLetter.routes";
@@ -104,8 +105,17 @@ app.use(cookieParser());
 // ── Razorpay webhook ────────────────────────────────────────
 // MUST be mounted before express.json so the body stays a raw Buffer for
 // HMAC verification. See payment.service.handleWebhook for signature check.
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max:      process.env.NODE_ENV === "development" ? 200 : 60,
+  message:  { error: "Too many webhook requests." },
+  standardHeaders: true,
+  legacyHeaders:   false,
+});
+
 app.post(
   "/api/payments/webhook",
+  webhookLimiter,
   express.raw({ type: "application/json", limit: "1mb" }),
   paymentWebhookHandler,
 );
@@ -188,6 +198,21 @@ async function verifyPgVector() {
   }
 }
 
+function scheduleSubscriptionReconciliation() {
+  const INTERVAL_MS = 60 * 60 * 1000; // hourly
+  const tick = async () => {
+    try {
+      const n = await reconcileExpiredSubscriptions();
+      if (n > 0) logger.info(`Subscription reconciliation: ${n} user(s) downgraded`);
+    } catch (err) {
+      logger.error("Subscription reconciliation failed", err);
+    }
+  };
+  void tick();
+  setInterval(() => void tick(), INTERVAL_MS);
+  logger.info("Subscription reconciliation scheduled: every hour");
+}
+
 async function bootstrap() {
   await redis.connect();
   await verifyPgVector();
@@ -205,6 +230,7 @@ async function bootstrap() {
     logger.info(`API running on http://localhost:${PORT}`);
   });
   scheduleNightlyRefresh();
+  scheduleSubscriptionReconciliation();
   await scheduleWeeklyDigest();
   await scheduleDiscoveryTimeoutCheck();
 }

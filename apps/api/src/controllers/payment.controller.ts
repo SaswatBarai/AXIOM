@@ -1,4 +1,5 @@
 import type { Response, NextFunction } from "express";
+import crypto from "crypto";
 import { assertUserId, type AuthRequest } from "../middleware/auth.middleware";
 import * as paymentService from "../services/payment.service";
 import type {
@@ -100,8 +101,12 @@ export async function paymentHistoryHandler(req: AuthRequest, res: Response, nex
 export async function webhookHandler(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const signature = (req.headers["x-razorpay-signature"] as string) ?? "";
-    const rawBody   = req.body as Buffer; // express.raw → Buffer
-    const result    = await paymentService.handleWebhook(rawBody, signature);
+    const rawBody   = req.body as Buffer;
+    const eventId   =
+      (req.headers["x-razorpay-event-id"] as string) ??
+      crypto.createHash("sha256").update(rawBody).digest("hex");
+
+    const result = await paymentService.handleWebhook(rawBody, { signature, eventId });
     res.json(result);
   } catch (err) { next(err); }
 }
