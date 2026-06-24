@@ -12,6 +12,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { usePayments } from "@/hooks/usePayments";
+import { PLAN_FEATURES } from "@/lib/pricing";
 
 const AVATARS = [
   { initials: "SJ", color: "#3B82F6" },
@@ -19,33 +20,6 @@ const AVATARS = [
   { initials: "AR", color: "#10B981" },
   { initials: "TC", color: "#F59E0B" },
 ];
-
-const PLAN_FEATURES: Record<PlanKey, string[]> = {
-  MONTHLY: [
-    "Unlimited resume analyses",
-    "AI Career Copilot (chat)",
-    "Cover letter generator",
-    "Interview prep simulator",
-    "Skill gap detection",
-    "Career roadmap generator",
-    "Analytics dashboard",
-    "Priority email support",
-  ],
-  QUARTERLY: [
-    "Everything in Monthly",
-    "Save 20% vs paying monthly",
-    "Up to 10 job alerts",
-    "Priority queue on AI features",
-    "Quarterly career strategy email",
-  ],
-  ANNUAL: [
-    "Everything in Quarterly",
-    "Save 33% vs paying monthly",
-    "Up to 25 active job alerts",
-    "Early access to new AI features",
-    "Annual career strategy session",
-  ],
-};
 
 export default function PricingPage() {
   const router = useRouter();
