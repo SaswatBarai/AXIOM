@@ -30,6 +30,20 @@ enum ExperienceLevel {
   EXECUTIVE
 }
 
+enum ResumeStatus {
+  UPLOADING
+  PARSING
+  COMPLETED
+  FAILED
+}
+
+enum DiscoveryStatus {
+  PENDING
+  SCRAPING
+  COMPLETED
+  FAILED
+}
+
 enum ApplicationStatus {
   SAVED
   APPLIED
@@ -68,6 +82,10 @@ model User {
 
   // Admin: suspended flag
   suspendedAt    DateTime?
+
+  // Active resume for job recommendations
+  activeResumeId String?  @unique
+  activeResume   Resume?  @relation("ActiveResume", fields: [activeResumeId], references: [id])
 
   // Relations
   preferences  UserPreferences?
@@ -110,18 +128,60 @@ model Resume {
   fileUrl  String
   fileType String
 
+  status       ResumeStatus @default(UPLOADING)
+  parsingError String?
+
   parsedData Json?
   atsScore   Json?
   version    Int   @default(1)
   embedding  Unsupported("vector(384)")?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeForUser User?            @relation("ActiveResume")
+  discovery     JobDiscovery?
+  recommendations JobRecommendation[]
+  applications  Application[]     @relation("AppliedResume")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([status])
+  @@unique([userId, version])
   @@map("resumes")
+}
+
+model JobDiscovery {
+  id        String          @id @default(cuid())
+  resumeId  String          @unique
+  status    DiscoveryStatus @default(PENDING)
+  error     String?
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("job_discoveries")
+}
+
+model JobRecommendation {
+  id            String   @id @default(cuid())
+  resumeId      String
+  jobId         String
+  score         Float
+  matchedSkills String[]
+  missingSkills String[]
+  matchReason   Json?    // scoring signals: semantic, skill_overlap, seniority, title_align, confidence
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([resumeId, jobId])
+  @@index([resumeId])
+  @@map("job_recommendations")
 }
 
 model Job {
@@ -148,8 +208,9 @@ model Job {
   postedAt  DateTime
   expiresAt DateTime?
 
-  applications Application[]
-  savedByUsers SavedJob[]
+  applications  Application[]
+  savedByUsers  SavedJob[]
+  recommendations JobRecommendation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -169,8 +230,11 @@ model Application {
   appliedAt   DateTime?
   timeline    Json              @default("[]")
 
+  resumeId    String?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume Resume? @relation("AppliedResume", fields: [resumeId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

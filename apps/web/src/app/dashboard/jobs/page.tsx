@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Heart, MapPin, Building2, ExternalLink, Loader2 } from "lucide-react";
+import { Search, Heart, MapPin, Building2, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useJobs, type JobFilters } from "@/hooks/useJobs";
 import { useApplications } from "@/hooks/useApplications";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import { api } from "@/lib/api";
 
 const SOURCES = [
   { value: undefined,    label: "All sources" },
@@ -63,7 +66,26 @@ function MatchBadge({ score }: { score?: number | null }) {
 }
 
 export default function JobsPage() {
-  const { jobs, savedJobIds, total, isLoading, error, filters, search, toggleSave } = useJobs();
+  const { jobs, savedJobIds, total, isLoading, error, filters, search, toggleSave, discoveryStatus } = useJobs();
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const activeResumeId = useSelector((s: RootState) => s.resume.activeResumeId);
+  const resumes = useSelector((s: RootState) => s.resume.resumes);
+  const activeResumeName = activeResumeId
+    ? resumes.find((r) => r.id === activeResumeId)?.fileName ?? null
+    : null;
+
+  async function runDiscovery() {
+    if (!activeResumeId) return;
+    setIsDiscovering(true);
+    try {
+      await api.post(`/resumes/${activeResumeId}/discover`);
+      await search();
+    } catch {
+      // ignore
+    } finally {
+      setIsDiscovering(false);
+    }
+  }
   const { applications, createApplication, fetchApplications } = useApplications();
   const [q, setQ] = useState("");
   const [trackingLoadingId, setTrackingLoadingId] = useState<string | null>(null);
@@ -100,16 +122,16 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="px-6 py-8 max-w-6xl mx-auto bg-bg-base min-h-screen">
+    <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-6xl mx-auto bg-bg-base min-h-full">
       {/* Header */}
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Jobs</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6 sm:mb-8">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Jobs</h1>
           <p className="text-sm text-text-secondary mt-1">
             Search across Internshala, Unstop, and Naukri.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <span className="text-xs text-text-muted">{total.toLocaleString()} jobs</span>
           <select
             value={filters.sortBy || "match"}
@@ -119,8 +141,40 @@ export default function JobsPage() {
             <option value="match">Sort by Match</option>
             <option value="date">Sort by Date</option>
           </select>
+          <button
+            onClick={runDiscovery}
+            disabled={isDiscovering}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-bg-card border border-border-subtle text-xs text-text-secondary hover:border-border-medium hover:text-text-primary transition-colors disabled:opacity-50 cursor-pointer"
+            title="Re-scan all jobs against active resume"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isDiscovering ? "animate-spin" : ""}`} />
+            {isDiscovering ? "Scanning…" : "Refresh"}
+          </button>
         </div>
       </div>
+
+      {/* Discovery status banner — shown atop existing jobs, never erases them */}
+      {(discoveryStatus === "PENDING" || discoveryStatus === "SCRAPING") && (
+        <div className="mb-4 px-4 py-3 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center gap-2 text-sm text-amber-500">
+          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          {discoveryStatus === "PENDING"
+            ? `Generating recommendations for "${activeResumeName ?? "your resume"}" — showing previous results.`
+            : `AI job matching in progress for "${activeResumeName ?? "your resume"}" — recommendations will appear once complete.`}
+        </div>
+      )}
+      {discoveryStatus === "FAILED" && (
+        <div className="mb-4 px-4 py-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-500">
+          <div className="flex items-center gap-2">
+            <span>Unable to generate recommendations for "{activeResumeName ?? "your resume"}". {jobs.length > 0 ? "Showing previous results." : "Try refreshing to retry."}</span>
+            <button
+              onClick={() => runDiscovery()}
+              className="ml-auto px-3 py-1 rounded-lg border border-red-500/40 text-xs font-medium hover:bg-red-500/10 transition-colors cursor-pointer shrink-0"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Search row */}
       <div className="flex gap-2 mb-5">

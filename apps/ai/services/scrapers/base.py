@@ -52,7 +52,7 @@ class NormalizedJob(BaseModel):
 
     source: str  # "internshala" | "unstop" | "naukri" | "manual"
     source_url: HttpUrl
-    posted_at: datetime
+    posted_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
 
 

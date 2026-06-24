@@ -20,7 +20,7 @@ class ATSAnalyzeRequest(BaseModel):
 
 class JobMatchRequest(BaseModel):
     resume_id: str = Field(..., max_length=200)
-    job_ids: list[str] = Field(..., max_length=100)
+    job_ids: list[str] = Field(default_factory=list, max_length=10000)
 
 
 class SkillGapRequest(BaseModel):

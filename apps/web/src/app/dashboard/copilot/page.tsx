@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Send, Square, Plus, Trash2, MessageSquare, Bot, User,
-  AlertCircle, Sparkles, ChevronLeft, ChevronRight,
-  Copy, Check, FileText, Mic, TrendingUp, Mail,
+  AlertCircle, Sparkles, ChevronRight,
+  Copy, Check, FileText, Mic, TrendingUp, Mail, PanelLeftClose,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/hooks/useChat";
@@ -216,6 +216,81 @@ function SessionItem({
   );
 }
 
+// ── Copilot history panel (desktop sidebar + mobile drawer) ─────────────────
+function CopilotHistoryPanel({
+  sessions,
+  sessionId,
+  onNewSession,
+  onSelect,
+  onDelete,
+  onClose,
+  showClose = false,
+}: {
+  sessions: { sessionId: string; title: string }[];
+  sessionId: string | null | undefined;
+  onNewSession: () => void;
+  onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
+  onClose?: () => void;
+  showClose?: boolean;
+}) {
+  return (
+    <div className="flex flex-col h-full p-4 min-h-0">
+      <div className="flex items-center justify-between gap-2 px-1 pb-2 mb-1 border-b border-border-subtle shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
+            <Sparkles size={11} className="text-brand" />
+          </div>
+          <span className="text-xs font-semibold text-text-secondary truncate">Copilot History</span>
+        </div>
+        {showClose && onClose && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-7 w-7 shrink-0 text-text-muted hover:text-text-primary hover:bg-bg-hover"
+            title="Close history"
+            aria-label="Close history"
+          >
+            <PanelLeftClose size={14} />
+          </Button>
+        )}
+      </div>
+
+      <Button
+        size="sm"
+        className="w-full justify-start gap-2 bg-brand/10 hover:bg-brand/20 border border-brand/20 text-brand text-xs font-semibold transition-all shrink-0 mb-2 cursor-pointer"
+        onClick={onNewSession}
+      >
+        <Plus size={12} /> New Chat
+      </Button>
+
+      <div className="flex flex-col flex-1 min-h-0">
+        <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest px-2 py-1.5 select-none shrink-0">
+          Recent
+        </p>
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-0.5 scrollbar-thin scrollbar-thumb-border-medium scrollbar-track-transparent">
+          {sessions.length === 0 && (
+            <p className="text-xs text-text-muted px-3 py-3">No sessions yet</p>
+          )}
+          <AnimatePresence>
+            {sessions.map((s) => (
+              <SessionItem
+                key={s.sessionId}
+                session={s}
+                active={s.sessionId === sessionId}
+                onSelect={() => onSelect(s.sessionId)}
+                onDelete={() => onDelete(s.sessionId)}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function CopilotPage() {
   const {
@@ -225,6 +300,7 @@ export default function CopilotPage() {
 
   const [input, setInput]           = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
   const bottomRef     = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef   = useRef<HTMLTextAreaElement>(null);
@@ -267,7 +343,7 @@ export default function CopilotPage() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="relative flex h-full w-full overflow-hidden bg-bg-base">
+    <div className="relative flex h-[calc(100dvh-3.75rem)] min-h-[32rem] w-full overflow-hidden bg-bg-base">
 
       {/* Ambient glow orbs */}
       <div className="pointer-events-none absolute -top-40 -left-20 h-[500px] w-[500px] rounded-full bg-brand/[0.04] blur-[120px]" />
@@ -283,47 +359,52 @@ export default function CopilotPage() {
             transition={{ duration: 0.22, ease: "easeInOut" }}
             className="relative z-10 hidden md:flex flex-col border-r border-border-subtle bg-bg-card/35 backdrop-blur-sm shrink-0 overflow-hidden"
           >
-            <div className="flex flex-col h-full w-[248px] p-4 min-h-0">
-              {/* Sidebar header */}
-              <div className="flex items-center gap-2 px-1 pb-2 mb-1 border-b border-border-subtle shrink-0">
-                <div className="w-6 h-6 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
-                  <Sparkles size={11} className="text-brand" />
-                </div>
-                <span className="text-xs font-semibold text-text-secondary">Copilot History</span>
-              </div>
-
-              <Button
-                size="sm"
-                className="w-full justify-start gap-2 bg-brand/10 hover:bg-brand/20 border border-brand/20 text-brand text-xs font-semibold transition-all shrink-0 mb-2 cursor-pointer"
-                onClick={newSession}
-              >
-                <Plus size={12} /> New Chat
-              </Button>
-
-              {/* Session list — flex-1 min-h-0 so it fills remaining space and scrolls */}
-              <div className="flex flex-col flex-1 min-h-0">
-                <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest px-2 py-1.5 select-none shrink-0">
-                  Recent
-                </p>
-                <div className="flex-1 min-h-0 overflow-y-auto space-y-0.5 scrollbar-thin scrollbar-thumb-border-medium scrollbar-track-transparent">
-                  {sessions.length === 0 && (
-                    <p className="text-xs text-text-muted px-3 py-3">No sessions yet</p>
-                  )}
-                  <AnimatePresence>
-                    {sessions.map((s) => (
-                      <SessionItem
-                        key={s.sessionId}
-                        session={s}
-                        active={s.sessionId === sessionId}
-                        onSelect={() => loadSession(s.sessionId)}
-                        onDelete={() => deleteSession(s.sessionId)}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </div>
+            <div className="h-full w-[248px]">
+              <CopilotHistoryPanel
+                sessions={sessions}
+                sessionId={sessionId}
+                onNewSession={newSession}
+                onSelect={(id) => loadSession(id)}
+                onDelete={(id) => deleteSession(id)}
+                onClose={() => setSidebarOpen(false)}
+                showClose
+              />
             </div>
           </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile history drawer */}
+      <AnimatePresence>
+        {mobileHistoryOpen && (
+          <>
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] md:hidden"
+              aria-label="Close history"
+              onClick={() => setMobileHistoryOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.22, ease: "easeInOut" }}
+              className="fixed inset-y-0 left-0 z-50 w-[min(16rem,88vw)] md:hidden bg-bg-card border-r border-border-subtle shadow-2xl"
+            >
+              <CopilotHistoryPanel
+                sessions={sessions}
+                sessionId={sessionId}
+                onNewSession={() => { newSession(); setMobileHistoryOpen(false); }}
+                onSelect={(id) => { loadSession(id); setMobileHistoryOpen(false); }}
+                onDelete={(id) => deleteSession(id)}
+                onClose={() => setMobileHistoryOpen(false)}
+                showClose
+              />
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
 
@@ -331,16 +412,33 @@ export default function CopilotPage() {
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden min-w-0">
 
         {/* Header */}
-        <header className="flex shrink-0 items-center justify-between border-b border-border-subtle px-5 py-3.5 bg-bg-card/30 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            {/* Sidebar toggle */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hidden md:flex items-center justify-center h-7 w-7 rounded-lg border border-border-subtle bg-bg-card/50 hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-              title={sidebarOpen ? "Hide history" : "Show history"}
+        <header className="flex shrink-0 items-center justify-between border-b border-border-subtle px-4 sm:px-5 py-3.5 bg-bg-card/30 backdrop-blur-sm gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileHistoryOpen(true)}
+              className="md:hidden h-8 w-8 shrink-0 text-text-secondary hover:text-text-primary border border-border-subtle bg-bg-card/50"
+              title="Chat history"
+              aria-label="Open chat history"
             >
-              {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-            </button>
+              <MessageSquare size={14} />
+            </Button>
+            {!sidebarOpen && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+                className="hidden md:flex h-7 w-7 text-text-secondary hover:text-text-primary hover:bg-bg-hover border border-border-subtle bg-bg-card/50"
+                title="Show history"
+                aria-label="Show history sidebar"
+                aria-expanded={false}
+              >
+                <ChevronRight size={14} />
+              </Button>
+            )}
 
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10 border border-brand/20 shrink-0">

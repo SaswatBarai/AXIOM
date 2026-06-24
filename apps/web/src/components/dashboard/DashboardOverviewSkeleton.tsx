@@ -1,125 +1,81 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
-function StatCardSkeleton() {
+function Bone({ className }: { className?: string }) {
   return (
-    <Card className="border border-zinc-800 bg-zinc-950/40 p-5 shadow-lg">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2 flex-1">
-          <Skeleton className="h-2.5 w-16" />
-          <Skeleton className="h-8 w-12" />
-          <Skeleton className="h-2 w-24 mt-1" />
-        </div>
-        <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
-      </div>
-    </Card>
-  );
-}
-
-function QuickActionSkeleton() {
-  return (
-    <div className="flex items-start gap-4 p-4.5 rounded-xl border border-zinc-800 bg-zinc-950/20">
-      <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-3.5 w-28" />
-        <Skeleton className="h-3 w-full max-w-[180px]" />
-      </div>
-      <Skeleton className="h-4 w-4 rounded shrink-0 mt-0.5" />
+    <div className={cn("relative overflow-hidden rounded-md bg-zinc-800/60", className)}>
+      <div className="absolute inset-0 -translate-x-full animate-[skeleton-shimmer_1.8s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
     </div>
   );
 }
 
-function JobCardSkeleton() {
+function PageBackgroundSkeleton() {
   return (
-    <div className="shrink-0 w-72 rounded-xl border border-zinc-800 bg-zinc-950/20 p-4.5 space-y-3">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-16 rounded" />
-        <Skeleton className="h-3 w-14" />
-      </div>
-      <Skeleton className="h-3.5 w-3/4" />
-      <Skeleton className="h-3 w-1/2" />
-      <div className="flex gap-1 pt-1">
-        <Skeleton className="h-4 w-12 rounded-md" />
-        <Skeleton className="h-4 w-14 rounded-md" />
-        <Skeleton className="h-4 w-10 rounded-md" />
-      </div>
-      <div className="space-y-1.5 pt-1">
-        <Skeleton className="h-2.5 w-full" />
-        <Skeleton className="h-2.5 w-4/5" />
-      </div>
-      <div className="pt-3 border-t border-zinc-900 flex justify-between">
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-3 w-10" />
-      </div>
-    </div>
+    <>
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(var(--grid-dot-color) 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+          maskImage: "radial-gradient(ellipse 85% 45% at 50% 0%, #000 50%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 85% 45% at 50% 0%, #000 50%, transparent 100%)",
+        }}
+      />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[520px] h-[200px] bg-brand/[0.06] rounded-full blur-[100px] pointer-events-none" />
+    </>
   );
 }
 
 export function DashboardOverviewSkeleton() {
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-6 md:p-8 max-w-5xl space-y-8">
-        {/* Header */}
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-56 max-w-full" />
-          <Skeleton className="h-4 w-72 max-w-full" />
-        </div>
+    <div className="relative min-h-full overflow-hidden" aria-busy="true" aria-label="Loading overview">
+      <PageBackgroundSkeleton />
 
-        {/* Profile completion banner */}
-        <Card className="border border-zinc-800 bg-zinc-950/40 p-4.5">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-3.5 w-48" />
-              <Skeleton className="h-3 w-20" />
-            </div>
-            <Skeleton className="h-1.5 w-full rounded-full" />
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-12">
+        {/* Hero */}
+        <div className="mb-8 flex flex-col lg:flex-row lg:justify-between gap-6">
+          <div className="flex-1 space-y-3">
+            <Bone className="h-4 w-32" />
+            <Bone className="h-9 w-80 max-w-full" />
+            <Bone className="h-4 w-96 max-w-full" />
+            <Bone className="h-10 w-36 rounded-xl mt-2" />
           </div>
-        </Card>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
+          <Bone className="h-28 w-full lg:w-72 rounded-2xl shrink-0" />
         </div>
 
-        {/* Quick actions */}
-        <div className="space-y-3.5">
-          <Skeleton className="h-2.5 w-24" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Metrics strip */}
+        <div className="mb-8 rounded-2xl border border-border-subtle bg-bg-card/40 overflow-hidden">
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-border-subtle/80">
             {Array.from({ length: 4 }).map((_, i) => (
-              <QuickActionSkeleton key={i} />
+              <div key={i} className="px-6 py-4 space-y-2">
+                <Bone className="h-8 w-12" />
+                <Bone className="h-3.5 w-20" />
+                <Bone className="h-3 w-24" />
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Recommended jobs */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-2.5 w-32" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-          <div className="flex gap-4 overflow-hidden pb-1">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <JobCardSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-
-        {/* Application funnel */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-4 w-4 rounded" />
-              <Skeleton className="h-3 w-32" />
+        {/* Main grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-8">
+          <div className="space-y-5">
+            <div className="flex justify-between">
+              <div className="space-y-1.5">
+                <Bone className="h-4 w-40" />
+                <Bone className="h-3 w-56" />
+              </div>
+              <Bone className="h-4 w-16" />
             </div>
-            <Skeleton className="h-3 w-24" />
+            <Bone className="h-44 w-full rounded-2xl" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Bone className="h-36 rounded-xl" />
+              <Bone className="h-36 rounded-xl" />
+            </div>
           </div>
-          <div className="grid grid-cols-4 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 rounded-xl" />
-            ))}
-          </div>
+
+          <aside className="space-y-5">
+            <Bone className="h-56 w-full rounded-2xl" />
+            <Bone className="h-64 w-full rounded-2xl" />
+          </aside>
         </div>
       </div>
     </div>
@@ -128,10 +84,12 @@ export function DashboardOverviewSkeleton() {
 
 export function RecommendedJobsSkeleton() {
   return (
-    <div className="flex gap-4 overflow-hidden pb-1">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <JobCardSkeleton key={i} />
-      ))}
+    <div className="space-y-4">
+      <Bone className="h-44 w-full rounded-2xl" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Bone className="h-36 rounded-xl" />
+        <Bone className="h-36 rounded-xl" />
+      </div>
     </div>
   );
 }

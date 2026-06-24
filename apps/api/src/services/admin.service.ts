@@ -1,9 +1,8 @@
-import { prisma } from "@axiom/database";
+import { prisma, UserRole } from "@axiom/database";
 import { redis } from "./redis.service";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { CacheKey } from "../utils/constants";
 import type { Request } from "express";
-import type { UserRole } from "@prisma/client";
 
 export interface PaginatedAuditLog {
   entries: any[];

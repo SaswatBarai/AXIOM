@@ -203,55 +203,39 @@ _VALID_RESPONSE = json.dumps([
 
 
 def test_generate_roadmap_returns_steps():
-    mock_model = MagicMock()
-    mock_model.generate_content.return_value = MagicMock(text=_VALID_RESPONSE)
-    with patch("services.roadmap_service.genai.GenerativeModel", return_value=mock_model):
+    with patch("services.roadmap_service.ask_llm", return_value=_VALID_RESPONSE):
         result = generate_roadmap("SWE", {"missing": {"must_have": ["Python"], "should_have": [], "nice_to_have": []}, "matched": {}})
     assert len(result) == 1
     assert result[0]["skill"] == "Python"
 
 
 def test_generate_roadmap_clamps_weeks():
-    mock_model = MagicMock()
-    mock_model.generate_content.return_value = MagicMock(text=_VALID_RESPONSE)
-    with patch("services.roadmap_service.genai.GenerativeModel", return_value=mock_model):
+    with patch("services.roadmap_service.ask_llm", return_value=_VALID_RESPONSE):
         result = generate_roadmap("SWE", {}, weeks=100)
     assert isinstance(result, list)
 
 
 def test_generate_roadmap_no_gaps_placeholder():
-    mock_model = MagicMock()
     placeholder = json.dumps([
         {"week": 1, "skill": "Review and deepen existing skills", "tier": "nice_to_have",
          "resources": ["Docs"], "estimated_hours": 8}
     ])
-    mock_model.generate_content.return_value = MagicMock(text=placeholder)
-    with patch("services.roadmap_service.genai.GenerativeModel", return_value=mock_model):
+    with patch("services.roadmap_service.ask_llm", return_value=placeholder):
         result = generate_roadmap("SWE", {})
     assert len(result) >= 1
 
 
 def test_generate_roadmap_retries_on_bad_json():
-    mock_model = MagicMock()
-    call_count = 0
-
-    def side_effect(*args, **kwargs):
-        nonlocal call_count
-        call_count += 1
-        if call_count == 1:
-            return MagicMock(text="not json at all")
-        return MagicMock(text=_VALID_RESPONSE)
-
-    mock_model.generate_content.side_effect = side_effect
-    with patch("services.roadmap_service.genai.GenerativeModel", return_value=mock_model):
+    with patch(
+        "services.roadmap_service.ask_llm",
+        side_effect=["not json at all", _VALID_RESPONSE],
+    ) as mock_ask:
         result = generate_roadmap("SWE", {"missing": {"must_have": ["Python"], "should_have": [], "nice_to_have": []}, "matched": {}})
-    assert call_count == 2
+    assert mock_ask.call_count == 2
     assert result[0]["skill"] == "Python"
 
 
 def test_generate_roadmap_raises_after_two_failures():
-    mock_model = MagicMock()
-    mock_model.generate_content.return_value = MagicMock(text="bad json {{")
-    with patch("services.roadmap_service.genai.GenerativeModel", return_value=mock_model):
+    with patch("services.roadmap_service.ask_llm", return_value="bad json {{"):
         with pytest.raises(RuntimeError, match="Failed to generate roadmap"):
             generate_roadmap("SWE", {"missing": {"must_have": ["Python"], "should_have": [], "nice_to_have": []}, "matched": {}})

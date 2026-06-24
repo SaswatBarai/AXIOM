@@ -2,27 +2,153 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Lock, Bell, AlertTriangle, CheckCircle2, Loader2, Palette } from "lucide-react";
+import {
+  User,
+  Lock,
+  Bell,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  Palette,
+  Sparkles,
+  ChevronRight,
+  Shield,
+  Download,
+} from "lucide-react";
+import { SettingsPageSkeleton } from "@/components/dashboard/SettingsSkeleton";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-const TABS = [
-  { id: "profile",    label: "Profile",       icon: User },
-  { id: "security",   label: "Security",      icon: Lock },
-  { id: "appearance", label: "Appearance",    icon: Palette },
-  { id: "notifs",     label: "Notifications", icon: Bell },
-  { id: "danger",     label: "Account",       icon: AlertTriangle },
-] as const;
+type TabId = "profile" | "security" | "appearance" | "notifs" | "danger";
 
-type TabId = typeof TABS[number]["id"];
+type TabItem = {
+  id: TabId;
+  label: string;
+  desc: string;
+  icon: typeof User;
+  danger?: boolean;
+};
 
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+const TABS: TabItem[] = [
+  {
+    id: "profile",
+    label: "Profile",
+    desc: "Name, bio, and professional links",
+    icon: User,
+  },
+  {
+    id: "security",
+    label: "Security",
+    desc: "Password and authentication",
+    icon: Lock,
+  },
+  {
+    id: "appearance",
+    label: "Appearance",
+    desc: "Theme and display preferences",
+    icon: Palette,
+  },
+  {
+    id: "notifs",
+    label: "Notifications",
+    desc: "Email alerts and digests",
+    icon: Bell,
+  },
+  {
+    id: "danger",
+    label: "Account",
+    desc: "Export data or delete account",
+    icon: AlertTriangle,
+    danger: true,
+  },
+];
+
+const CIRC = 2 * Math.PI * 40;
+
+function PageBackground() {
   return (
-    <div className="grid md:grid-cols-3 gap-2 md:gap-4 items-start py-4 border-b border-border-subtle last:border-0">
-      <label className="text-sm font-medium text-text-secondary pt-2">{label}</label>
+    <>
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(var(--grid-dot-color) 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+          maskImage: "radial-gradient(ellipse 80% 50% at 50% 0%, #000 50%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 80% 50% at 50% 0%, #000 50%, transparent 100%)",
+        }}
+      />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[560px] h-[220px] bg-brand/[0.06] rounded-full blur-[110px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[280px] h-[180px] bg-emerald-500/[0.03] rounded-full blur-[90px] pointer-events-none" />
+    </>
+  );
+}
+
+function SpotlightCard({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+
+  return (
+    <div
+      className={cn("relative overflow-hidden rounded-2xl group", className)}
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        setPos({ x: e.clientX - r.left, y: e.clientY - r.top });
+      }}
+    >
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10"
+        style={{
+          background: `radial-gradient(320px circle at ${pos.x}px ${pos.y}px, var(--spotlight-color), transparent 80%)`,
+        }}
+      />
+      {children}
+    </div>
+  );
+}
+
+function CompletionRing({ pct }: { pct: number }) {
+  return (
+    <div className="relative w-16 h-16 shrink-0">
+      <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="var(--bg-elevated)" strokeWidth="6" />
+        <motion.circle
+          cx="50"
+          cy="50"
+          r="40"
+          fill="none"
+          stroke="#f97316"
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={CIRC}
+          initial={{ strokeDashoffset: CIRC }}
+          animate={{ strokeDashoffset: CIRC * (1 - pct / 100) }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-sm font-bold text-text-primary tabular-nums">{pct}%</span>
+      </div>
+    </div>
+  );
+}
+
+function FieldRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="grid md:grid-cols-3 gap-2 md:gap-6 items-start py-4 border-b border-border-subtle/80 last:border-0">
+      <div className="pt-2">
+        <label className="text-sm font-medium text-text-primary">{label}</label>
+        {hint && <p className="text-[11px] text-text-muted mt-0.5">{hint}</p>}
+      </div>
       <div className="md:col-span-2">{children}</div>
     </div>
   );
@@ -32,7 +158,12 @@ function Input({ className = "", ...props }: React.InputHTMLAttributes<HTMLInput
   return (
     <input
       {...props}
-      className={`w-full bg-bg-elevated border border-border-subtle text-text-primary placeholder:text-text-muted rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand/20 focus:border-border-medium transition-colors ${className}`}
+      className={cn(
+        "w-full bg-bg-base/60 border border-border-subtle text-text-primary placeholder:text-text-muted",
+        "rounded-xl px-3.5 py-2.5 text-sm backdrop-blur-sm",
+        "focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand/40 transition-all duration-200",
+        className,
+      )}
     />
   );
 }
@@ -42,7 +173,7 @@ function Textarea({ ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement
     <textarea
       {...props}
       rows={3}
-      className="w-full bg-bg-elevated border border-border-subtle text-text-primary placeholder:text-text-muted rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand/20 focus:border-border-medium transition-colors resize-none"
+      className="w-full bg-bg-base/60 border border-border-subtle text-text-primary placeholder:text-text-muted rounded-xl px-3.5 py-2.5 text-sm backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand/40 transition-all duration-200 resize-none"
     />
   );
 }
@@ -52,7 +183,7 @@ function SaveButton({ loading, success }: { loading: boolean; success: boolean }
     <button
       type="submit"
       disabled={loading}
-      className="flex items-center gap-2 px-5 py-2 bg-brand text-black text-sm font-semibold rounded-lg hover:bg-brand-hover disabled:opacity-50 transition-colors"
+      className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand text-black text-sm font-semibold rounded-xl hover:bg-brand-hover disabled:opacity-50 transition-all duration-200 shadow-lg shadow-brand/10"
     >
       {loading ? <Loader2 size={14} className="animate-spin" /> : success ? <CheckCircle2 size={14} /> : null}
       {loading ? "Saving…" : success ? "Saved" : "Save changes"}
@@ -60,23 +191,35 @@ function SaveButton({ loading, success }: { loading: boolean; success: boolean }
   );
 }
 
-// ── Profile tab ───────────────────────────────────────────────────────────────
-
 function ProfileTab() {
   const { profile, updateProfile } = useProfile();
   const [form, setForm] = useState({
-    name:         profile?.name            ?? "",
-    bio:          profile?.bio             ?? "",
-    location:     profile?.location        ?? "",
-    currentTitle: profile?.currentTitle    ?? "",
-    yearsOfExp:   String(profile?.yearsOfExperience ?? ""),
-    linkedinUrl:  profile?.linkedinUrl     ?? "",
-    githubUrl:    profile?.githubUrl       ?? "",
-    portfolioUrl: profile?.portfolioUrl    ?? "",
+    name: "",
+    bio: "",
+    location: "",
+    currentTitle: "",
+    yearsOfExp: "",
+    linkedinUrl: "",
+    githubUrl: "",
+    portfolioUrl: "",
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error,   setError]   = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!profile) return;
+    setForm({
+      name: profile.name ?? "",
+      bio: profile.bio ?? "",
+      location: profile.location ?? "",
+      currentTitle: profile.currentTitle ?? "",
+      yearsOfExp: String(profile.yearsOfExperience ?? ""),
+      linkedinUrl: profile.linkedinUrl ?? "",
+      githubUrl: profile.githubUrl ?? "",
+      portfolioUrl: profile.portfolioUrl ?? "",
+    });
+  }, [profile]);
 
   const set = (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -107,18 +250,18 @@ function ProfileTab() {
       <FieldRow label="Display name">
         <Input value={form.name} onChange={set("name")} placeholder="Your full name" />
       </FieldRow>
-      <FieldRow label="Professional title">
+      <FieldRow label="Professional title" hint="Shown on your dashboard and applications">
         <Input value={form.currentTitle} onChange={set("currentTitle")} placeholder="e.g. Senior Software Engineer" />
       </FieldRow>
       <FieldRow label="Bio">
-        <Textarea value={form.bio} onChange={set("bio")} placeholder="A short bio about yourself…" />
-        <p className="text-xs text-text-muted mt-1">{form.bio.length}/300</p>
+        <Textarea value={form.bio} onChange={set("bio")} placeholder="A short bio about yourself…" maxLength={300} />
+        <p className="text-xs text-text-muted mt-1.5">{form.bio.length}/300</p>
       </FieldRow>
       <FieldRow label="Location">
-        <Input value={form.location} onChange={set("location")} placeholder="e.g. San Francisco, CA" />
+        <Input value={form.location} onChange={set("location")} placeholder="e.g. Bangalore, India" />
       </FieldRow>
       <FieldRow label="Years of experience">
-        <Input type="number" min={0} max={50} value={form.yearsOfExp} onChange={set("yearsOfExp")} placeholder="0" className="w-24" />
+        <Input type="number" min={0} max={50} value={form.yearsOfExp} onChange={set("yearsOfExp")} placeholder="0" className="w-28" />
       </FieldRow>
       <FieldRow label="LinkedIn">
         <Input value={form.linkedinUrl} onChange={set("linkedinUrl")} placeholder="https://linkedin.com/in/…" />
@@ -130,29 +273,31 @@ function ProfileTab() {
         <Input value={form.portfolioUrl} onChange={set("portfolioUrl")} placeholder="https://yoursite.com" />
       </FieldRow>
       {error && <p className="text-sm text-red-400 pt-2">{error}</p>}
-      <div className="pt-4"><SaveButton loading={loading} success={success} /></div>
+      <div className="pt-6 flex justify-end">
+        <SaveButton loading={loading} success={success} />
+      </div>
     </form>
   );
 }
 
-// ── Security tab ──────────────────────────────────────────────────────────────
-
 function SecurityTab() {
   const { changePassword } = useProfile();
-  const [form, setForm]   = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error,   setError]   = useState("");
+  const [error, setError] = useState("");
 
-  const set = (field: string) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((f) => ({ ...f, [field]: e.target.value }));
-      setError("");
-    };
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((f) => ({ ...f, [field]: e.target.value }));
+    setError("");
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.newPassword !== form.confirmPassword) { setError("New passwords do not match"); return; }
+    if (form.newPassword !== form.confirmPassword) {
+      setError("New passwords do not match");
+      return;
+    }
     setLoading(true);
     try {
       await changePassword(form.currentPassword, form.newPassword);
@@ -168,6 +313,17 @@ function SecurityTab() {
 
   return (
     <form onSubmit={handleSubmit}>
+      <div className="mb-6 flex items-start gap-3 rounded-xl border border-border-subtle bg-bg-base/40 p-4">
+        <div className="w-9 h-9 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
+          <Shield size={16} className="text-brand" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-text-primary">Keep your account secure</p>
+          <p className="text-xs text-text-secondary mt-0.5">
+            Use a strong password with at least 8 characters, including uppercase, a number, and a symbol.
+          </p>
+        </div>
+      </div>
       <FieldRow label="Current password">
         <Input type="password" value={form.currentPassword} onChange={set("currentPassword")} placeholder="Enter current password" />
       </FieldRow>
@@ -178,12 +334,12 @@ function SecurityTab() {
         <Input type="password" value={form.confirmPassword} onChange={set("confirmPassword")} placeholder="Repeat new password" />
       </FieldRow>
       {error && <p className="text-sm text-red-400 pt-2">{error}</p>}
-      <div className="pt-4"><SaveButton loading={loading} success={success} /></div>
+      <div className="pt-6 flex justify-end">
+        <SaveButton loading={loading} success={success} />
+      </div>
     </form>
   );
 }
-
-// ── Appearance tab ────────────────────────────────────────────────────────────
 
 function AppearanceTab() {
   const { theme, setTheme } = useTheme();
@@ -193,13 +349,10 @@ function AppearanceTab() {
 
   if (!mounted) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-4 w-32 bg-bg-elevated rounded" />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="h-28 bg-bg-elevated rounded-xl" />
-          <div className="h-28 bg-bg-elevated rounded-xl" />
-          <div className="h-28 bg-bg-elevated rounded-xl" />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-pulse">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-36 rounded-2xl bg-bg-elevated" />
+        ))}
       </div>
     );
   }
@@ -208,13 +361,13 @@ function AppearanceTab() {
     {
       id: "light",
       label: "Light",
-      desc: "Clean light layout",
+      desc: "Clean, bright interface",
       preview: (
-        <div className="w-full h-12 bg-white border border-zinc-200 rounded flex gap-1 p-1">
-          <div className="w-3 h-full bg-zinc-100 rounded-sm" />
-          <div className="flex-1 flex flex-col gap-1">
-            <div className="h-2 bg-zinc-200 rounded-sm w-1/2" />
-            <div className="h-2 bg-zinc-100 rounded-sm w-3/4" />
+        <div className="w-full h-14 bg-white border border-zinc-200 rounded-lg flex gap-1.5 p-1.5 shadow-inner">
+          <div className="w-4 h-full bg-zinc-100 rounded" />
+          <div className="flex-1 flex flex-col gap-1 justify-center">
+            <div className="h-2 bg-zinc-200 rounded w-1/2" />
+            <div className="h-2 bg-zinc-100 rounded w-3/4" />
           </div>
         </div>
       ),
@@ -222,13 +375,13 @@ function AppearanceTab() {
     {
       id: "dark",
       label: "Dark",
-      desc: "Sleek dark layout",
+      desc: "Sleek dark interface",
       preview: (
-        <div className="w-full h-12 bg-zinc-950 border border-zinc-800 rounded flex gap-1 p-1">
-          <div className="w-3 h-full bg-zinc-900 rounded-sm" />
-          <div className="flex-1 flex flex-col gap-1">
-            <div className="h-2 bg-zinc-800 rounded-sm w-1/2" />
-            <div className="h-2 bg-zinc-900 rounded-sm w-3/4" />
+        <div className="w-full h-14 bg-zinc-950 border border-zinc-800 rounded-lg flex gap-1.5 p-1.5 shadow-inner">
+          <div className="w-4 h-full bg-zinc-900 rounded" />
+          <div className="flex-1 flex flex-col gap-1 justify-center">
+            <div className="h-2 bg-zinc-700 rounded w-1/2" />
+            <div className="h-2 bg-zinc-800 rounded w-3/4" />
           </div>
         </div>
       ),
@@ -236,16 +389,16 @@ function AppearanceTab() {
     {
       id: "system",
       label: "System",
-      desc: "Matches OS settings",
+      desc: "Matches your OS",
       preview: (
-        <div className="w-full h-12 rounded flex overflow-hidden border border-border-subtle">
-          <div className="w-1/2 h-full bg-white flex gap-1 p-1">
-            <div className="w-2 h-full bg-zinc-100 rounded-sm" />
-            <div className="h-2 bg-zinc-200 rounded-sm w-full" />
+        <div className="w-full h-14 rounded-lg flex overflow-hidden border border-border-subtle shadow-inner">
+          <div className="w-1/2 h-full bg-white flex gap-1 p-1.5">
+            <div className="w-3 h-full bg-zinc-100 rounded" />
+            <div className="h-2 bg-zinc-200 rounded w-full self-center" />
           </div>
-          <div className="w-1/2 h-full bg-zinc-950 flex gap-1 p-1">
-            <div className="w-2 h-full bg-zinc-900 rounded-sm" />
-            <div className="h-2 bg-zinc-800 rounded-sm w-full" />
+          <div className="w-1/2 h-full bg-zinc-950 flex gap-1 p-1.5">
+            <div className="w-3 h-full bg-zinc-900 rounded" />
+            <div className="h-2 bg-zinc-700 rounded w-full self-center" />
           </div>
         </div>
       ),
@@ -253,58 +406,61 @@ function AppearanceTab() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-sm font-semibold text-text-primary mb-1">Theme</h3>
-        <p className="text-xs text-text-secondary">Choose how AXIOM looks to you.</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {options.map((opt) => {
-          const active = theme === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setTheme(opt.id)}
-              className={cn(
-                "flex flex-col gap-3 p-4 rounded-xl border text-left transition-all duration-200 hover:border-border-medium cursor-pointer group",
-                active
-                  ? "border-brand bg-brand/5 shadow-[0_0_0_1px_var(--brand)]"
-                  : "border-border-subtle bg-bg-card"
-              )}
-            >
-              {opt.preview}
-              <div>
-                <div className="text-xs font-semibold text-text-primary flex items-center justify-between">
-                  {opt.label}
-                  <div className={cn(
-                    "w-3 h-3 rounded-full border flex items-center justify-center shrink-0",
-                    active ? "border-brand bg-brand" : "border-border-medium"
-                  )}>
-                    {active && <div className="w-1 h-1 bg-black rounded-full" />}
-                  </div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {options.map((opt) => {
+        const active = theme === opt.id;
+        return (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setTheme(opt.id)}
+            className={cn(
+              "flex flex-col gap-4 p-5 rounded-2xl border text-left transition-all duration-200 cursor-pointer group",
+              active
+                ? "border-brand/60 bg-brand/5 shadow-[0_0_0_1px_rgba(249,115,22,0.3)]"
+                : "border-border-subtle bg-bg-base/40 hover:border-border-medium hover:bg-bg-hover/30",
+            )}
+          >
+            {opt.preview}
+            <div>
+              <div className="text-sm font-semibold text-text-primary flex items-center justify-between">
+                {opt.label}
+                <div
+                  className={cn(
+                    "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                    active ? "border-brand bg-brand" : "border-border-medium group-hover:border-border-strong",
+                  )}
+                >
+                  {active && <div className="w-1.5 h-1.5 bg-black rounded-full" />}
                 </div>
-                <div className="text-[10px] text-text-secondary mt-0.5">{opt.desc}</div>
               </div>
-            </button>
-          );
-        })}
-      </div>
+              <p className="text-xs text-text-secondary mt-1">{opt.desc}</p>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
-
-// ── Notifications tab ─────────────────────────────────────────────────────────
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative w-10 h-5 rounded-full transition-colors ${checked ? "bg-brand" : "bg-bg-hover border border-border-subtle"}`}
+      className={cn(
+        "relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0",
+        checked ? "bg-brand" : "bg-bg-hover border border-border-subtle",
+      )}
     >
-      <span className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full transition-transform ${checked ? "translate-x-5 bg-black" : "bg-text-muted"}`} />
+      <span
+        className={cn(
+          "absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform duration-200 shadow-sm",
+          checked ? "translate-x-5 bg-black" : "bg-text-muted",
+        )}
+      />
     </button>
   );
 }
@@ -312,12 +468,21 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 function NotificationsTab() {
   const { prefs, updatePreferences } = useProfile();
   const [form, setForm] = useState({
-    emailNotifications: prefs?.emailNotifications ?? true,
-    jobAlerts:          prefs?.jobAlerts          ?? true,
-    weeklyDigest:       prefs?.weeklyDigest       ?? true,
+    emailNotifications: true,
+    jobAlerts: true,
+    weeklyDigest: true,
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!prefs) return;
+    setForm({
+      emailNotifications: prefs.emailNotifications ?? true,
+      jobAlerts: prefs.jobAlerts ?? true,
+      weeklyDigest: prefs.weeklyDigest ?? true,
+    });
+  }, [prefs]);
 
   const toggle = (field: keyof typeof form) => (v: boolean) => {
     setForm((f) => ({ ...f, [field]: v }));
@@ -337,39 +502,47 @@ function NotificationsTab() {
   }
 
   const rows: [keyof typeof form, string, string][] = [
-    ["emailNotifications", "Email notifications",  "Receive important account updates via email"],
-    ["jobAlerts",          "Job alerts",           "Get notified about new matching job postings"],
-    ["weeklyDigest",       "Weekly digest",        "A weekly summary of your career progress"],
+    ["emailNotifications", "Email notifications", "Important account updates and security alerts"],
+    ["jobAlerts", "Job alerts", "New matching opportunities as they're discovered"],
+    ["weeklyDigest", "Weekly digest", "A summary of your career progress each week"],
   ];
 
   return (
     <form onSubmit={handleSubmit}>
-      {rows.map(([field, label, desc]) => (
-        <div key={field} className="flex items-center justify-between py-4 border-b border-border-subtle last:border-0">
-          <div>
-            <p className="text-sm font-medium text-text-primary">{label}</p>
-            <p className="text-xs text-text-muted mt-0.5">{desc}</p>
+      <div className="space-y-1">
+        {rows.map(([field, label, desc]) => (
+          <div
+            key={field}
+            className="flex items-center justify-between gap-4 py-4 px-1 border-b border-border-subtle/80 last:border-0 rounded-lg hover:bg-bg-hover/20 transition-colors"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-text-primary">{label}</p>
+              <p className="text-xs text-text-muted mt-0.5">{desc}</p>
+            </div>
+            <Toggle checked={form[field]} onChange={toggle(field)} />
           </div>
-          <Toggle checked={form[field]} onChange={toggle(field)} />
-        </div>
-      ))}
-      <div className="pt-4"><SaveButton loading={loading} success={success} /></div>
+        ))}
+      </div>
+      <div className="pt-6 flex justify-end">
+        <SaveButton loading={loading} success={success} />
+      </div>
     </form>
   );
 }
 
-// ── Danger zone tab ───────────────────────────────────────────────────────────
-
 function DangerTab() {
   const { deleteAccount } = useProfile();
-  const { logout }        = useAuth();
-  const router            = useRouter();
+  const { logout } = useAuth();
+  const router = useRouter();
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
+  const [error, setError] = useState("");
 
   async function handleDelete() {
-    if (confirm !== "delete my account") { setError("Please type the confirmation phrase exactly."); return; }
+    if (confirm !== "delete my account") {
+      setError("Please type the confirmation phrase exactly.");
+      return;
+    }
     setLoading(true);
     try {
       await deleteAccount();
@@ -382,104 +555,232 @@ function DangerTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-border-subtle p-5 bg-bg-card">
-        <h3 className="text-sm font-semibold text-text-primary mb-1">Export your data</h3>
-        <p className="text-xs text-text-secondary mb-4">Download a JSON copy of all your AXIOM data.</p>
-        <a
-          href="/api/users/me/export"
-          download="axiom-data-export.json"
-          className="inline-flex items-center px-4 py-2 bg-bg-elevated hover:bg-bg-hover text-text-primary text-sm font-medium rounded-lg border border-border-subtle transition-colors"
-        >
-          Download data export
-        </a>
-      </div>
-      <div className="rounded-xl border border-red-950/40 bg-red-950/5 p-5">
-        <h3 className="text-sm font-semibold text-red-400 mb-1">Delete account</h3>
-        <p className="text-xs text-text-secondary mb-4">
-          Permanently deletes your account and all associated data. This cannot be undone.
-        </p>
-        <p className="text-xs text-text-secondary mb-2">
-          Type <span className="font-mono text-text-primary">delete my account</span> to confirm:
-        </p>
-        <input
-          value={confirm}
-          onChange={(e) => { setConfirm(e.target.value); setError(""); }}
-          placeholder="delete my account"
-          className="w-full bg-bg-elevated border border-border-subtle text-text-primary placeholder:text-text-muted rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-red-500/40 focus:border-red-700 transition-colors mb-3"
-        />
-        {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
-        >
-          {loading && <Loader2 size={13} className="animate-spin" />}
-          Delete account permanently
-        </button>
-      </div>
+    <div className="space-y-5">
+      <Card className="border border-border-subtle bg-bg-base/40 backdrop-blur-sm rounded-2xl overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-bg-elevated border border-border-subtle flex items-center justify-center shrink-0">
+              <Download size={18} className="text-text-secondary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-text-primary">Export your data</h3>
+              <p className="text-xs text-text-secondary mt-1 mb-4">
+                Download a JSON copy of all your AXIOM data — resumes, applications, and preferences.
+              </p>
+              <a
+                href="/api/users/me/export"
+                download="axiom-data-export.json"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-bg-elevated hover:bg-bg-hover text-text-primary text-sm font-medium rounded-xl border border-border-subtle transition-all duration-200"
+              >
+                <Download size={14} />
+                Download data export
+              </a>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="border border-red-500/20 bg-red-500/[0.03] backdrop-blur-sm rounded-2xl overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+              <AlertTriangle size={18} className="text-red-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-red-400">Delete account</h3>
+              <p className="text-xs text-text-secondary mt-1 mb-4">
+                Permanently removes your account and all associated data. This action cannot be undone.
+              </p>
+              <p className="text-xs text-text-secondary mb-2">
+                Type <span className="font-mono text-text-primary bg-bg-elevated px-1.5 py-0.5 rounded">delete my account</span> to confirm:
+              </p>
+              <Input
+                value={confirm}
+                onChange={(e) => {
+                  setConfirm(e.target.value);
+                  setError("");
+                }}
+                placeholder="delete my account"
+                className="mb-3 focus:ring-red-500/20 focus:border-red-500/40"
+              />
+              {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                {loading && <Loader2 size={13} className="animate-spin" />}
+                Delete account permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+const TAB_CONTENT: Record<TabId, React.ComponentType> = {
+  profile: ProfileTab,
+  security: SecurityTab,
+  appearance: AppearanceTab,
+  notifs: NotificationsTab,
+  danger: DangerTab,
+};
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab]  = useState<TabId>("profile");
-  const { profile, isLoading }     = useProfile();
-  const completionPct              = profile?.profileCompletionPct ?? 0;
+  const [activeTab, setActiveTab] = useState<TabId>("profile");
+  const { profile, isLoading } = useProfile();
+  const { user } = useAuth();
+  const completionPct = profile?.profileCompletionPct ?? 0;
+  const activeMeta = TABS.find((t) => t.id === activeTab)!;
+  const ActiveContent = TAB_CONTENT[activeTab];
+
+  const displayName = profile?.name ?? user?.name ?? "User";
+  const displayEmail = profile?.email ?? user?.email ?? "";
+  const initial = displayName.charAt(0).toUpperCase();
+
+  if (isLoading) {
+    return <SettingsPageSkeleton />;
+  }
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
-        <p className="text-sm text-text-secondary mt-1">Manage your profile, security, and preferences.</p>
-      </div>
+    <div className="relative min-h-full overflow-hidden">
+      <PageBackground />
 
-      {!isLoading && (
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex-1 h-1 rounded-full bg-bg-elevated overflow-hidden">
-            <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
-          </div>
-          <span className="text-xs text-text-secondary shrink-0">Profile {completionPct}% complete</span>
-        </div>
-      )}
-
-      {/* Tab bar */}
-      <div className="flex gap-1 border-b border-border-subtle mb-6 overflow-x-auto scrollbar-none">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
-              activeTab === id
-                ? "border-brand text-text-primary"
-                : "border-transparent text-text-muted hover:text-text-secondary"
-            }`}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-12">
+        {/* Hero header */}
         <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 6 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-8"
         >
-          {activeTab === "profile"  && <ProfileTab />}
-          {activeTab === "security" && <SecurityTab />}
-          {activeTab === "appearance" && <AppearanceTab />}
-          {activeTab === "notifs"   && <NotificationsTab />}
-          {activeTab === "danger"   && <DangerTab />}
+          <Badge
+            variant="outline"
+            className="mb-4 border-border-subtle bg-bg-card/60 text-text-secondary backdrop-blur-sm gap-1.5 px-3 py-1"
+          >
+            <Sparkles size={12} className="text-brand" />
+            Account preferences
+          </Badge>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-text-primary">
+            Your{" "}
+            <span className="text-brand" style={{ textShadow: "0 0 60px rgba(249,115,22,0.25)" }}>
+              Settings
+            </span>
+          </h1>
+          <p className="text-sm text-text-secondary mt-2 max-w-lg">
+            Manage your profile, security, and how AXIOM works for you.
+          </p>
         </motion.div>
-      </AnimatePresence>
+
+        {/* Profile summary card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.06 }}
+        >
+          <Card className="mb-8 border border-border-subtle bg-bg-card/40 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg">
+              <div className="p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-center gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/20 flex items-center justify-center shrink-0 shadow-inner">
+                  <span className="text-2xl font-bold text-brand">{initial}</span>
+                </div>
+                <div className="flex-1 text-center sm:text-left min-w-0">
+                  <p className="text-lg font-bold text-text-primary truncate">{displayName}</p>
+                  <p className="text-sm text-text-secondary truncate">{displayEmail}</p>
+                  {profile?.currentTitle && (
+                    <p className="text-xs text-text-muted mt-0.5 truncate">{profile.currentTitle}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  <CompletionRing pct={completionPct} />
+                  <div className="hidden sm:block text-left">
+                    <p className="text-xs font-semibold text-text-primary">Profile strength</p>
+                    <p className="text-[11px] text-text-muted mt-0.5">
+                      {completionPct < 100 ? "Complete your profile for better matches" : "Profile complete"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+        {/* Main layout */}
+        <div className="grid lg:grid-cols-[260px_1fr] gap-6 items-start">
+          {/* Side navigation */}
+          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 scrollbar-none">
+            {TABS.map(({ id, label, desc, icon: Icon, danger }) => {
+              const active = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveTab(id)}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all duration-200 shrink-0 lg:shrink lg:w-full group",
+                    active
+                      ? danger
+                        ? "border-red-500/30 bg-red-500/[0.06] shadow-sm"
+                        : "border-brand/40 bg-brand/5 shadow-[0_0_0_1px_rgba(249,115,22,0.15)]"
+                      : "border-border-subtle bg-bg-card/30 hover:border-border-medium hover:bg-bg-hover/40",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                      active
+                        ? danger
+                          ? "bg-red-500/10 text-red-400"
+                          : "bg-brand/15 text-brand"
+                        : "bg-bg-elevated text-text-muted group-hover:text-text-secondary",
+                    )}
+                  >
+                    <Icon size={16} strokeWidth={active ? 2 : 1.75} />
+                  </div>
+                  <div className="min-w-0 flex-1 hidden sm:block lg:block">
+                    <p
+                      className={cn(
+                        "text-sm font-semibold truncate",
+                        active ? (danger ? "text-red-400" : "text-text-primary") : "text-text-secondary",
+                      )}
+                    >
+                      {label}
+                    </p>
+                    <p className="text-[11px] text-text-muted truncate hidden lg:block">{desc}</p>
+                  </div>
+                  {active && (
+                    <ChevronRight size={14} className="text-text-muted shrink-0 hidden lg:block" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Content panel */}
+          <SpotlightCard>
+            <Card className="border border-border-subtle bg-bg-card/40 backdrop-blur-md rounded-2xl shadow-lg relative z-[1]">
+              <div className="p-6 sm:p-8 border-b border-border-subtle/80">
+                <h2 className="text-xl font-bold text-text-primary tracking-tight">{activeMeta.label}</h2>
+                <p className="text-sm text-text-secondary mt-1">{activeMeta.desc}</p>
+              </div>
+              <div className="p-6 sm:p-8">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <ActiveContent />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </Card>
+          </SpotlightCard>
+        </div>
+      </div>
     </div>
   );
 }

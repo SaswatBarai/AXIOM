@@ -8,6 +8,9 @@ import {
   getResumeHandler,
   deleteResumeHandler,
   analyzeResumeHandler,
+  setActiveResumeHandler,
+  getDiscoveryStatusHandler,
+  runDiscoveryHandler,
 } from "../controllers/resume.controller";
 import { validate } from "../middleware/validate.middleware";
 import { analyzeResumeSchema } from "../utils/schemas";
@@ -38,6 +41,9 @@ router.post(  "/",           requireAuth, uploadLimiter, upload.single("resume")
 router.get(   "/",           requireAuth,                                   listResumesHandler);
 router.get(   "/:id",        requireAuth,                                   getResumeHandler);
 router.delete("/:id",        requireAuth,                                   deleteResumeHandler);
-router.post(  "/:id/analyze",requireAuth, validate(analyzeResumeSchema),    analyzeResumeHandler);
+router.post(  "/:id/analyze", requireAuth, validate(analyzeResumeSchema),    analyzeResumeHandler);
+router.put(   "/:id/activate",  requireAuth,                                  setActiveResumeHandler);
+router.get(   "/:id/discovery", requireAuth,                                  getDiscoveryStatusHandler);
+router.post(  "/:id/discover",  requireAuth,                                  runDiscoveryHandler);
 
 export default router;

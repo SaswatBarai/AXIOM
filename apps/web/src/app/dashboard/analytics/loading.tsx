@@ -1,5 +1,5 @@
-import { AnalyticsSkeleton } from "@/components/dashboard/skeletons";
+import { AnalyticsPageSkeleton } from "@/components/dashboard/AnalyticsSkeleton";
 
 export default function AnalyticsLoading() {
-  return <AnalyticsSkeleton />;
+  return <AnalyticsPageSkeleton />;
 }

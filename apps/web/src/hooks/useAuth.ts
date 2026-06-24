@@ -4,7 +4,7 @@ import { useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 import { setCredentials, clearCredentials, setLoading } from "@/store/authSlice";
-import { api, setAccessToken } from "@/lib/api";
+import { api, setAccessToken, getAccessToken } from "@/lib/api";
 
 export function useAuth() {
   const dispatch = useDispatch<AppDispatch>();
@@ -22,7 +22,10 @@ export function useAuth() {
     api
       .get("/auth/me", { withCredentials: true })
       .then(({ data }) => {
-        dispatch(setCredentials({ user: data.user, accessToken: "" }));
+        // _accessToken is either null (cookie still valid — interceptor didn't need
+        // to fire) or the freshly-refreshed token (interceptor ran silently).
+        // Either way, sync whatever the module has into Redux.
+        dispatch(setCredentials({ user: data.user, accessToken: getAccessToken() ?? "" }));
       })
       .catch(() => {
         setAccessToken(null);

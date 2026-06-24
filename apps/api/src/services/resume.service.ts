@@ -1,10 +1,11 @@
-import { prisma } from "@axiom/database";
+import { prisma, type ResumeStatus } from "@axiom/database";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { uploadToS3, deleteFromS3, getPresignedUrl, keyFromUrl } from "./s3.service";
-import { parseResume as aiParseResume, analyzeResumeATS } from "./ai.service";
+import { analyzeResumeATS } from "./ai.service";
 import { logger } from "../utils/logger";
 import type { ParsedResume } from "@axiom/shared-types";
 import { v4 as uuid } from "uuid";
+import { resumeParsingQueue } from "./queue.service";
 
 const ALLOWED_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 const MAX_BYTES     = 5 * 1024 * 1024; // 5 MB
@@ -45,21 +46,13 @@ export async function uploadResume(
       fileUrl,
       fileType: ext,
       version,
+      status: "UPLOADING",
     },
   });
 
-  // Parse in background — non-fatal if AI service is down
-  aiParseResume(fileUrl, ext).then(async (parsed) => {
-    if (!parsed) return;
-    await prisma.resume.update({
-      where: { id: resume.id },
-      data:  { parsedData: parsed as object },
-    }).catch((err) => {
-      logger.error({ err, resumeId: resume.id }, "Resume parse callback: failed to persist parsed data");
-    });
-  }).catch((err) => logger.error({ err, resumeId: resume.id }, "Resume parse callback: AI parse failed"));
+  await resumeParsingQueue.add({ resumeId: resume.id });
 
-  return resume;
+  return { ...resume, status: "UPLOADING" as ResumeStatus };
 }
 
 export async function listResumes(userId: string) {
@@ -98,12 +91,30 @@ export async function deleteResume(resumeId: string, userId: string) {
   if (!resume) throw new AppError(404, "Resume not found");
   if (resume.userId !== userId) throw new AppError(403, "Forbidden");
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeResumeId: true },
+  });
+
   await Promise.all([
     deleteFromS3(keyFromUrl(resume.fileUrl)),
     prisma.resume.delete({ where: { id: resumeId } }),
   ]);
 
-  return { message: "Resume deleted" };
+  let newActiveId: string | null = null;
+  if (user?.activeResumeId === resumeId) {
+    const latest = await prisma.resume.findFirst({
+      where:  { userId, id: { not: resumeId }, status: "COMPLETED" },
+      orderBy: { version: "desc" },
+    });
+    newActiveId = latest?.id ?? null;
+    await prisma.user.update({
+      where: { id: userId },
+      data:  { activeResumeId: newActiveId },
+    });
+  }
+
+  return { message: "Resume deleted", activeResumeId: newActiveId };
 }
 
 export async function analyzeResume(resumeId: string, userId: string, jobDescription: string) {

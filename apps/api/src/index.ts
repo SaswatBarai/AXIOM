@@ -25,7 +25,7 @@ import { analyticsRoutes }       from "./routes/analytics.routes";
 import { notificationRoutes }    from "./routes/notification.routes";
 import adminRoutes            from "./routes/admin.routes";
 import { refreshMaterializedViews } from "./services/analytics.service";
-import { scheduleWeeklyDigest }  from "./services/queue.service";
+import { scheduleWeeklyDigest, scheduleDiscoveryTimeoutCheck }  from "./services/queue.service";
 import { deleteStaleNotifications } from "./services/notification.service";
 import { initSocketIO }          from "./lib/socket";
 import { errorHandler } from "./middleware/errorHandler.middleware";
@@ -206,6 +206,7 @@ async function bootstrap() {
   });
   scheduleNightlyRefresh();
   await scheduleWeeklyDigest();
+  await scheduleDiscoveryTimeoutCheck();
 }
 
 bootstrap().catch((err) => {

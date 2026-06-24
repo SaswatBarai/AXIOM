@@ -16,6 +16,7 @@ const PROFILE_SELECT = {
   linkedinUrl: true, githubUrl: true, portfolioUrl: true,
   currentTitle: true, yearsOfExp: true,
   emailVerified: true, createdAt: true, updatedAt: true,
+  activeResumeId: true,
 };
 
 const PROFILE_FIELDS = [

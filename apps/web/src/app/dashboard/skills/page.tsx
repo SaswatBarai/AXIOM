@@ -231,7 +231,7 @@ export default function SkillsPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-bg-base bg-grid-dots overflow-hidden">
+    <div className="relative min-h-full bg-bg-base bg-grid-dots overflow-hidden">
       {/* Background glow effects */}
       <div className="ambient-glow-orb w-[600px] h-[600px] -top-40 -left-20 animate-float-1" />
       <div className="ambient-glow-orb w-[500px] h-[500px] bottom-5 right-5 animate-float-2" />

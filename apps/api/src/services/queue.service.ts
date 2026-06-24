@@ -3,6 +3,9 @@ import { prisma } from "@axiom/database";
 import { sendEmail } from "./email.service";
 import { createNotification, type AlertFilters } from "./notification.service";
 import { logger } from "../utils/logger";
+import { getPresignedUrl, keyFromUrl } from "./s3.service";
+import { parseResume as aiParseResume } from "./ai.service";
+import { runJobDiscovery, checkStuckDiscoveries } from "./discovery.service";
 
 const REDIS_URL = process.env["REDIS_URL"] ?? "redis://localhost:6379";
 
@@ -21,6 +24,8 @@ const QUEUE_OPTS: Bull.QueueOptions = {
 export const emailQueue        = new Bull("email",        QUEUE_OPTS);
 export const notificationQueue = new Bull("notification", QUEUE_OPTS);
 export const digestQueue       = new Bull("digest",       QUEUE_OPTS);
+export const resumeParsingQueue = new Bull("resume-parsing", QUEUE_OPTS);
+export const jobDiscoveryQueue  = new Bull("job-discovery",  QUEUE_OPTS);
 
 // ── Frequency caps ─────────────────────────────────────────────────────────────
 // Stored in Redis: "freq:alert:{userId}" → count, TTL = end of day
@@ -155,4 +160,99 @@ export async function dispatchJobAlerts(jobId: string, jobTitle: string, jobLoca
       await tx.jobAlert.update({ where: { id: alert.id }, data: { lastSentAt: now } });
     });
   }
+}
+
+// ── Resume Parsing worker ─────────────────────────────────────────────────────
+
+resumeParsingQueue.process(async (job) => {
+  const { resumeId } = job.data as { resumeId: string };
+  const resume = await prisma.resume.findUnique({
+    where: { id: resumeId },
+  });
+
+  if (!resume) {
+    logger.error({ resumeId }, "Parsing job failed: resume not found in database");
+    return;
+  }
+
+  await prisma.resume.update({
+    where: { id: resumeId },
+    data:  { status: "PARSING" },
+  });
+
+  try {
+    const presignedUrl = await getPresignedUrl(keyFromUrl(resume.fileUrl), 3600);
+    const parsed = await aiParseResume(presignedUrl, resume.fileType);
+
+    if (!parsed) {
+      // AI returned a 200 but empty data — surface it clearly and let Bull retry
+      throw new Error("AI service returned empty parsed data");
+    }
+
+    await prisma.resume.update({
+      where: { id: resumeId },
+      data:  { status: "COMPLETED", parsedData: parsed as object },
+    });
+
+    logger.info({ resumeId }, "Resume parsing completed successfully");
+    // Discovery is enqueued on resume activation — not here — to avoid duplicate runs.
+  } catch (err) {
+    const message = (err as Error).message ?? "Unknown parse error";
+    logger.error({ err, resumeId }, `Resume parse job failed: ${message}`);
+    await prisma.resume.update({
+      where: { id: resumeId },
+      data:  { status: "FAILED", parsingError: message },
+    });
+    // Re-throw so Bull marks this attempt as failed and applies backoff/retries
+    throw err;
+  }
+});
+
+resumeParsingQueue.on("failed", (job, err) => {
+  logger.error(`Resume parsing job ${job.id} failed: ${err.message}`);
+});
+
+// ── Job Discovery worker ──────────────────────────────────────────────────────
+
+jobDiscoveryQueue.process(async (job) => {
+  const { resumeId } = job.data as { resumeId: string };
+  try {
+    await runJobDiscovery(resumeId);
+  } catch (err) {
+    // Retry when another worker is already running this resume's discovery.
+    if ((err as Error).message === "DISCOVERY_IN_PROGRESS") {
+      throw err;
+    }
+    // runJobDiscovery handles FAILED status internally; don't exhaust Bull retries.
+  }
+});
+
+jobDiscoveryQueue.on("failed", (job, err) => {
+  logger.error(`Job discovery job ${job.id} failed (attempt ${job.attemptsMade}): ${err.message}`);
+});
+
+// ── Stuck Discovery checker (repeatable every 5 minutes) ────────────────────
+
+const discoveryTimeoutQueue = new Bull("discovery-timeout", QUEUE_OPTS);
+
+discoveryTimeoutQueue.process(async () => {
+  const count = await checkStuckDiscoveries();
+  if (count > 0) {
+    logger.info({ count }, "Stuck discovery timeout check completed");
+  }
+});
+
+export async function scheduleDiscoveryTimeoutCheck(): Promise<void> {
+  const repeatables = await discoveryTimeoutQueue.getRepeatableJobs();
+  for (const r of repeatables) {
+    if (r.name === "discovery-timeout-trigger") {
+      await discoveryTimeoutQueue.removeRepeatableByKey(r.key);
+    }
+  }
+  await discoveryTimeoutQueue.add(
+    "discovery-timeout-trigger",
+    { trigger: true },
+    { repeat: { cron: "*/5 * * * *" } },  // Every 5 minutes
+  );
+  logger.info("Discovery timeout checker scheduled: every 5 minutes");
 }

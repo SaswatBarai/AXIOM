@@ -8,6 +8,7 @@ import {
   Briefcase, Zap, XCircle, Lightbulb, X,
 } from "lucide-react";
 import { useResume } from "@/hooks/useResume";
+import { api } from "@/lib/api";
 import type { Resume, ParsedResume, ATSScore } from "@axiom/shared-types";
 import { DashboardResumeSkeleton } from "@/components/dashboard/DashboardResumeSkeleton";
 
@@ -315,10 +316,13 @@ function AnalyzeModal({
 // ── Resume card ───────────────────────────────────────────────────────────────
 
 function ResumeCard({
-  resume, onDelete, onAnalyze,
+  resume, isActive, discoveryStatus, onDelete, onSetActive, onAnalyze,
 }: {
   resume: Resume & { downloadUrl?: string };
+  isActive: boolean;
+  discoveryStatus: string | null;
   onDelete: (id: string) => void;
+  onSetActive: (id: string) => void;
   onAnalyze: (id: string, jd: string) => Promise<Resume>;
 }) {
   const [confirming,  setConfirming]  = useState(false);
@@ -335,6 +339,8 @@ function ResumeCard({
   const parsed   = resume.parsedData as ParsedResume | null;
   const atsScore = resume.atsScore as ATSScore | null;
   const hasParsed = parsed && (parsed.skills?.length > 0 || parsed.experience?.length > 0);
+  const isCompleted = resume.status === "COMPLETED";
+  const isFailed = resume.status === "FAILED";
   const date = new Date(resume.createdAt).toLocaleDateString("en-US", {
     year: "numeric", month: "short", day: "numeric",
   });
@@ -359,18 +365,55 @@ function ResumeCard({
             </div>
           </div>
 
+          {/* Active badge + discovery status */}
+          {isActive && (
+            <div className="shrink-0 flex items-center gap-1.5 mr-2 md:mr-0">
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand/10 border border-brand/30">
+                <span className="text-xs text-brand font-semibold">Active</span>
+              </div>
+              {discoveryStatus === "PENDING" && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/30" title="Generating job recommendations">
+                  <Loader2 size={10} className="text-amber-500 animate-spin" />
+                  <span className="text-xs text-amber-500 font-medium">Discovering jobs…</span>
+                </div>
+              )}
+              {discoveryStatus === "SCRAPING" && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/30" title="Scraping and matching jobs">
+                  <Loader2 size={10} className="text-amber-500 animate-spin" />
+                  <span className="text-xs text-amber-500 font-medium">Matching jobs…</span>
+                </div>
+              )}
+              {discoveryStatus === "FAILED" && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 border border-red-500/30" title="Job discovery failed">
+                  <AlertCircle size={10} className="text-red-500" />
+                  <span className="text-xs text-red-500 font-medium">Discovery failed</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Status badge */}
-          {atsScore ? (
+          {isFailed ? (
+            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 mr-2 md:mr-0 group relative" title={resume.parsingError ?? "Parsing failed"}>
+              <AlertCircle size={11} className="text-red-500" />
+              <span className="text-xs text-red-500 font-medium">Failed</span>
+            </div>
+          ) : atsScore ? (
             <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-elevated border border-border-subtle mr-2 md:mr-0">
               <span className={`text-xs font-bold ${atsScore.overall >= 75 ? "text-green-500" : atsScore.overall >= 50 ? "text-amber-500" : "text-red-500"}`}>
                 {atsScore.overall}
               </span>
               <span className="text-xs text-text-secondary">ATS</span>
             </div>
-          ) : hasParsed ? (
+          ) : isCompleted || hasParsed ? (
             <div className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 mr-2 md:mr-0">
               <CheckCircle2 size={11} className="text-green-500" />
               <span className="text-xs text-green-500 font-medium">Parsed</span>
+            </div>
+          ) : resume.status === "UPLOADING" ? (
+            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-elevated border border-border-subtle mr-2 md:mr-0">
+              <Loader2 size={11} className="text-text-secondary animate-spin" />
+              <span className="text-xs text-text-secondary font-medium">Uploading…</span>
             </div>
           ) : (
             <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-elevated border border-border-subtle mr-2 md:mr-0">
@@ -381,7 +424,13 @@ function ResumeCard({
 
           {/* Action buttons - Opacity: 100% by default on mobile touch viewports, hover hidden on desktop */}
           <div className="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-            {hasParsed && (
+            {!isActive && isCompleted && (
+              <button onClick={() => onSetActive(resume.id)}
+                className="p-2 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-brand transition-colors cursor-pointer" title="Set as active">
+                <CheckCircle2 size={15} />
+              </button>
+            )}
+            {isCompleted && hasParsed && (
               <button onClick={() => setAnalyzeOpen(true)}
                 className="p-2 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-amber-500 transition-colors cursor-pointer" title="ATS Analyze">
                 <Zap size={15} />
@@ -436,22 +485,42 @@ function ResumeCard({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ResumePage() {
-  const { resumes, isLoading, isUploading, uploadResume, deleteResume, analyzeResume, refetch } = useResume();
+  const { resumes, activeResumeId, isLoading, isUploading, uploadResume, deleteResume, setActiveResume, analyzeResume, refetch } = useResume();
+  const [activeDiscoveryStatuses, setActiveDiscoveryStatuses] = useState<Record<string, string | null>>({});
+
+  // Poll discovery status for the active resume
+  useEffect(() => {
+    if (!activeResumeId) return;
+    const fetchDiscoveryStatus = async () => {
+      try {
+        const { data } = await api.get(`/resumes/${activeResumeId}/discovery`);
+        setActiveDiscoveryStatuses((prev) => ({
+          ...prev,
+          [activeResumeId]: data.discovery?.status ?? null,
+        }));
+      } catch {
+        // Ignore
+      }
+    };
+    fetchDiscoveryStatus();
+    const interval = setInterval(fetchDiscoveryStatus, 5000);
+    return () => clearInterval(interval);
+  }, [activeResumeId]);
   const [uploadError,   setUploadError]   = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [polling,       setPolling]       = useState(false);
 
-  // Background polling bugfix: Poll if *any* resume is currently missing parsed data, 
-  // regardless of immediate uploadSuccess state, to recover gracefully from refreshes.
+  // Background polling: Poll if *any* resume is still being processed (UPLOADING or PARSING).
+  // Stops automatically once all resumes reach a terminal state (COMPLETED or FAILED).
   useEffect(() => {
-    const unparsed = resumes.some((r) => !r.parsedData);
-    if (!unparsed) { 
-      setPolling(false); 
-      return; 
+    const pending = resumes.some((r) => r.status === "UPLOADING" || r.status === "PARSING");
+    if (!pending) {
+      setPolling(false);
+      return;
     }
     setPolling(true);
-    const interval = setInterval(() => { 
-      void refetch(); 
+    const interval = setInterval(() => {
+      void refetch();
     }, 3500);
     return () => clearInterval(interval);
   }, [resumes, refetch]);
@@ -516,7 +585,7 @@ export default function ResumePage() {
           <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
             Your resumes {resumes.length > 0 && `(${resumes.length})`}
           </h2>
-          {resumes.some((r) => r.parsedData) && (
+          {resumes.some((r) => r.status === "COMPLETED") && (
             <p className="text-xs text-text-secondary flex items-center gap-1 font-medium">
               <Zap size={11} className="text-amber-500" />
               Hover a card to run ATS analysis
@@ -536,7 +605,10 @@ export default function ResumePage() {
                 <ResumeCard
                   key={r.id}
                   resume={r as Resume & { downloadUrl?: string }}
+                  isActive={r.id === activeResumeId}
+                  discoveryStatus={activeDiscoveryStatuses[r.id] ?? null}
                   onDelete={deleteResume}
+                  onSetActive={setActiveResume}
                   onAnalyze={analyzeResume}
                 />
               ))}

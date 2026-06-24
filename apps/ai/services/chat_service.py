@@ -1,21 +1,12 @@
-"""Phase 12 — AI Career Chatbot: RAG pipeline + Gemini 1.5 Flash streaming."""
+"""Phase 12 — AI Career Chatbot: RAG pipeline + DeepSeek V4 Flash streaming."""
 from __future__ import annotations
 
-import os
 import re
 import uuid
-from typing import Any, AsyncGenerator
+from typing import AsyncGenerator
 
-import google.generativeai as genai
-
+from services.llm import ask_llm, stream_llm
 from utils.sanitize import sanitize_input
-
-# ── Gemini setup ──────────────────────────────────────────────────────────────
-
-_API_KEY = os.getenv("GEMINI_API_KEY", "")
-genai.configure(api_key=_API_KEY)
-
-_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
 # ── PII patterns ──────────────────────────────────────────────────────────────
 
@@ -96,7 +87,7 @@ async def stream_chat(
     resume_parsed: dict | None = None,
     saved_jobs: list[dict] | None = None,
 ) -> AsyncGenerator[str, None]:
-    """Yields text chunks as they arrive from Gemini."""
+    """Yields text chunks as they arrive from DeepSeek."""
     safe_msg = sanitize_input(message)
 
     context_parts: list[str] = []
@@ -118,25 +109,20 @@ async def stream_chat(
         else f"User: {safe_msg}\nAssistant:"
     )
 
-    model = genai.GenerativeModel(_MODEL_NAME, system_instruction=_SYSTEM_PROMPT)
-    response = model.generate_content(user_content, stream=True)
-    for chunk in response:
-        text = chunk.text if hasattr(chunk, "text") else ""
-        if text:
-            yield text
+    async for chunk in stream_llm(user_content, system=_SYSTEM_PROMPT):
+        if chunk:
+            yield chunk
 
 
 async def get_session_title(first_message: str) -> str:
     """Generate a short session title from the first user message."""
     safe_msg = sanitize_input(first_message, 500)
-    model = genai.GenerativeModel(_MODEL_NAME)
     prompt = (
         "Summarize the following career question in 4-6 words as a chat session title. "
         "Return only the title, no punctuation.\n\nQuestion: " + safe_msg
     )
     try:
-        resp = model.generate_content(prompt)
-        return resp.text.strip()[:80]
+        return ask_llm(prompt, temperature=0.3, max_tokens=80)[:80]
     except Exception:
         return safe_msg[:60]
 

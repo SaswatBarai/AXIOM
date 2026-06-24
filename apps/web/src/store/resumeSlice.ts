@@ -3,14 +3,14 @@ import type { Resume } from "@axiom/shared-types";
 
 export interface ResumeState {
   resumes: Resume[];
-  activeResume: Resume | null;
+  activeResumeId: string | null;
   isUploading: boolean;
   isAnalyzing: boolean;
 }
 
 const initialState: ResumeState = {
   resumes: [],
-  activeResume: null,
+  activeResumeId: null,
   isUploading: false,
   isAnalyzing: false,
 };
@@ -22,8 +22,8 @@ const resumeSlice = createSlice({
     setResumes(state, action: PayloadAction<Resume[]>) {
       state.resumes = action.payload;
     },
-    setActiveResume(state, action: PayloadAction<Resume>) {
-      state.activeResume = action.payload;
+    setActiveResumeId(state, action: PayloadAction<string | null>) {
+      state.activeResumeId = action.payload;
     },
     setUploading(state, action: PayloadAction<boolean>) {
       state.isUploading = action.payload;
@@ -34,5 +34,5 @@ const resumeSlice = createSlice({
   },
 });
 
-export const { setResumes, setActiveResume, setUploading, setAnalyzing } = resumeSlice.actions;
+export const { setResumes, setActiveResumeId, setUploading, setAnalyzing } = resumeSlice.actions;
 export default resumeSlice.reducer;

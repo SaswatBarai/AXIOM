@@ -11,9 +11,7 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages ./packages
-COPY --from=deps /app/pnpm-workspace.yaml /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=deps /app ./
 COPY apps/web ./apps/web
 # Set environment variables if needed during build (e.g. Next.js build variables)
 ENV NEXT_TELEMETRY_DISABLED=1

@@ -1,15 +1,7 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
 import "@/styles/globals.css";
 import { Providers } from "@/components/providers";
 import { cn } from "@/lib/utils";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
-  display: "swap",
-});
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://axiom.careers";
 
@@ -89,7 +81,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={poppins.variable} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className="bg-grid-dots bg-bg-base text-text-primary relative min-h-screen overflow-x-hidden antialiased font-sans">
         {/* Clipped background container to prevent vertical scroll overflow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">

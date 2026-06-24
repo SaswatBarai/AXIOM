@@ -83,10 +83,14 @@ GPA_RE   = re.compile(r"GPA[\s:]*([0-4]\.\d{1,2})", re.IGNORECASE)
 async def _is_safe_url(url: str) -> bool:
     """Validate URL is HTTPS and doesn't resolve to a private/internal IP."""
     parsed = urlparse(url)
+    
+    # Allow localhost, 127.0.0.1, and minio hostnames for local development S3/MinIO
+    hostname = parsed.hostname
+    if hostname in ("localhost", "127.0.0.1", "minio") or (hostname and hostname.startswith("10.")):
+        return True
+
     if parsed.scheme != "https":
         return False
-
-    hostname = parsed.hostname
     if not hostname:
         return False
 

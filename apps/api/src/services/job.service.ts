@@ -7,6 +7,7 @@ import { requireEnv } from "../utils/env";
 import type { JobSearchInput, ScrapeRunInput } from "../utils/schemas";
 import { matchJobs } from "./ai.service";
 import { redis } from "./redis.service";
+import { activeJobWhere, isActiveJob, isActiveJobPayload } from "../utils/jobFreshness";
 
 const AI_URL    = process.env.AI_SERVICE_URL    ?? "http://localhost:8000";
 const AI_SECRET = requireEnv("AI_SERVICE_SECRET");
@@ -24,51 +25,87 @@ export interface JobSearchResult {
   total: number;
   page: number;
   pageSize: number;
+  discoveryStatus?: string;
 }
 
 export async function searchJobs(input: JobSearchInput, userId?: string): Promise<JobSearchResult> {
   const where = buildWhere(input);
 
-  if (input.sortBy === "match" && userId) {
-    const resume = await prisma.resume.findFirst({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
+  // Always resolve discovery status when user has an active resume,
+  // regardless of sort order. This lets the frontend show the correct
+  // banner even when sortBy is not "match".
+  let discoveryStatus: string | undefined;
+  let targetResumeId: string | undefined;
+
+  if (userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { activeResumeId: true },
     });
-    if (resume) {
-      const allJobs = await prisma.job.findMany({ where, take: 500 });
-      if (allJobs.length === 0) {
-        return { jobs: [], total: 0, page: input.page, pageSize: input.pageSize };
-      }
+    targetResumeId = user?.activeResumeId ?? undefined;
+    if (targetResumeId) {
+      const discovery = await prisma.jobDiscovery.findUnique({
+        where: { resumeId: targetResumeId },
+      });
+      discoveryStatus = discovery?.status;
+    }
+  }
 
-      const jobIds = allJobs.map((j) => j.id);
-      const matches = await matchJobs(resume.id, jobIds);
-      if (!matches) {
-        throw new AppError(500, "Failed to compute job matches from AI service");
-      }
+  if (input.sortBy === "match" && targetResumeId) {
+    const recCount = await prisma.jobRecommendation.count({
+      where: { resumeId: targetResumeId },
+    });
 
-      const decoratedJobs = matches
-        .map((match) => {
-          const job = allJobs.find((j) => j.id === match.job_id);
-          if (!job) return null;
-          return {
-            ...job,
-            matchScore: match.score,
-            matchedSkills: match.matched_skills,
-            missingSkills: match.missing_skills,
-          } as any;
-        })
-        .filter((item) => item !== null);
+    if (recCount > 0) {
+      // Push both the search filter and pagination to DB — avoids fetching all
+      // 100 recommendation rows + 100 job rows on every poll tick.
+      const jobFilter = input.q
+        ? {
+            OR: [
+              { title:       { contains: input.q, mode: "insensitive" as const } },
+              { company:     { contains: input.q, mode: "insensitive" as const } },
+              { description: { contains: input.q, mode: "insensitive" as const } },
+            ],
+          }
+        : undefined;
 
+      const recWhere = {
+        resumeId: targetResumeId,
+        job: {
+          ...activeJobWhere(),
+          ...(jobFilter ?? {}),
+        },
+      };
       const skip = (input.page - 1) * input.pageSize;
-      const paginatedJobs = decoratedJobs.slice(skip, skip + input.pageSize);
+
+      const [paginated, total] = await Promise.all([
+        prisma.jobRecommendation.findMany({
+          where:   recWhere,
+          include: { job: true },
+          orderBy: { score: "desc" },
+          skip,
+          take:    input.pageSize,
+        }),
+        prisma.jobRecommendation.count({ where: recWhere }),
+      ]);
 
       return {
-        jobs: paginatedJobs,
-        total: decoratedJobs.length,
+        jobs: paginated
+          .map((r) => ({
+            ...r.job,
+            matchScore:    r.score,
+            matchedSkills: r.matchedSkills,
+            missingSkills: r.missingSkills,
+            matchReason:   r.matchReason ?? null,
+          }))
+          .filter((j) => isActiveJob(j)) as any,
+        total,
         page: input.page,
         pageSize: input.pageSize,
+        discoveryStatus,
       };
     }
+    // No recommendations yet — fall through to default search
   }
 
   const skip  = (input.page - 1) * input.pageSize;
@@ -83,7 +120,7 @@ export async function searchJobs(input: JobSearchInput, userId?: string): Promis
     prisma.job.count({ where }),
   ]);
 
-  return { jobs: jobs as any, total, page: input.page, pageSize: input.pageSize };
+  return { jobs: jobs.filter((j) => isActiveJob(j)) as any, total, page: input.page, pageSize: input.pageSize, discoveryStatus };
 }
 
 export async function getJob(id: string) {
@@ -93,7 +130,7 @@ export async function getJob(id: string) {
 }
 
 function buildWhere(input: JobSearchInput): Prisma.JobWhereInput {
-  const AND: Prisma.JobWhereInput[] = [];
+  const AND: Prisma.JobWhereInput[] = [activeJobWhere()];
 
   if (input.q) {
     const q = input.q.trim();
@@ -227,10 +264,17 @@ export async function runScrape(input: ScrapeRunInput) {
     throw new AppError(503, "Scraper service unavailable — try again later");
   }
 
-  // Persist — upsert by unique sourceUrl
+  // Persist — upsert by unique sourceUrl; skip stale listings
   let inserted = 0;
   let updated = 0;
+  let skippedStale = 0;
+  const jobIds: string[] = [];
   for (const j of aiResp.jobs) {
+    if (!isActiveJobPayload(j)) {
+      skippedStale++;
+      continue;
+    }
+
     const data: Prisma.JobUncheckedCreateInput = {
       title:            j.title,
       company:          j.company,
@@ -260,9 +304,14 @@ export async function runScrape(input: ScrapeRunInput) {
     const isNew = result.createdAt.getTime() === result.updatedAt.getTime();
     if (isNew) inserted++;
     else updated++;
+    jobIds.push(result.id);
   }
 
   const durationMs = Date.now() - started;
+
+  if (skippedStale > 0) {
+    logger.info(`scrape ${input.source}: skipped_stale=${skippedStale} at persistence layer`);
+  }
 
   if (aiResp.summary.fetched === 0) {
     logger.error(
@@ -276,26 +325,63 @@ export async function runScrape(input: ScrapeRunInput) {
     fetched:   aiResp.summary.fetched,
     inserted,
     updated,
-    skipped:   aiResp.summary.skipped,
+    skipped:   aiResp.summary.skipped + skippedStale,
     errors:    aiResp.summary.errors,
     durationMs,
+    jobIds,
   };
 }
 
-export async function getRecommendedJobs(userId: string, limit = 20) {
-  const resume = await prisma.resume.findFirst({
-    where: { userId },
-    orderBy: { updatedAt: "desc" },
+async function getActiveOrCreateResumeId(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeResumeId: true },
   });
-  if (!resume) {
+  if (user?.activeResumeId) {
+    return user.activeResumeId;
+  }
+  const latest = await prisma.resume.findFirst({
+    where: { userId, status: "COMPLETED" },
+    orderBy: { version: "desc" },
+    select: { id: true },
+  });
+  if (!latest) {
     throw new AppError(400, "Please upload a resume first");
   }
+  return latest.id;
+}
 
-  const cacheKey = `recommended_jobs:${resume.id}:${limit}`;
+export async function getRecommendedJobs(userId: string, limit = 20) {
+  const resumeId = await getActiveOrCreateResumeId(userId);
+
+  const cacheKey = `recommended_jobs:${resumeId}:${limit}`;
   const cached = await redis.getJson<any[]>(cacheKey);
   if (cached) {
-    logger.info(`Serving cached recommended jobs for resume ${resume.id}`);
+    logger.info(`Serving cached recommended jobs for resume ${resumeId}`);
     return cached;
+  }
+
+  // Check for stored recommendations first — avoids calling AI on every fetch
+  const storedRecs = await prisma.jobRecommendation.findMany({
+    where: { resumeId, job: activeJobWhere() },
+    include: { job: true },
+    orderBy: { score: "desc" },
+    take: limit,
+  });
+
+  if (storedRecs.length > 0) {
+    const result = storedRecs
+      .map((r) => ({
+        ...r.job,
+        matchScore: r.score,
+        matchedSkills: r.matchedSkills,
+        missingSkills: r.missingSkills,
+        matchReason: r.matchReason,
+      }))
+      .filter((j) => isActiveJob(j));
+    // Set a short cache so subsequent requests are fast but fresh data can be served
+    await redis.setJson(cacheKey, result, 300);
+    return result;
   }
 
   // Exclude jobs the user already applied to or saved
@@ -307,7 +393,7 @@ export async function getRecommendedJobs(userId: string, limit = 20) {
   existingApps.forEach((a) => existingJobIds.add(a.jobId));
   existingSaved.forEach((s) => existingJobIds.add(s.jobId));
 
-  const matches = await matchJobs(resume.id);
+  const matches = await matchJobs(resumeId);
   if (!matches) {
     throw new AppError(500, "Failed to compute job matches from AI service");
   }
@@ -333,18 +419,12 @@ export async function getRecommendedJobs(userId: string, limit = 20) {
     })
     .filter((item) => item !== null);
 
-  await redis.setJson(cacheKey, recommended, 600); // 10 minutes cache
+  await redis.setJson(cacheKey, recommended, 600);
   return recommended;
 }
 
 export async function matchSingleJob(userId: string, jobId: string) {
-  const resume = await prisma.resume.findFirst({
-    where: { userId },
-    orderBy: { updatedAt: "desc" },
-  });
-  if (!resume) {
-    throw new AppError(400, "Please upload a resume first");
-  }
+  const resumeId = await getActiveOrCreateResumeId(userId);
 
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) {
@@ -360,7 +440,7 @@ export async function matchSingleJob(userId: string, jobId: string) {
     throw new AppError(400, "You have already applied to this job");
   }
 
-  const matches = await matchJobs(resume.id, [jobId]);
+  const matches = await matchJobs(resumeId, [jobId]);
   if (!matches || matches.length === 0) {
     throw new AppError(500, "Failed to compute job match from AI service");
   }

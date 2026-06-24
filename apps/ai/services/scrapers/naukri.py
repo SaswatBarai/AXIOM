@@ -120,8 +120,17 @@ def parse_listing_entry(entry: dict) -> Optional[NormalizedJob]:
     if not title or not company:
         return None
 
-    job_id = entry.get("jobId") or entry.get("id") or entry.get("seoJD") or ""
-    url = entry.get("jdURL") or entry.get("url") or f"{BASE_URL}/job-listings-{job_id}"
+    seo_jd = entry.get("seoJD") or ""
+    job_id  = entry.get("jobId") or entry.get("id") or ""
+    # Prefer jdURL (already a full path), then construct from seoJD, then numeric jobId
+    if entry.get("jdURL") or entry.get("url"):
+        url = entry.get("jdURL") or entry.get("url")
+    elif seo_jd:
+        url = f"{BASE_URL}/job-listings-{seo_jd}"
+    elif job_id:
+        url = f"{BASE_URL}/job-listings-{job_id}"
+    else:
+        return None  # no valid URL — skip entry
 
     description_html = (
         entry.get("jobDescription")
@@ -180,7 +189,7 @@ def parse_listing_entry(entry: dict) -> Optional[NormalizedJob]:
         nice_to_have_skills=nice,
         source="naukri",
         source_url=url if url.startswith("http") else BASE_URL + url,
-        posted_at=posted_at or datetime.now(timezone.utc),
+        posted_at=posted_at,
         expires_at=expires_at,
     )
 

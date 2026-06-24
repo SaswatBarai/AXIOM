@@ -116,17 +116,15 @@ def test_new_session_id_unique():
     assert new_session_id() != new_session_id()
 
 
-# ── stream_chat (mocked Gemini) ───────────────────────────────────────────────
+# ── stream_chat (mocked LLM) ─────────────────────────────────────────────────
+
+async def _mock_stream(prompt, **kwargs):
+    for token in ["Hello", " world"]:
+        yield token
 
 @pytest.mark.asyncio
 async def test_stream_chat_yields_tokens():
-    mock_chunk1 = MagicMock(); mock_chunk1.text = "Hello"
-    mock_chunk2 = MagicMock(); mock_chunk2.text = " world"
-    mock_response = MagicMock()
-    mock_response.__iter__ = MagicMock(return_value=iter([mock_chunk1, mock_chunk2]))
-
-    with patch("services.chat_service.genai.GenerativeModel") as MockModel:
-        MockModel.return_value.generate_content.return_value = mock_response
+    with patch("services.chat_service.stream_llm", side_effect=_mock_stream):
         from services.chat_service import stream_chat
         tokens = []
         async for t in stream_chat("Tell me about Python", []):
@@ -135,33 +133,28 @@ async def test_stream_chat_yields_tokens():
 
 @pytest.mark.asyncio
 async def test_stream_chat_with_resume_context():
-    mock_chunk = MagicMock(); mock_chunk.text = "Great skills!"
-    mock_response = MagicMock()
-    mock_response.__iter__ = MagicMock(return_value=iter([mock_chunk]))
+    captured = {}
 
-    with patch("services.chat_service.genai.GenerativeModel") as MockModel:
-        mock_model_inst = MockModel.return_value
-        mock_model_inst.generate_content.return_value = mock_response
+    async def capture_stream(prompt, **kwargs):
+        captured["prompt"] = prompt
+        yield "Great skills!"
 
+    with patch("services.chat_service.stream_llm", side_effect=capture_stream):
         from services.chat_service import stream_chat
         parsed = {"skills": [{"name": "Python"}], "experience": []}
         tokens = []
         async for t in stream_chat("How's my resume?", [], resume_parsed=parsed):
             tokens.append(t)
 
-        call_args = mock_model_inst.generate_content.call_args
-        prompt = call_args[0][0]
-        assert "Resume context" in prompt or "Python" in prompt
+        assert "Resume context" in captured["prompt"] or "Python" in captured["prompt"]
 
 @pytest.mark.asyncio
 async def test_stream_chat_skips_empty_chunks():
-    mock_chunk1 = MagicMock(); mock_chunk1.text = ""
-    mock_chunk2 = MagicMock(); mock_chunk2.text = "content"
-    mock_response = MagicMock()
-    mock_response.__iter__ = MagicMock(return_value=iter([mock_chunk1, mock_chunk2]))
+    async def sparse_stream(prompt, **kwargs):
+        yield ""
+        yield "content"
 
-    with patch("services.chat_service.genai.GenerativeModel") as MockModel:
-        MockModel.return_value.generate_content.return_value = mock_response
+    with patch("services.chat_service.stream_llm", side_effect=sparse_stream):
         from services.chat_service import stream_chat
         tokens = [t async for t in stream_chat("Hi", [])]
         assert tokens == ["content"]

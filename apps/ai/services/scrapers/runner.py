@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Optional
 
 from .base import JobSourceAdapter, NormalizedJob, ScrapeRunSummary
+from .freshness import is_job_active
 from utils.logger import logger
 
 
@@ -27,25 +27,29 @@ async def run_scrape(
     started = time.monotonic()
     summary = ScrapeRunSummary(source=adapter.name)
     collected: list[NormalizedJob] = []
-    deadline = started + timeout_s
+    skipped_stale = 0
 
     try:
-        async for job in adapter.fetch(query=query, max_pages=max_pages):
-            if time.monotonic() > deadline:
-                logger.warning(f"{adapter.name}: hit {timeout_s}s timeout — stopping")
-                break
-            summary.fetched += 1
-            collected.append(job)
-            if len(collected) >= max_jobs:
-                logger.info(f"{adapter.name}: hit max_jobs={max_jobs} — stopping")
-                break
+        async with asyncio.timeout(timeout_s):
+            async for job in adapter.fetch(query=query, max_pages=max_pages):
+                summary.fetched += 1
+                if not is_job_active(job):
+                    skipped_stale += 1
+                    summary.skipped += 1
+                    continue
+                collected.append(job)
+                if len(collected) >= max_jobs:
+                    logger.info(f"{adapter.name}: hit max_jobs={max_jobs} — stopping")
+                    break
+    except asyncio.TimeoutError:
+        logger.warning(f"{adapter.name}: hit {timeout_s}s timeout — stopping")
     except Exception as e:  # noqa: BLE001 — adapters can throw anything
         summary.errors += 1
         logger.error(f"{adapter.name}: scrape aborted — {type(e).__name__}: {e}")
 
     summary.duration_ms = int((time.monotonic() - started) * 1000)
     logger.info(
-        f"{adapter.name}: fetched={summary.fetched} errors={summary.errors} "
-        f"duration={summary.duration_ms}ms"
+        f"{adapter.name}: fetched={summary.fetched} skipped_stale={skipped_stale} "
+        f"errors={summary.errors} duration={summary.duration_ms}ms"
     )
     return collected, summary

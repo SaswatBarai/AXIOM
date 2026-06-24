@@ -204,7 +204,7 @@ export default function ApplicationsPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto min-h-screen bg-bg-base text-text-primary relative">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto min-h-full bg-bg-base text-text-primary relative">
       {/* Header & Stats */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>

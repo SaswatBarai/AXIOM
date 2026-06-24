@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useDashboardNav } from "@/contexts/DashboardNavContext";
+import { useSidebar } from "@/contexts/SidebarContext";
 import {
   LayoutDashboard,
   FileText,
@@ -16,102 +16,143 @@ import {
   LogOut,
   ChevronRight,
   PanelLeftClose,
+  PanelLeftOpen,
   MessageSquare,
   Shield,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { SidebarResizeHandle } from "@/components/dashboard/SidebarResizeHandle";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/dashboard",              label: "Overview",     icon: LayoutDashboard },
-  { href: "/dashboard/resume",       label: "Resume",       icon: FileText },
-  { href: "/dashboard/jobs",         label: "Jobs",         icon: Briefcase },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/resume", label: "Resume", icon: FileText },
+  { href: "/dashboard/jobs", label: "Jobs", icon: Briefcase },
   { href: "/dashboard/applications", label: "Applications", icon: ClipboardList },
-  { href: "/dashboard/skills",       label: "Skills",       icon: GraduationCap },
-  { href: "/dashboard/interview",    label: "Interview",    icon: MessageSquare },
-  { href: "/dashboard/roadmap",      label: "Roadmap",      icon: MapPin },
-  { href: "/dashboard/copilot",      label: "AI Copilot",   icon: Bot },
-  { href: "/dashboard/analytics",    label: "Analytics",    icon: BarChart2 },
-  { href: "/dashboard/settings",     label: "Settings",     icon: Settings },
+  { href: "/dashboard/skills", label: "Skills", icon: GraduationCap },
+  { href: "/dashboard/interview", label: "Interview", icon: MessageSquare },
+  { href: "/dashboard/roadmap", label: "Roadmap", icon: MapPin },
+  { href: "/dashboard/copilot", label: "AI Copilot", icon: Bot },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  mobile = false,
+  onNavigate,
+}: {
+  mobile?: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const { navigate } = useDashboardNav();
+  const { collapsed, effectiveWidth, isResizing, toggleCollapsed, setCollapsed } = useSidebar();
   const { user, logout } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+
+  const isCollapsed = mobile ? false : collapsed;
 
   function handleLogout() {
+    onNavigate?.();
     logout();
     router.push("/login");
+  }
+
+  function handleNavClick(href: string, e: React.MouseEvent<HTMLAnchorElement>) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    onNavigate?.();
+    navigate(href);
+  }
+
+  function handleAdminClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    onNavigate?.();
+    router.push("/admin/overview");
   }
 
   return (
     <aside
       className={cn(
-        "flex flex-col h-full border-r border-border-subtle bg-bg-card transition-all duration-300 ease-in-out select-none",
-        collapsed ? "w-[68px]" : "w-64"
+        "relative flex flex-col h-full border-r border-border-subtle bg-bg-card select-none shrink-0",
+        mobile && "w-full border-r-0",
+        !mobile && !isResizing && "transition-[width] duration-300 ease-in-out",
       )}
+      style={mobile ? undefined : { width: effectiveWidth }}
     >
-      {/* ─── Header: Logo + Collapse ─── */}
+      {!mobile && <SidebarResizeHandle />}
+
+      {/* Header */}
       <div className="flex items-center h-14 border-b border-border-subtle px-3 shrink-0">
         <div
           className={cn(
-            "flex items-center w-full transition-all duration-300",
-            collapsed ? "justify-center" : "justify-between"
+            "flex items-center w-full",
+            isCollapsed ? "justify-center" : "justify-between gap-2",
           )}
         >
           <div
             className={cn(
               "flex items-center gap-2.5 min-w-0",
-              collapsed && "cursor-pointer hover:opacity-80 transition-opacity"
+              isCollapsed && !mobile && "cursor-pointer hover:opacity-80 transition-opacity",
             )}
-            onClick={collapsed ? () => setCollapsed(false) : undefined}
-            title={collapsed ? "Expand sidebar" : undefined}
+            onClick={isCollapsed && !mobile ? () => setCollapsed(false) : undefined}
+            title={isCollapsed && !mobile ? "Expand sidebar" : undefined}
           >
             <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center font-bold text-sm text-black shrink-0">
               A
             </div>
-            {!collapsed && (
-              <span className="font-semibold text-[15px] text-text-primary tracking-tight transition-opacity duration-200">
+            {!isCollapsed && (
+              <span className="font-semibold text-[15px] text-text-primary tracking-tight truncate">
                 AXIOM
               </span>
             )}
           </div>
 
-          {!collapsed && (
+          {!isCollapsed && !mobile && (
             <button
-              onClick={() => setCollapsed(true)}
+              type="button"
+              onClick={toggleCollapsed}
               className="flex items-center justify-center h-8 w-8 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-all duration-150 shrink-0"
               title="Collapse sidebar"
+              aria-label="Collapse sidebar"
             >
               <PanelLeftClose size={18} />
+            </button>
+          )}
+
+          {isCollapsed && !mobile && (
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="sr-only"
+              aria-label="Expand sidebar"
+            >
+              Expand
             </button>
           )}
         </div>
       </div>
 
-      {/* ─── Navigation ─── */}
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 scrollbar-none">
-        <div className={cn("space-y-0.5", collapsed ? "px-2" : "px-3")}>
+        <div className={cn("space-y-0.5", isCollapsed ? "px-2" : "px-3")}>
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active =
-              pathname === href ||
-              (href !== "/dashboard" && pathname.startsWith(href));
+              pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
             return (
-              <Link
+              <a
                 key={href}
                 href={href}
-                title={collapsed ? label : undefined}
+                onClick={(e) => handleNavClick(href, e)}
+                title={isCollapsed ? label : undefined}
                 className={cn(
                   "flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 group relative",
                   active
                     ? "bg-bg-elevated text-text-primary shadow-sm"
                     : "text-text-secondary hover:text-text-primary hover:bg-bg-hover",
-                  collapsed
-                    ? "h-10 w-10 justify-center mx-auto"
-                    : "h-10 gap-3 px-3"
+                  isCollapsed ? "h-10 w-10 justify-center mx-auto" : "h-10 gap-3 px-3",
                 )}
               >
                 <Icon
@@ -119,43 +160,33 @@ export function Sidebar() {
                   strokeWidth={active ? 2 : 1.75}
                   className={cn(
                     "shrink-0 transition-colors",
-                    active ? "text-text-primary" : "text-text-muted group-hover:text-text-secondary"
+                    active ? "text-text-primary" : "text-text-muted group-hover:text-text-secondary",
                   )}
                 />
-                {!collapsed && (
-                  <span className="transition-opacity duration-150 truncate">
-                    {label}
-                  </span>
+                {!isCollapsed && <span className="truncate">{label}</span>}
+                {active && !isCollapsed && (
+                  <ChevronRight size={14} className="ml-auto text-text-muted shrink-0" />
                 )}
-                {active && !collapsed && (
-                  <ChevronRight
-                    size={14}
-                    className="ml-auto text-text-muted transition-transform duration-200"
-                  />
-                )}
-
-                {/* Active indicator dot for collapsed mode */}
-                {active && collapsed && (
+                {active && isCollapsed && (
                   <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-brand rounded-full" />
                 )}
-              </Link>
+              </a>
             );
           })}
 
           {user?.role === "ADMIN" && (
             <>
               <div className="border-t border-border-subtle/50 my-2" />
-              <Link
+              <a
                 href="/admin/overview"
-                title={collapsed ? "Admin" : undefined}
+                onClick={handleAdminClick}
+                title={isCollapsed ? "Admin" : undefined}
                 className={cn(
                   "flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 group relative",
                   pathname.startsWith("/admin")
                     ? "bg-bg-elevated text-text-primary shadow-sm"
                     : "text-text-secondary hover:text-text-primary hover:bg-bg-hover",
-                  collapsed
-                    ? "h-10 w-10 justify-center mx-auto"
-                    : "h-10 gap-3 px-3"
+                  isCollapsed ? "h-10 w-10 justify-center mx-auto" : "h-10 gap-3 px-3",
                 )}
               >
                 <Shield
@@ -163,81 +194,87 @@ export function Sidebar() {
                   strokeWidth={pathname.startsWith("/admin") ? 2 : 1.75}
                   className={cn(
                     "shrink-0 transition-colors",
-                    pathname.startsWith("/admin") ? "text-red-500" : "text-text-muted group-hover:text-text-secondary"
+                    pathname.startsWith("/admin") ? "text-red-500" : "text-text-muted group-hover:text-text-secondary",
                   )}
                 />
-                {!collapsed && (
-                  <span className="transition-opacity duration-150 truncate">Admin</span>
+                {!isCollapsed && <span className="truncate">Admin</span>}
+                {pathname.startsWith("/admin") && !isCollapsed && (
+                  <ChevronRight size={14} className="ml-auto text-text-muted shrink-0" />
                 )}
-                {pathname.startsWith("/admin") && !collapsed && (
-                  <ChevronRight size={14} className="ml-auto text-text-muted" />
-                )}
-                {pathname.startsWith("/admin") && collapsed && (
+                {pathname.startsWith("/admin") && isCollapsed && (
                   <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-brand rounded-full" />
                 )}
-              </Link>
+              </a>
             </>
           )}
         </div>
       </nav>
 
-      {/* ─── Footer: User + Logout ─── */}
-      <div
-        className={cn(
-          "border-t border-border-subtle shrink-0",
-          collapsed ? "px-2 py-3" : "px-3 py-3"
-        )}
-      >
-        {/* User info + Logout */}
-        <div>
-          {user && (
-            <div
-              className={cn(
-                "flex items-center rounded-lg transition-all duration-200 mb-1.5",
-                collapsed ? "h-10 w-10 justify-center mx-auto" : "gap-3 px-3 py-1"
-              )}
-            >
-              <div className="w-8 h-8 rounded-full bg-bg-elevated border border-border-subtle flex items-center justify-center shrink-0">
-                <span className="text-xs font-semibold text-text-primary uppercase">
-                  {user.name?.charAt(0) ?? user.email.charAt(0)}
-                </span>
-              </div>
-              {!collapsed && (
-                <div className="min-w-0 flex flex-col justify-center transition-opacity duration-200">
-                  <p className="text-xs font-semibold text-text-primary truncate leading-none">
-                    {user.name ?? "User"}
-                  </p>
-                  <p className="text-[10px] text-text-secondary truncate leading-none mt-0.5">
-                    {user.email}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={handleLogout}
-            title={collapsed ? "Log out" : undefined}
+      {/* Footer */}
+      <div className={cn("border-t border-border-subtle shrink-0", isCollapsed ? "px-2 py-3" : "px-3 py-3")}>
+        {user && (
+          <div
             className={cn(
-              "flex items-center rounded-lg text-[13px] font-medium text-text-secondary hover:text-red-500 hover:bg-red-500/10 transition-all duration-150 group cursor-pointer",
-              collapsed
-                ? "h-10 w-10 justify-center mx-auto"
-                : "h-10 w-full gap-3 px-3"
+              "flex items-center rounded-lg mb-1.5",
+              isCollapsed ? "h-10 w-10 justify-center mx-auto" : "gap-3 px-3 py-1",
             )}
           >
-            <span className="w-8 h-8 flex items-center justify-center shrink-0">
-              <LogOut
-                size={18}
-                strokeWidth={1.75}
-                className="text-text-secondary group-hover:text-red-500 transition-colors"
-              />
-            </span>
-            {!collapsed && (
-              <span className="transition-opacity duration-150">Log out</span>
+            <div className="w-8 h-8 rounded-full bg-bg-elevated border border-border-subtle flex items-center justify-center shrink-0">
+              <span className="text-xs font-semibold text-text-primary uppercase">
+                {user.name?.charAt(0) ?? user.email.charAt(0)}
+              </span>
+            </div>
+            {!isCollapsed && (
+              <div className="min-w-0 flex flex-col justify-center">
+                <p className="text-xs font-semibold text-text-primary truncate leading-none">
+                  {user.name ?? "User"}
+                </p>
+                <p className="text-[10px] text-text-secondary truncate leading-none mt-0.5">
+                  {user.email}
+                </p>
+              </div>
             )}
-          </button>
-        </div>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          title={isCollapsed ? "Log out" : undefined}
+          className={cn(
+            "flex items-center rounded-lg text-[13px] font-medium text-text-secondary hover:text-red-500 hover:bg-red-500/10 transition-all duration-150 group cursor-pointer w-full",
+            isCollapsed ? "h-10 w-10 justify-center mx-auto" : "h-10 gap-3 px-3",
+          )}
+        >
+          <span className="w-8 h-8 flex items-center justify-center shrink-0">
+            <LogOut
+              size={18}
+              strokeWidth={1.75}
+              className="text-text-secondary group-hover:text-red-500 transition-colors"
+            />
+          </span>
+          {!isCollapsed && <span>Log out</span>}
+        </button>
       </div>
     </aside>
+  );
+}
+
+export function SidebarToggleButton({ className }: { className?: string }) {
+  const { collapsed, toggleCollapsed } = useSidebar();
+
+  return (
+    <button
+      type="button"
+      onClick={toggleCollapsed}
+      className={cn(
+        "flex items-center justify-center h-9 w-9 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors",
+        className,
+      )}
+      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+    >
+      {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+    </button>
   );
 }

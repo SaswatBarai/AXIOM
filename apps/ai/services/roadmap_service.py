@@ -2,20 +2,12 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 import textwrap
 from typing import TypedDict
 
-import google.generativeai as genai
-
+from services.llm import ask_llm
 from utils.sanitize import sanitize_input
-
-# ── Gemini setup ──────────────────────────────────────────────────────────────
-
-_API_KEY    = os.getenv("GEMINI_API_KEY", "")
-_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
-genai.configure(api_key=_API_KEY)
 
 
 # ── Types ─────────────────────────────────────────────────────────────────────
@@ -156,14 +148,12 @@ def generate_roadmap(
         skill_list = [("Review and deepen existing skills", "nice_to_have")]
 
     prompt = build_prompt(target_role, skill_list, len(skill_list), matched_all)
-    model  = genai.GenerativeModel(_MODEL_NAME, system_instruction=_SYSTEM)
-    config = genai.types.GenerationConfig(temperature=0.5, max_output_tokens=3000)
 
     last_err: Exception | None = None
     for attempt in range(2):
         try:
-            resp = model.generate_content(prompt, generation_config=config)
-            return _parse_json_response(resp.text)
+            text = ask_llm(prompt, system=_SYSTEM, temperature=0.5, max_tokens=3000)
+            return _parse_json_response(text)
         except (ValueError, json.JSONDecodeError) as exc:
             last_err = exc
             if attempt == 0:

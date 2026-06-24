@@ -91,25 +91,17 @@ def test_prompt_truncates_long_job_description():
 
 # ── generate_cover_letter (mocked) ───────────────────────────────────────────
 
-def test_generate_calls_gemini_and_returns_text():
-    mock_resp = MagicMock()
-    mock_resp.text = "  Dear Hiring Manager, I am excited...  "
-    with patch("services.cover_letter.genai.GenerativeModel") as MockModel:
-        MockModel.return_value.generate_content.return_value = mock_resp
+def test_generate_calls_llm_and_returns_text():
+    with patch("services.cover_letter.ask_llm", return_value="  Dear Hiring Manager, I am excited...  "):
         from services.cover_letter import generate_cover_letter
         result = generate_cover_letter(PARSED_RESUME, JOB_DESCRIPTION, COMPANY, JOB_TITLE, "formal")
         assert result == "Dear Hiring Manager, I am excited..."
 
 def test_generate_uses_temperature_07():
-    mock_resp = MagicMock(); mock_resp.text = "letter body"
-    with patch("services.cover_letter.genai.GenerativeModel") as MockModel:
-        inst = MockModel.return_value
-        inst.generate_content.return_value = mock_resp
+    with patch("services.cover_letter.ask_llm", return_value="letter body") as mock_ask:
         from services.cover_letter import generate_cover_letter
         generate_cover_letter(PARSED_RESUME, JOB_DESCRIPTION, COMPANY, JOB_TITLE, "friendly")
-        call_kwargs = inst.generate_content.call_args
-        config = call_kwargs[1]["generation_config"]
-        assert config.temperature == 0.7
+        assert mock_ask.call_args[1]["temperature"] == 0.7
 
 
 # ── export_pdf ────────────────────────────────────────────────────────────────

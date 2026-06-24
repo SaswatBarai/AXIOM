@@ -48,6 +48,10 @@ class UnstopAdapter(JobSourceAdapter):
                 ("searchTerm", query or "engineer"),
                 ("page", str(page)),
                 ("per_page", "20"),
+                # `oppstatus=open` returns only currently-open listings.
+                # Without it Unstop returns expired campaigns (e.g. 2022) that
+                # the freshness filter then drops, yielding zero usable jobs.
+                ("oppstatus", "open"),
             ]
             qs = "&".join(f"{k}={v}" for k, v in params)
             url = f"{SEARCH_URL}?{qs}"
@@ -104,7 +108,14 @@ def parse_listing_entry(entry: dict) -> Optional[NormalizedJob]:
 
     slug = entry.get("public_url") or entry.get("slug") or entry.get("seo_slug") or ""
     opp_type = (entry.get("type") or entry.get("opportunity_type") or "internships").lower()
-    url = entry.get("share_url") or entry.get("url") or PUBLIC_URL.format(type=opp_type, slug=slug)
+    # Only use the template URL when we have a real slug — otherwise the URL
+    # resolves to a generic category listing page (e.g. unstop.com/internships/)
+    if entry.get("share_url") or entry.get("url"):
+        url = entry.get("share_url") or entry.get("url")
+    elif slug:
+        url = PUBLIC_URL.format(type=opp_type, slug=slug)
+    else:
+        return None  # no valid direct URL — skip entry
 
     description_html = entry.get("description") or entry.get("about") or entry.get("summary") or title
     description = sanitize_description(description_html)
@@ -118,7 +129,16 @@ def parse_listing_entry(entry: dict) -> Optional[NormalizedJob]:
 
     salary_min, salary_max = _stipend_band(entry)
 
-    posted_at = _parse_dt(entry.get("created_at") or entry.get("startDate") or entry.get("posted_at"))
+    # Unstop listing entries expose `approved_date`/`updated_at` rather than a
+    # `created_at`/`posted_at` field. Map those so fresh open listings aren't
+    # rejected by the freshness filter for a missing posted date.
+    posted_at = _parse_dt(
+        entry.get("created_at")
+        or entry.get("startDate")
+        or entry.get("posted_at")
+        or entry.get("approved_date")
+        or entry.get("updated_at")
+    )
     expires_at = _parse_dt(entry.get("end_date") or entry.get("endDate") or entry.get("expiry"))
 
     return NormalizedJob(
@@ -137,7 +157,7 @@ def parse_listing_entry(entry: dict) -> Optional[NormalizedJob]:
         nice_to_have_skills=nice,
         source="unstop",
         source_url=url,
-        posted_at=posted_at or datetime.now(timezone.utc),
+        posted_at=posted_at,
         expires_at=expires_at,
     )
 

@@ -5,5 +5,5 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <div className="h-full overflow-y-auto p-6">{children}</div>;
+  return children;
 }

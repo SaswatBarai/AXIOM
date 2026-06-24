@@ -19,7 +19,6 @@ import {
   verifyEmailSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
-  refreshSchema,
 } from "../utils/schemas";
 import { RATE_LIMIT } from "../utils/constants";
 
@@ -52,7 +51,9 @@ router.post("/register",        authLimiter, validate(registerSchema),       reg
 router.post("/verify-email",    emailLimiter, validate(verifyEmailSchema),     verifyEmailHandler);
 router.post("/resend-verification", emailLimiter, validate(forgotPasswordSchema), resendVerificationHandler);
 router.post("/login",           loginLimiter, validate(loginSchema),           loginHandler);
-router.post("/refresh",        authLimiter,  validate(refreshSchema),          refreshHandler);
+// No body validation — token is read from the HttpOnly cookie (req.cookies.refreshToken).
+// The controller returns 401 when neither cookie nor body provides a token.
+router.post("/refresh",        authLimiter,                                    refreshHandler);
 router.post("/logout",         authLimiter,  requireAuth,                      logoutHandler);
 router.post("/forgot-password", emailLimiter, validate(forgotPasswordSchema),  forgotPasswordHandler);
 router.post("/reset-password",  emailLimiter, validate(resetPasswordSchema),   resetPasswordHandler);

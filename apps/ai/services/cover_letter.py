@@ -1,20 +1,12 @@
-"""Phase 13 — Cover Letter Generator: Gemini-powered drafting + PDF/DOCX export."""
+"""Phase 13 — Cover Letter Generator: DeepSeek-powered drafting + PDF/DOCX export."""
 from __future__ import annotations
 
 import io
-import os
 import textwrap
 from typing import Literal
 
-import google.generativeai as genai
-
+from services.llm import ask_llm
 from utils.sanitize import sanitize_input
-
-# ── Gemini setup ──────────────────────────────────────────────────────────────
-
-_API_KEY    = os.getenv("GEMINI_API_KEY", "")
-_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
-genai.configure(api_key=_API_KEY)
 
 Tone = Literal["formal", "friendly", "direct"]
 
@@ -117,11 +109,8 @@ def generate_cover_letter(
     tone: Tone = "formal",
 ) -> str:
     system_inst = f"{_SYSTEM}\n\n{_FEW_SHOTS}"
-    model  = genai.GenerativeModel(_MODEL_NAME, system_instruction=system_inst)
     prompt = build_prompt(parsed_resume, job_description, company_name, job_title, tone)
-    config = genai.types.GenerationConfig(temperature=0.7, max_output_tokens=600)
-    resp   = model.generate_content(prompt, generation_config=config)
-    return resp.text.strip()
+    return ask_llm(prompt, system=system_inst, temperature=0.7, max_tokens=600).strip()
 
 
 # ── Export helpers ────────────────────────────────────────────────────────────

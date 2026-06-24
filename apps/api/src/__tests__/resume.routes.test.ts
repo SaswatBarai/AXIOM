@@ -135,7 +135,7 @@ describe("GET /api/resumes/:id", () => {
 
 describe("DELETE /api/resumes/:id", () => {
   it("200 — deletes resume", async () => {
-    vi.mocked(resumeService.deleteResume).mockResolvedValue({ message: "Resume deleted" });
+    vi.mocked(resumeService.deleteResume).mockResolvedValue({ message: "Resume deleted", activeResumeId: null });
 
     const res = await request(app).delete("/api/resumes/resume-1");
 

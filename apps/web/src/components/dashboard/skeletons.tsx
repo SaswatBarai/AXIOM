@@ -1,4 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { SettingsPageSkeleton } from "@/components/dashboard/SettingsSkeleton";
+import { AnalyticsPageSkeleton } from "@/components/dashboard/AnalyticsSkeleton";
 
 // ── Shared pulse shimmer ──────────────────────────────────────────────────────
 
@@ -7,73 +9,11 @@ function S({ className, style }: { className?: string; style?: React.CSSProperti
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Analytics skeleton
+// Analytics skeleton — see AnalyticsSkeleton.tsx
 // ─────────────────────────────────────────────────────────────────────────────
 
-function KpiCardSkeleton() {
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-5 space-y-3">
-      <div className="flex items-center justify-between">
-        <S className="h-3 w-24" />
-        <S className="h-7 w-7 rounded-lg" />
-      </div>
-      <S className="h-8 w-16" />
-      <S className="h-2.5 w-32" />
-    </div>
-  );
-}
-
-function ChartSkeleton({ height = "h-48" }: { height?: string }) {
-  return (
-    <div className={`rounded-xl border border-zinc-800 bg-zinc-950/40 p-5 space-y-4 ${height}`}>
-      <div className="flex items-center justify-between">
-        <S className="h-3.5 w-36" />
-        <S className="h-3 w-20" />
-      </div>
-      <div className="flex-1 flex items-end gap-2 h-32">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <S
-            key={i}
-            className="flex-1 rounded-t-md"
-            style={{ height: `${30 + Math.abs(Math.sin(i) * 70)}%` }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function AnalyticsSkeleton() {
-  return (
-    <div className="h-full overflow-y-auto p-6 space-y-6 max-w-5xl">
-      {/* Header + date range */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <S className="h-7 w-40" />
-          <S className="h-3.5 w-56" />
-        </div>
-        <div className="flex gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <S key={i} className="h-8 w-20 rounded-full" />
-          ))}
-        </div>
-      </div>
-
-      {/* KPI grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)}
-      </div>
-
-      {/* Charts row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ChartSkeleton height="h-64" />
-        <ChartSkeleton height="h-64" />
-      </div>
-
-      {/* Single wide chart */}
-      <ChartSkeleton height="h-64" />
-    </div>
-  );
+  return <AnalyticsPageSkeleton />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -219,25 +159,7 @@ function FieldSkeleton() {
 }
 
 export function SettingsSkeleton() {
-  return (
-    <div className="h-full overflow-y-auto p-6 max-w-3xl space-y-6">
-      {/* Tab bar */}
-      <div className="flex gap-1 border-b border-zinc-800 pb-1">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <S key={i} className="h-9 w-28 rounded-lg" />
-        ))}
-      </div>
-
-      {/* Form section */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/20 p-5 space-y-1">
-        <S className="h-5 w-32 mb-4" />
-        {Array.from({ length: 6 }).map((_, i) => <FieldSkeleton key={i} />)}
-        <div className="flex justify-end pt-3">
-          <S className="h-9 w-28 rounded-lg" />
-        </div>
-      </div>
-    </div>
-  );
+  return <SettingsPageSkeleton />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

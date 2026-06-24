@@ -159,17 +159,13 @@ def test_build_prompt_contains_section_specs():
 # ── generate_questions ────────────────────────────────────────────────────────
 
 def test_generate_questions_returns_list():
-    mock_resp = _make_mock_response(SAMPLE_QUESTIONS)
-    with patch("services.interview_service.genai.GenerativeModel") as MockModel:
-        MockModel.return_value.generate_content.return_value = mock_resp
+    with patch("services.interview_service.ask_llm", return_value=json.dumps(SAMPLE_QUESTIONS)):
         result = generate_questions("Backend Engineer", "Build APIs", difficulty="medium", count=3)
     assert isinstance(result, list)
     assert len(result) == 3
 
 def test_generate_questions_fields_present():
-    mock_resp = _make_mock_response(SAMPLE_QUESTIONS)
-    with patch("services.interview_service.genai.GenerativeModel") as MockModel:
-        MockModel.return_value.generate_content.return_value = mock_resp
+    with patch("services.interview_service.ask_llm", return_value=json.dumps(SAMPLE_QUESTIONS)):
         result = generate_questions("SWE", "desc")
     for q in result:
         assert "category" in q
@@ -178,33 +174,23 @@ def test_generate_questions_fields_present():
         assert "difficulty" in q
 
 def test_generate_questions_retries_on_bad_json():
-    good_resp  = _make_mock_response(SAMPLE_QUESTIONS)
-    bad_resp   = MagicMock()
-    bad_resp.text = "not json at all"
-
-    with patch("services.interview_service.genai.GenerativeModel") as MockModel:
-        MockModel.return_value.generate_content.side_effect = [bad_resp, good_resp]
+    with patch(
+        "services.interview_service.ask_llm",
+        side_effect=["not json at all", json.dumps(SAMPLE_QUESTIONS)],
+    ):
         result = generate_questions("SWE", "desc", count=3)
     assert len(result) == 3
 
 def test_generate_questions_raises_after_two_failures():
-    bad_resp       = MagicMock()
-    bad_resp.text  = "not json"
-    with patch("services.interview_service.genai.GenerativeModel") as MockModel:
-        MockModel.return_value.generate_content.return_value = bad_resp
+    with patch("services.interview_service.ask_llm", return_value="not json"):
         with pytest.raises(RuntimeError, match="Failed to parse"):
             generate_questions("SWE", "desc")
 
 def test_generate_questions_count_capped_at_30():
     many = SAMPLE_QUESTIONS * 10  # 30 items
-    mock_resp = _make_mock_response(many)
-    with patch("services.interview_service.genai.GenerativeModel") as MockModel:
-        MockModel.return_value.generate_content.return_value = mock_resp
-        # count=50 should be clamped to 30 before calling LLM
+    with patch("services.interview_service.ask_llm", return_value=json.dumps(many)) as mock_ask:
         generate_questions("SWE", "desc", count=50)
-    call_args = MockModel.return_value.generate_content.call_args
-    prompt_str = call_args[0][0]
-    # prompt should NOT contain "50 questions"
+    prompt_str = mock_ask.call_args[0][0]
     assert "50 question" not in prompt_str
 
 

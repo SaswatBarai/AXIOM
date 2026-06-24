@@ -33,11 +33,13 @@ interface SearchResponse {
   total: number;
   page: number;
   pageSize: number;
+  discoveryStatus?: string;
 }
 
 export function useJobs() {
   const dispatch = useDispatch();
   const { jobs, savedJobIds, totalCount } = useSelector((s: RootState) => s.jobs);
+  const activeResumeId = useSelector((s: RootState) => s.resume.activeResumeId);
 
   const [total, setTotal]         = useState(totalCount);
   const [page, setPage]           = useState(1);
@@ -47,6 +49,7 @@ export function useJobs() {
   const [filters, setFilters]     = useState<JobFilters>({ sortBy: "match" });
   const [recommendedJobs, setRecommendedJobs] = useState<RecommendedJob[]>([]);
   const [isLoadingRecommended, setIsLoadingRecommended] = useState(false);
+  const [discoveryStatus, setDiscoveryStatus] = useState<string | null>(null);
 
   const fetchRecommended = useCallback(async (limit: number = 5) => {
     setIsLoadingRecommended(true);
@@ -75,8 +78,14 @@ export function useJobs() {
 
     try {
       const { data } = await api.get<SearchResponse>(`/jobs?${params.toString()}`);
-      dispatch(setJobs({ jobs: data.jobs, total: data.total }));
-      setTotal(data.total);
+      // Preserve existing jobs when discovery is pending and the response is empty.
+      // This prevents flashing "0 jobs" while a new resume's discovery runs.
+      const ds = data.discoveryStatus ?? null;
+      setDiscoveryStatus(ds);
+      if (data.jobs.length > 0 || !ds || jobs.length === 0) {
+        dispatch(setJobs({ jobs: data.jobs, total: data.total }));
+        setTotal(data.total);
+      }
       setPage(data.page);
       setPageSize(data.pageSize);
     } catch {
@@ -84,14 +93,21 @@ export function useJobs() {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, filters]);
+  }, [dispatch, filters, jobs.length]);
 
+  // Re-fetch when active resume changes (e.g. after upload + parse)
   useEffect(() => {
-    if (jobs.length === 0) {
-      void search();
-    }
+    void search();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeResumeId]);
+
+  // Poll while discovery is in progress (PENDING = queued but not started; SCRAPING = actively running)
+  useEffect(() => {
+    if (discoveryStatus !== "SCRAPING" && discoveryStatus !== "PENDING") return;
+    const interval = setInterval(() => { void search(); }, 3000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discoveryStatus]);
 
   async function toggleSave(jobId: string) {
     const isSaved = savedJobIds.includes(jobId);
@@ -139,5 +155,6 @@ export function useJobs() {
     recommendedJobs,
     isLoadingRecommended,
     fetchRecommended,
+    discoveryStatus,
   };
 }
