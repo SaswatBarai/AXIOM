@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from "react";
@@ -55,7 +56,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setCollapsedState(readStoredCollapsed());
     setWidthState(readStoredWidth());
     setHydrated(true);

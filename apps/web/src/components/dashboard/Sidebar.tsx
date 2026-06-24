@@ -120,17 +120,6 @@ export function Sidebar({
               <PanelLeftClose size={18} />
             </button>
           )}
-
-          {isCollapsed && !mobile && (
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              className="sr-only"
-              aria-label="Expand sidebar"
-            >
-              Expand
-            </button>
-          )}
         </div>
       </div>
 

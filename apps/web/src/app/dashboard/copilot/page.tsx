@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useLayoutEffect, useCallback } from "react";
 import {
   Send, Square, Plus, Trash2, MessageSquare, Bot, User,
   AlertCircle, Sparkles, ChevronRight,
@@ -10,6 +10,68 @@ import { Button } from "@/components/ui/button";
 import { useChat } from "@/hooks/useChat";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+
+const HISTORY_DEFAULT_WIDTH = 248;
+const HISTORY_MIN_WIDTH = 200;
+const HISTORY_MAX_WIDTH = 380;
+const HISTORY_WIDTH_KEY = "axiom-copilot-history-width";
+
+function clampHistoryWidth(value: number) {
+  return Math.min(HISTORY_MAX_WIDTH, Math.max(HISTORY_MIN_WIDTH, value));
+}
+
+function CopilotHistoryResizeHandle({
+  onResize,
+  onResizeStart,
+  onResizeEnd,
+  isResizing,
+}: {
+  onResize: (deltaX: number) => void;
+  onResizeStart: () => void;
+  onResizeEnd: () => void;
+  isResizing: boolean;
+}) {
+  const dragging = useRef(false);
+
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      if (!dragging.current) return;
+      onResize(e.movementX);
+    }
+    function onMouseUp() {
+      if (!dragging.current) return;
+      dragging.current = false;
+      onResizeEnd();
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [onResize, onResizeEnd]);
+
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize chat history panel"
+      className={cn(
+        "absolute top-0 right-0 z-30 h-full w-1.5 cursor-col-resize touch-none",
+        isResizing ? "bg-brand/30" : "hover:bg-brand/15",
+      )}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        dragging.current = true;
+        onResizeStart();
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+      }}
+    />
+  );
+}
 
 // ── Quick prompts ──────────────────────────────────────────────────────────
 const QUICK_PROMPTS = [
@@ -298,8 +360,10 @@ export default function CopilotPage() {
     sendMessage, fetchSessions, loadSession, deleteSession, newSession, stopStreaming,
   } = useChat();
 
-  const [input, setInput]           = useState("");
+  const [input, setInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [historyWidth, setHistoryWidth] = useState(HISTORY_DEFAULT_WIDTH);
+  const [historyResizing, setHistoryResizing] = useState(false);
   const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
   const bottomRef     = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -307,7 +371,23 @@ export default function CopilotPage() {
 
   useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
-  // Auto-scroll to bottom
+  useLayoutEffect(() => {
+    const stored = localStorage.getItem(HISTORY_WIDTH_KEY);
+    if (stored) {
+      const n = Number(stored);
+      if (Number.isFinite(n)) setHistoryWidth(clampHistoryWidth(n));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(HISTORY_WIDTH_KEY, String(historyWidth));
+  }, [historyWidth]);
+
+  const resizeHistoryBy = useCallback((deltaX: number) => {
+    if (deltaX === 0) return;
+    setHistoryWidth((w) => clampHistoryWidth(w + deltaX));
+  }, []);
+
   useEffect(() => {
     const el = scrollAreaRef.current;
     if (!el) return;
@@ -343,7 +423,7 @@ export default function CopilotPage() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="relative flex h-[calc(100dvh-3.75rem)] min-h-[32rem] w-full overflow-hidden bg-bg-base">
+    <div className="relative flex h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 w-full overflow-hidden bg-bg-base">
 
       {/* Ambient glow orbs */}
       <div className="pointer-events-none absolute -top-40 -left-20 h-[500px] w-[500px] rounded-full bg-brand/[0.04] blur-[120px]" />
@@ -354,12 +434,19 @@ export default function CopilotPage() {
         {sidebarOpen && (
           <motion.aside
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 248, opacity: 1 }}
+            animate={{ width: historyWidth, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: "easeInOut" }}
+            transition={historyResizing ? { duration: 0 } : { duration: 0.22, ease: "easeInOut" }}
             className="relative z-10 hidden md:flex flex-col border-r border-border-subtle bg-bg-card/35 backdrop-blur-sm shrink-0 overflow-hidden"
+            style={{ width: historyWidth }}
           >
-            <div className="h-full w-[248px]">
+            <div className="relative h-full" style={{ width: historyWidth }}>
+              <CopilotHistoryResizeHandle
+                onResize={resizeHistoryBy}
+                onResizeStart={() => setHistoryResizing(true)}
+                onResizeEnd={() => setHistoryResizing(false)}
+                isResizing={historyResizing}
+              />
               <CopilotHistoryPanel
                 sessions={sessions}
                 sessionId={sessionId}

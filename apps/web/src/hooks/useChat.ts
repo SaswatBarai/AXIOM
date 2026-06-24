@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getAccessToken } from "@/lib/api";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -14,15 +15,49 @@ export interface ChatSession {
   updatedAt: string;
 }
 
+function chatHeaders(): HeadersInit {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const token = getAccessToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+const fetchOpts: RequestInit = {
+  credentials: "include",
+};
+
 export function useChat() {
-  const [messages, setMessages]   = useState<ChatMessage[]>([]);
-  const [sessions, setSessions]   = useState<ChatSession[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [sessionId, setSessionId] = useState<string | undefined>();
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // ── Send a message ──────────────────────────────────────────
+  const newSession = useCallback(() => {
+    abortRef.current?.abort();
+    setMessages([]);
+    setSessionId(undefined);
+    setError(null);
+  }, []);
+
+  const fetchSessions = useCallback(async () => {
+    try {
+      const res = await fetch("/api/chat/sessions", {
+        ...fetchOpts,
+        headers: chatHeaders(),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setSessions(data.sessions ?? []);
+    } catch {
+      /* silently ignore */
+    }
+  }, []);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
@@ -30,9 +65,7 @@ export function useChat() {
     setError(null);
     setLoading(true);
 
-    // Append user bubble immediately
     setMessages((prev) => [...prev, { role: "user", content: text }]);
-    // Append empty assistant bubble (will stream into it)
     setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
 
     abortRef.current?.abort();
@@ -41,15 +74,23 @@ export function useChat() {
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        ...fetchOpts,
+        headers: chatHeaders(),
         body: JSON.stringify({ message: text, sessionId }),
         signal: abortRef.current.signal,
       });
 
       if (!res.ok || !res.body) {
-        throw new Error(`HTTP ${res.status}`);
+        let detail = `Request failed (${res.status})`;
+        try {
+          const body = await res.json();
+          if (body?.message) detail = body.message;
+          else if (body?.error) detail = body.error;
+        } catch {
+          if (res.status === 401) detail = "Please sign in again to use Copilot.";
+          else if (res.status === 429) detail = "Rate limit reached — try again later.";
+        }
+        throw new Error(detail);
       }
 
       const reader = res.body.getReader();
@@ -82,8 +123,9 @@ export function useChat() {
                 return updated;
               });
             } else if (payload.type === "done" || payload.type === "error") {
-              if (payload.type === "error") setError(payload.message);
-              // Mark streaming complete
+              if (payload.type === "error") {
+                setError(payload.message ?? "LLM service error — please retry");
+              }
               setMessages((prev) => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
@@ -93,36 +135,34 @@ export function useChat() {
                 return updated;
               });
             }
-          } catch { /* ignore parse errors */ }
+          } catch {
+            /* ignore malformed SSE chunks */
+          }
         }
       }
+
+      void fetchSessions();
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
-        setError("Failed to send message — please try again");
-        // Remove the empty streaming bubble
+        setError((err as Error).message || "Failed to send message — please try again");
         setMessages((prev) => prev.filter((m) => !(m.role === "assistant" && m.streaming)));
       }
     } finally {
       setLoading(false);
     }
-  }, [loading, sessionId]);
-
-  // ── Session management ──────────────────────────────────────
-
-  const fetchSessions = useCallback(async () => {
-    try {
-      const res = await fetch("/api/chat/sessions", { credentials: "include" });
-      const data = await res.json();
-      setSessions(data.sessions ?? []);
-    } catch { /* silently ignore */ }
-  }, []);
+  }, [loading, sessionId, fetchSessions]);
 
   const loadSession = useCallback(async (sid: string) => {
     try {
-      const res = await fetch(`/api/chat/sessions/${sid}`, { credentials: "include" });
+      const res = await fetch(`/api/chat/sessions/${sid}`, {
+        ...fetchOpts,
+        headers: chatHeaders(),
+      });
+      if (!res.ok) throw new Error("Failed to load session");
       const data = await res.json();
       setMessages(data.messages ?? []);
       setSessionId(sid);
+      setError(null);
     } catch {
       setError("Failed to load session");
     }
@@ -131,18 +171,12 @@ export function useChat() {
   const deleteSession = useCallback(async (sid: string) => {
     await fetch(`/api/chat/sessions/${sid}`, {
       method: "DELETE",
-      credentials: "include",
+      ...fetchOpts,
+      headers: chatHeaders(),
     });
     setSessions((prev) => prev.filter((s) => s.sessionId !== sid));
     if (sessionId === sid) newSession();
-  }, [sessionId]);
-
-  const newSession = useCallback(() => {
-    abortRef.current?.abort();
-    setMessages([]);
-    setSessionId(undefined);
-    setError(null);
-  }, []);
+  }, [sessionId, newSession]);
 
   const stopStreaming = useCallback(() => {
     abortRef.current?.abort();
@@ -157,13 +191,23 @@ export function useChat() {
     });
   }, []);
 
-  // Abort on unmount to prevent memory leaks
   useEffect(() => {
-    return () => { abortRef.current?.abort(); };
+    return () => {
+      abortRef.current?.abort();
+    };
   }, []);
 
   return {
-    messages, sessions, sessionId, loading, error,
-    sendMessage, fetchSessions, loadSession, deleteSession, newSession, stopStreaming,
+    messages,
+    sessions,
+    sessionId,
+    loading,
+    error,
+    sendMessage,
+    fetchSessions,
+    loadSession,
+    deleteSession,
+    newSession,
+    stopStreaming,
   };
 }
