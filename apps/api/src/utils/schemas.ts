@@ -104,6 +104,30 @@ export const scrapeRunSchema = z.object({
   maxJobs:   z.number().int().min(1).max(500).default(100),
 });
 
+// ── Payments (Razorpay) ───────────────────────────────────────────────────────
+
+const PAID_PLANS = ["MONTHLY", "QUARTERLY", "ANNUAL"] as const;
+
+export const createOrderSchema = z.object({
+  plan: z.enum(PAID_PLANS),
+});
+
+export const verifyOrderSchema = z.object({
+  razorpay_order_id:   z.string().min(1),
+  razorpay_payment_id: z.string().min(1),
+  razorpay_signature:  z.string().min(1),
+});
+
+export const createSubscriptionSchema = z.object({
+  plan: z.enum(PAID_PLANS),
+});
+
+export const verifySubscriptionSchema = z.object({
+  razorpay_subscription_id: z.string().min(1),
+  razorpay_payment_id:      z.string().min(1),
+  razorpay_signature:       z.string().min(1),
+});
+
 export type RegisterInput        = z.infer<typeof registerSchema>;
 export type LoginInput           = z.infer<typeof loginSchema>;
 export type VerifyEmailInput     = z.infer<typeof verifyEmailSchema>;
@@ -249,3 +273,9 @@ export const updateNotificationAlertSchema = z.object({
   active:    z.boolean().optional(),
 });
 
+
+
+export type CreateOrderInput          = z.infer<typeof createOrderSchema>;
+export type VerifyOrderInput          = z.infer<typeof verifyOrderSchema>;
+export type CreateSubscriptionInput   = z.infer<typeof createSubscriptionSchema>;
+export type VerifySubscriptionInput   = z.infer<typeof verifySubscriptionSchema>;

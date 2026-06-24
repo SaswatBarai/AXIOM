@@ -75,3 +75,38 @@ export function requireRole(...roles: string[]) {
     next();
   };
 }
+
+/**
+ * Gate premium features behind an active paid subscription.
+ *
+ * 403 with `PREMIUM_REQUIRED` is intentional — the frontend uses that code to
+ * pop a paywall modal instead of a generic "forbidden" error.
+ */
+export function requirePremium(req: AuthRequest, _res: Response, next: NextFunction) {
+  if (req.userRole === "PREMIUM" || req.userRole === "ADMIN") return next();
+  return next(new AppError(403, "This feature requires a Premium subscription", "PREMIUM_REQUIRED"));
+}
+
+/**
+ * Soft cap: free tier allows N resumes; further uploads require Premium.
+ */
+export function requirePremiumIfResumeCountAtLeast(limit: number) {
+  return (req: AuthRequest, _res: Response, next: NextFunction) => {
+    if (req.userRole === "PREMIUM" || req.userRole === "ADMIN") return next();
+    (async () => {
+      try {
+        const count = await prisma.resume.count({ where: { userId: req.userId } });
+        if (count >= limit) {
+          return next(new AppError(
+            403,
+            `Free plan allows ${limit} resume${limit === 1 ? "" : "s"}. Upgrade to add more.`,
+            "PREMIUM_REQUIRED",
+          ));
+        }
+        next();
+      } catch (err) {
+        next(err);
+      }
+    })();
+  };
+}

@@ -5,7 +5,8 @@ import { logger } from "../utils/logger";
 export class AppError extends Error {
   constructor(
     public statusCode: number,
-    message: string
+    message: string,
+    public code?: string,
   ) {
     super(message);
     this.name = "AppError";
@@ -19,7 +20,9 @@ export function errorHandler(
   _next: NextFunction
 ) {
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({ error: err.message });
+    const body: { error: string; code?: string } = { error: err.message };
+    if (err.code) body.code = err.code;
+    return res.status(err.statusCode).json(body);
   }
 
   // Multer errors → 400 with a readable message

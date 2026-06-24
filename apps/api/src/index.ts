@@ -14,6 +14,8 @@ import userRoutes from "./routes/user.routes";
 import resumeRoutes from "./routes/resume.routes";
 import jobRoutes from "./routes/job.routes";
 import applicationRoutes from "./routes/application.routes";
+import paymentRoutes from "./routes/payment.routes";
+import { webhookHandler as paymentWebhookHandler } from "./controllers/payment.controller";
 import skillRoutes from "./routes/skill.routes";
 import chatRoutes from "./routes/chat.routes";
 import coverLetterRoutes from "./routes/coverLetter.routes";
@@ -76,6 +78,15 @@ app.use(compression());
 // ── Cookie parsing ──────────────────────────────────────────
 app.use(cookieParser());
 
+// ── Razorpay webhook ────────────────────────────────────────
+// MUST be mounted before express.json so the body stays a raw Buffer for
+// HMAC verification. See payment.service.handleWebhook for signature check.
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json", limit: "1mb" }),
+  paymentWebhookHandler,
+);
+
 // ── Parsing & sanitization ──────────────────────────────────
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
@@ -102,6 +113,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/payments",     paymentRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/cover-letter", coverLetterRoutes);

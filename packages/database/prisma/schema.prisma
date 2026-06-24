@@ -80,6 +80,8 @@ model User {
   interviewSessions InterviewSession[]
   notifications     Notification[]
   jobAlerts         JobAlert[]
+  subscription      Subscription?
+  payments          Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -298,4 +300,79 @@ model AuditLog {
   @@index([targetType, targetId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ── Payments / Subscriptions (Razorpay) ──────────────────────────────────────
+
+enum PlanType {
+  FREE
+  MONTHLY    // ₹499/month
+  QUARTERLY  // ₹1,199/quarter
+  ANNUAL     // ₹3,999/year
+}
+
+enum SubscriptionStatus {
+  ACTIVE     // payment current; user has PREMIUM
+  PAST_DUE   // last payment failed; 3-day grace window
+  CANCELLED  // user cancelled; access until currentPeriodEnd
+  EXPIRED    // period over; user downgraded to USER
+}
+
+enum PaymentStatus {
+  PENDING    // order created, awaiting payment
+  CAPTURED   // payment captured (signature verified)
+  FAILED     // payment failed
+  REFUNDED   // payment refunded
+}
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // Razorpay identifiers
+  razorpaySubscriptionId String? @unique
+  razorpayCustomerId     String?
+
+  plan               PlanType           @default(FREE)
+  status             SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+
+  payments Payment[]
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([razorpaySubscriptionId])
+  @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String  @id @default(cuid())
+  userId         String
+  subscriptionId String?
+
+  // Razorpay identifiers
+  razorpayOrderId   String  @unique
+  razorpayPaymentId String? @unique
+  razorpaySignature String?
+
+  amount   Int           // in paise (e.g. 49900 = ₹499.00)
+  currency String        @default("INR")
+  plan     PlanType
+  status   PaymentStatus @default(PENDING)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+  @@map("payments")
 }
