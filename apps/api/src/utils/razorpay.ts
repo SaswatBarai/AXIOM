@@ -14,9 +14,21 @@ const KEY_ID         = process.env.RAZORPAY_KEY_ID         ?? "rzp_test_placehol
 const KEY_SECRET     = process.env.RAZORPAY_KEY_SECRET     ?? "placeholder_secret";
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET ?? "placeholder_webhook_secret";
 
-if (KEY_ID.endsWith("placeholder") && process.env.NODE_ENV === "production") {
+/** True iff the env still points at the dev placeholders. */
+export const RAZORPAY_IS_CONFIGURED =
+  !KEY_ID.endsWith("placeholder") && KEY_SECRET !== "placeholder_secret";
+
+if (!RAZORPAY_IS_CONFIGURED && process.env.NODE_ENV === "production") {
   // Loud fail in prod — silent fall-through in dev/test
   throw new Error("RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET must be set in production");
+}
+
+if (!RAZORPAY_IS_CONFIGURED) {
+  logger.warn(
+    "[razorpay] running with placeholder credentials — set RAZORPAY_KEY_ID, " +
+    "RAZORPAY_KEY_SECRET, RAZORPAY_PLAN_MONTHLY/QUARTERLY/ANNUAL in apps/api/.env " +
+    "to enable real checkout. See docs/PaymentPlan.md.",
+  );
 }
 
 export const razorpay = new Razorpay({ key_id: KEY_ID, key_secret: KEY_SECRET });

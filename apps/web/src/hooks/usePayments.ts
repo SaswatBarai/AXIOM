@@ -16,6 +16,16 @@ import { openCheckout } from "@/lib/razorpay";
 import { useAuth } from "@/hooks/useAuth";
 import { setCredentials } from "@/store/authSlice";
 
+/** Pulls the most informative message out of an axios / generic error. */
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (typeof err === "object" && err !== null) {
+    const e = err as { response?: { data?: { error?: string } }; message?: string };
+    if (e.response?.data?.error) return e.response.data.error;
+    if (e.message) return e.message;
+  }
+  return fallback;
+}
+
 interface PricingResponse {
   plans: PlanCatalogItem[];
 }
@@ -105,8 +115,7 @@ export function usePayments() {
       }
       return verified;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Subscription failed";
-      setError(msg);
+      setError(extractErrorMessage(err, "Subscription failed"));
       throw err;
     } finally {
       setIsCheckingOut(false);
@@ -144,8 +153,7 @@ export function usePayments() {
       }
       return verified;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Payment failed";
-      setError(msg);
+      setError(extractErrorMessage(err, "Payment failed"));
       throw err;
     } finally {
       setIsCheckingOut(false);
@@ -159,8 +167,7 @@ export function usePayments() {
       setSubscription(data.subscription);
       return data.subscription;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Cancellation failed";
-      setError(msg);
+      setError(extractErrorMessage(err, "Cancellation failed"));
       throw err;
     }
   }, []);

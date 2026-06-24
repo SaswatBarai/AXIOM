@@ -10,17 +10,58 @@
  * / `revokePremium` so the logic stays in one place.
  */
 import { prisma, type Prisma } from "@axiom/database";
+import type { Orders } from "razorpay/dist/types/orders";
+import type { Subscriptions } from "razorpay/dist/types/subscriptions";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { logger } from "../utils/logger";
 import {
   razorpay,
   RAZORPAY_KEY_ID,
+  RAZORPAY_IS_CONFIGURED,
   PLAN_CATALOG,
   type PlanKey,
   verifyOrderSignature,
   verifySubscriptionSignature,
   verifyWebhookSignature,
 } from "../utils/razorpay";
+
+// ── Razorpay error normalization ────────────────────────────────────────────
+
+interface RazorpayErrorShape {
+  statusCode?: number;
+  error?: { code?: string; description?: string; reason?: string };
+}
+
+function razorpayErrorMessage(err: unknown): string {
+  const e = err as RazorpayErrorShape;
+  if (e?.error?.description) return e.error.description;
+  if (err instanceof Error)  return err.message;
+  return "Razorpay request failed";
+}
+
+/**
+ * Translates an SDK throw into a user-friendly AppError.
+ *
+ * Razorpay 4xxs come back with an `error.description` we can show; anything
+ * else is bucketed as 502 (bad upstream). Placeholder env in dev surfaces as
+ * 503 with a clear message so the user knows what to configure.
+ */
+function wrapRazorpayError(err: unknown): AppError {
+  if (!RAZORPAY_IS_CONFIGURED) {
+    return new AppError(
+      503,
+      "Razorpay is not configured on this server. Set RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, and RAZORPAY_PLAN_* env vars to enable checkout.",
+      "RAZORPAY_NOT_CONFIGURED",
+    );
+  }
+  const desc = razorpayErrorMessage(err);
+  const status = (err as RazorpayErrorShape)?.statusCode;
+  if (status && status >= 400 && status < 500) {
+    return new AppError(400, `Payment gateway: ${desc}`);
+  }
+  logger.error(`razorpay upstream error: ${desc}`);
+  return new AppError(502, "Payment gateway is currently unavailable. Please try again in a moment.");
+}
 
 // ── Public DTOs ──────────────────────────────────────────────────────────────
 
@@ -99,13 +140,18 @@ export async function createOrder(userId: string, plan: PlanKey): Promise<Create
   const def = PLAN_CATALOG[plan];
   if (!def) throw new AppError(400, `Unknown plan: ${plan}`);
 
-  const order = await razorpay.orders.create({
-    amount:           def.amountPaise,
-    currency:         "INR",
-    receipt:          `axiom_${userId}_${Date.now()}`,
-    notes:            { userId, plan },
-    partial_payment:  false,
-  });
+  let order: Orders.RazorpayOrder;
+  try {
+    order = await razorpay.orders.create({
+      amount:           def.amountPaise,
+      currency:         "INR",
+      receipt:          `axiom_${userId}_${Date.now()}`,
+      notes:            { userId, plan },
+      partial_payment:  false,
+    });
+  } catch (err) {
+    throw wrapRazorpayError(err);
+  }
 
   await prisma.payment.create({
     data: {
@@ -174,12 +220,17 @@ export async function createSubscription(userId: string, plan: PlanKey): Promise
   }
 
   // total_count = 60 → ~5 years of monthly billing, plenty of headroom
-  const sub = await razorpay.subscriptions.create({
-    plan_id:       def.razorpayPlanId,
-    customer_notify: 1,
-    total_count:   60,
-    notes:         { userId, plan },
-  });
+  let sub: Subscriptions.RazorpaySubscription;
+  try {
+    sub = await razorpay.subscriptions.create({
+      plan_id:       def.razorpayPlanId,
+      customer_notify: 1,
+      total_count:   60,
+      notes:         { userId, plan },
+    });
+  } catch (err) {
+    throw wrapRazorpayError(err);
+  }
 
   // Persist a placeholder row so webhooks can find the user via subscription id
   await prisma.subscription.upsert({
