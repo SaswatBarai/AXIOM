@@ -54,9 +54,32 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 // ── Security ────────────────────────────────────────────────
 app.use(helmet());
+
+/**
+ * CORS — allow our frontend across all the contexts we actually run in:
+ *   - localhost dev          (http://localhost:3000)
+ *   - ngrok tunnels in dev   (https://*.ngrok-free.dev|app)
+ *   - whatever FRONTEND_URL points at in prod
+ *
+ * Server-to-server callers (Razorpay webhook, the AI service, curl) send no
+ * Origin header — we allow those through (CORS is a browser policy only).
+ */
+const ALLOWED_ORIGINS = new Set<string>([
+  "http://localhost:3000",
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  ...(process.env.EXTRA_CORS_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ?? []),
+]);
+
+const NGROK_RE = /^https:\/\/[a-z0-9-]+\.ngrok-free\.(dev|app)$/i;
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
+    origin: (origin, cb) => {
+      if (!origin)                  return cb(null, true);   // curl, webhooks
+      if (ALLOWED_ORIGINS.has(origin)) return cb(null, true);
+      if (NGROK_RE.test(origin))    return cb(null, true);
+      return cb(new Error(`CORS: origin ${origin} not allowed`), false);
+    },
     credentials: true,
   })
 );
