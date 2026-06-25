@@ -20,6 +20,8 @@ service:
 env:
   AI_SERVICE_PORT: "8000"
   KAFKA_ENABLED: "false"
+  HF_HOME: "/tmp/hf"
+  TRANSFORMERS_CACHE: "/tmp/hf"
 
 envFrom:
   - secretRef:

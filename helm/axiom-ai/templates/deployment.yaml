@@ -46,6 +46,10 @@ spec:
               value: {{ .Values.env.AI_SERVICE_PORT | quote }}
             - name: KAFKA_ENABLED
               value: {{ .Values.env.KAFKA_ENABLED | quote }}
+            - name: HF_HOME
+              value: {{ .Values.env.HF_HOME | quote }}
+            - name: TRANSFORMERS_CACHE
+              value: {{ .Values.env.TRANSFORMERS_CACHE | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
