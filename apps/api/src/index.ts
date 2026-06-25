@@ -131,7 +131,10 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // ── Health check ────────────────────────────────────────────
-app.get("/health", async (_req, res) => {
+// Served at /health (k8s probes hit the pod directly) and /api/health
+// (the nginx ingress routes /api/* to this service without stripping the
+// prefix, so the public health URL is https://axiom.saswat.app/api/health).
+app.get(["/health", "/api/health"], async (_req, res) => {
   const [dbOk, redisOk] = await Promise.all([
     prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
     redis.ping(),

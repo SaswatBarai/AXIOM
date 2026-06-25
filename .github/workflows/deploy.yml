@@ -116,7 +116,7 @@ jobs:
       # reflects the real rollout state.
       - name: Health check
         run: |
-          HEALTH_URL="https://api.axiom.saswat.app/health"
+          HEALTH_URL="https://axiom.saswat.app/api/health"
           for i in $(seq 1 30); do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
             if [ "$STATUS" = "200" ]; then
