@@ -1,0 +1,142 @@
+import { prisma, type ResumeStatus } from "@axiom/database";
+import { AppError } from "../middleware/errorHandler.middleware";
+import { uploadToS3, deleteFromS3, getPresignedUrl, keyFromUrl } from "./s3.service";
+import { analyzeResumeATS } from "./ai.service";
+import { logger } from "../utils/logger";
+import type { ParsedResume } from "@axiom/shared-types";
+import { v4 as uuid } from "uuid";
+import { resumeParsingQueue } from "./queue.service";
+
+const ALLOWED_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+const MAX_BYTES     = 5 * 1024 * 1024; // 5 MB
+
+function validateMagicBytes(buffer: Buffer, mimetype: string): boolean {
+  if (mimetype === "application/pdf") {
+    return buffer.length >= 4 && buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+  }
+  if (mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+    return buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4B && buffer[2] === 0x03 && buffer[3] === 0x04;
+  }
+  return false;
+}
+
+export async function uploadResume(
+  userId: string,
+  file: Express.Multer.File
+) {
+  if (!ALLOWED_TYPES.includes(file.mimetype)) {
+    throw new AppError(415, "Only PDF and DOCX files are accepted");
+  }
+  if (file.size > MAX_BYTES) {
+    throw new AppError(413, "File size must be under 5 MB");
+  }
+  if (!validateMagicBytes(file.buffer, file.mimetype)) {
+    throw new AppError(415, "File content does not match the expected type");
+  }
+
+  const ext      = file.mimetype === "application/pdf" ? "pdf" : "docx";
+  const s3Key    = `resumes/${userId}/${uuid()}.${ext}`;
+  const fileUrl  = await uploadToS3(s3Key, file.buffer, file.mimetype);
+  const version  = await getNextVersion(userId);
+
+  const resume = await prisma.resume.create({
+    data: {
+      userId,
+      fileName: file.originalname.replace(/[<>:"/\\|?*]/g, "_").substring(0, 255),
+      fileUrl,
+      fileType: ext,
+      version,
+      status: "UPLOADING",
+    },
+  });
+
+  await resumeParsingQueue.add({ resumeId: resume.id });
+
+  return { ...resume, status: "UPLOADING" as ResumeStatus };
+}
+
+export async function listResumes(userId: string) {
+  const resumes = await prisma.resume.findMany({
+    where:   { userId },
+    orderBy: { createdAt: "desc" },
+  });
+  // Generate presigned URLs in parallel batches of 5
+  const batchSize = 5;
+  const result = [];
+  for (let i = 0; i < resumes.length; i += batchSize) {
+    const batch = resumes.slice(i, i + batchSize);
+    const enriched = await Promise.all(
+      batch.map(async (r) => ({
+        ...r,
+        downloadUrl: await getPresignedUrl(keyFromUrl(r.fileUrl)),
+      }))
+    );
+    result.push(...enriched);
+  }
+  return result;
+}
+
+export async function getResume(resumeId: string, userId: string) {
+  const resume = await prisma.resume.findUnique({ where: { id: resumeId } });
+  if (!resume) throw new AppError(404, "Resume not found");
+  if (resume.userId !== userId) throw new AppError(403, "Forbidden");
+  return {
+    ...resume,
+    downloadUrl: await getPresignedUrl(keyFromUrl(resume.fileUrl)),
+  };
+}
+
+export async function deleteResume(resumeId: string, userId: string) {
+  const resume = await prisma.resume.findUnique({ where: { id: resumeId } });
+  if (!resume) throw new AppError(404, "Resume not found");
+  if (resume.userId !== userId) throw new AppError(403, "Forbidden");
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeResumeId: true },
+  });
+
+  await Promise.all([
+    deleteFromS3(keyFromUrl(resume.fileUrl)),
+    prisma.resume.delete({ where: { id: resumeId } }),
+  ]);
+
+  let newActiveId: string | null = null;
+  if (user?.activeResumeId === resumeId) {
+    const latest = await prisma.resume.findFirst({
+      where:  { userId, id: { not: resumeId }, status: "COMPLETED" },
+      orderBy: { version: "desc" },
+    });
+    newActiveId = latest?.id ?? null;
+    await prisma.user.update({
+      where: { id: userId },
+      data:  { activeResumeId: newActiveId },
+    });
+  }
+
+  return { message: "Resume deleted", activeResumeId: newActiveId };
+}
+
+export async function analyzeResume(resumeId: string, userId: string, jobDescription: string) {
+  const resume = await prisma.resume.findUnique({ where: { id: resumeId } });
+  if (!resume) throw new AppError(404, "Resume not found");
+  if (resume.userId !== userId) throw new AppError(403, "Forbidden");
+  if (!resume.parsedData) throw new AppError(422, "Resume has not been parsed yet — try again in a moment");
+
+  const score = await analyzeResumeATS(resume.parsedData as unknown as ParsedResume, jobDescription);
+  if (!score) throw new AppError(503, "ATS analysis service unavailable — try again later");
+
+  const updated = await prisma.resume.update({
+    where: { id: resumeId },
+    data:  { atsScore: score as object },
+  });
+  return updated;
+}
+
+async function getNextVersion(userId: string): Promise<number> {
+  const maxResult = await prisma.resume.aggregate({
+    where: { userId },
+    _max: { version: true },
+  });
+  return (maxResult._max.version ?? 0) + 1;
+}

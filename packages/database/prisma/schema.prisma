@@ -30,6 +30,20 @@ enum ExperienceLevel {
   EXECUTIVE
 }
 
+enum ResumeStatus {
+  UPLOADING
+  PARSING
+  COMPLETED
+  FAILED
+}
+
+enum DiscoveryStatus {
+  PENDING
+  SCRAPING
+  COMPLETED
+  FAILED
+}
+
 enum ApplicationStatus {
   SAVED
   APPLIED
@@ -62,17 +76,30 @@ model User {
   // Auth
   emailVerified    Boolean   @default(false)
   googleId         String?   @unique
-  refreshToken     String?
-  resetToken       String?
-  resetTokenExpiry DateTime?
+
+  // Phase 11 — most-recent skill gap report
+  latestGapReport Json?
+
+  // Admin: suspended flag
+  suspendedAt    DateTime?
+
+  // Active resume for job recommendations
+  activeResumeId String?  @unique
+  activeResume   Resume?  @relation("ActiveResume", fields: [activeResumeId], references: [id])
 
   // Relations
   preferences  UserPreferences?
-  resumes      Resume[]
-  applications Application[]
-  savedJobs    SavedJob[]
-  chatHistory  ChatMessage[]
-  roadmaps     CareerRoadmap[]
+  auditLogs    AuditLog[] @relation("AdminAuditLogs")
+  resumes           Resume[]
+  applications      Application[]
+  savedJobs         SavedJob[]
+  chatHistory       ChatMessage[]
+  roadmaps          CareerRoadmap[]
+  interviewSessions InterviewSession[]
+  notifications     Notification[]
+  jobAlerts         JobAlert[]
+  subscription      Subscription?
+  payments          Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -101,17 +128,60 @@ model Resume {
   fileUrl  String
   fileType String
 
+  status       ResumeStatus @default(UPLOADING)
+  parsingError String?
+
   parsedData Json?
   atsScore   Json?
   version    Int   @default(1)
+  embedding  Unsupported("vector(384)")?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeForUser User?            @relation("ActiveResume")
+  discovery     JobDiscovery?
+  recommendations JobRecommendation[]
+  applications  Application[]     @relation("AppliedResume")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([status])
+  @@unique([userId, version])
   @@map("resumes")
+}
+
+model JobDiscovery {
+  id        String          @id @default(cuid())
+  resumeId  String          @unique
+  status    DiscoveryStatus @default(PENDING)
+  error     String?
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("job_discoveries")
+}
+
+model JobRecommendation {
+  id            String   @id @default(cuid())
+  resumeId      String
+  jobId         String
+  score         Float
+  matchedSkills String[]
+  missingSkills String[]
+  matchReason   Json?    // scoring signals: semantic, skill_overlap, seniority, title_align, confidence
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([resumeId, jobId])
+  @@index([resumeId])
+  @@map("job_recommendations")
 }
 
 model Job {
@@ -133,12 +203,14 @@ model Job {
 
   source    String
   sourceUrl String @unique
+  embedding Unsupported("vector(384)")?
 
   postedAt  DateTime
   expiresAt DateTime?
 
-  applications Application[]
-  savedByUsers SavedJob[]
+  applications  Application[]
+  savedByUsers  SavedJob[]
+  recommendations JobRecommendation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,8 +230,11 @@ model Application {
   appliedAt   DateTime?
   timeline    Json              @default("[]")
 
+  resumeId    String?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume Resume? @relation("AppliedResume", fields: [resumeId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -194,15 +269,53 @@ model ChatMessage {
 
   createdAt DateTime @default(now())
 
-  @@index([userId, sessionId])
+  @@index([userId, sessionId, createdAt])
   @@map("chat_messages")
 }
 
 model CareerRoadmap {
-  id      String @id @default(cuid())
+  id         String @id @default(cuid())
+  userId     String
+  title      String
+  targetRole String @default("")
+  weeks      Int    @default(12)
+  version    Int    @default(1)
+  content    Json
+  progress   Json   @default("{}")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, targetRole, version])
+  @@index([userId])
+  @@map("career_roadmaps")
+}
+
+model Notification {
+  id      String    @id @default(cuid())
   userId  String
-  title   String
-  content Json
+  type    String
+  payload Json      @default("{}")
+  readAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model JobAlert {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  filters    Json      @default("{}")
+  frequency  String    @default("daily")
+  active     Boolean   @default(true)
+  lastSentAt DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -210,5 +323,131 @@ model CareerRoadmap {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@map("career_roadmaps")
+  @@index([active, frequency])
+  @@map("job_alerts")
+}
+
+model InterviewSession {
+  id         String @id @default(cuid())
+  userId     String
+  jobTitle   String
+  difficulty String
+  sections   Json
+  questions  Json
+  marks      Json   @default("{}")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("interview_sessions")
+}
+
+// ─── Admin AuditLog ──────────────────────────────────────────────────────────
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+
+  admin  User     @relation("AdminAuditLogs", fields: [adminId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ── Payments / Subscriptions (Razorpay) ──────────────────────────────────────
+
+enum PlanType {
+  FREE
+  MONTHLY    // ₹499/month
+  QUARTERLY  // ₹1,199/quarter
+  ANNUAL     // ₹3,999/year
+}
+
+enum SubscriptionStatus {
+  ACTIVE     // payment current; user has PREMIUM
+  PAST_DUE   // last payment failed; 3-day grace window
+  CANCELLED  // user cancelled; access until currentPeriodEnd
+  EXPIRED    // period over; user downgraded to USER
+}
+
+enum PaymentStatus {
+  PENDING    // order created, awaiting payment
+  CAPTURED   // payment captured (signature verified)
+  FAILED     // payment failed
+  REFUNDED   // payment refunded
+}
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // Razorpay identifiers
+  razorpaySubscriptionId String? @unique
+  razorpayCustomerId     String?
+
+  plan               PlanType           @default(FREE)
+  status             SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+
+  payments Payment[]
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([razorpaySubscriptionId])
+  @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String  @id @default(cuid())
+  userId         String
+  subscriptionId String?
+
+  // Razorpay identifiers
+  razorpayOrderId   String  @unique
+  razorpayPaymentId String? @unique
+  razorpaySignature String?
+
+  amount   Int           // in paise (e.g. 49900 = ₹499.00)
+  currency String        @default("INR")
+  plan     PlanType
+  status   PaymentStatus @default(PENDING)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+  @@map("payments")
+}
+
+/** Processed Razorpay webhook deliveries — deduplication + replay protection. */
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  eventType   String
+  receivedAt  DateTime @default(now())
+
+  @@index([receivedAt])
+  @@map("webhook_events")
 }

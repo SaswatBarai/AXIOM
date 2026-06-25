@@ -1,34 +1,166 @@
 import type { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
 import { AppError } from "./errorHandler.middleware";
+import { redis } from "../services/redis.service";
+import { prisma } from "@axiom/database";
+import { CacheKey } from "../utils/constants";
+import { verifyToken, extractJti } from "../utils/jwt";
+import { hasPremiumAccess, getUserPlan } from "../services/subscription.service";
+import { PLAN_ENTITLEMENTS } from "../config/plan-entitlements";
 
 export interface AuthRequest extends Request {
   userId?: string;
   userRole?: string;
 }
 
-export function requireAuth(req: AuthRequest, _res: Response, next: NextFunction) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) throw new AppError(401, "No token provided");
+/** Asserts that the request has a valid userId set by requireAuth middleware */
+export function assertUserId(req: AuthRequest): string {
+  if (!req.userId) throw new AppError(401, "Not authenticated");
+  return req.userId;
+}
 
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET_KEY!) as {
-      userId: string;
-      role: string;
-    };
-    req.userId = payload.userId;
-    req.userRole = payload.role;
-    next();
-  } catch {
-    throw new AppError(401, "Invalid or expired token");
-  }
+export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.split(" ")[1] ?? req.cookies?.["accessToken"];
+  if (!token) return next(new AppError(401, "No token provided"));
+
+  (async () => {
+    try {
+      const payload = verifyToken(token) as unknown as {
+        userId: string;
+        role: string;
+        jti?: string;
+      };
+
+      // Check blacklist by jti
+      const jti = payload.jti ?? extractJti(token);
+      if (jti) {
+        const blacklisted = await redis.get(CacheKey.blacklist(jti));
+        if (blacklisted) return next(new AppError(401, "Token revoked"));
+      }
+
+      req.userId = payload.userId;
+      req.userRole = payload.role;
+
+      // ── Account check (deleted + suspended) ────────────────────────
+      const cacheKey = CacheKey.suspension(payload.userId);
+      const suspendedFlag = await redis.get(cacheKey);
+      if (suspendedFlag !== null) {
+        if (suspendedFlag === "true") {
+          return res.status(403).json({ error: "Your account has been suspended. Contact support.", code: "ACCOUNT_SUSPENDED" });
+        }
+      } else {
+        const user = await prisma.user.findUnique({
+          where: { id: payload.userId },
+          select: { suspendedAt: true },
+        });
+        if (!user) {
+          return res.status(401).json({ error: "User not found" });
+        }
+        if (user.suspendedAt) {
+          await redis.set(cacheKey, "true", 30);
+          return res.status(403).json({ error: "Your account has been suspended. Contact support.", code: "ACCOUNT_SUSPENDED" });
+        }
+        await redis.set(cacheKey, "false", 30);
+      }
+
+      next();
+    } catch {
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
+  })();
 }
 
 export function requireRole(...roles: string[]) {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.userRole || !roles.includes(req.userRole)) {
-      throw new AppError(403, "Insufficient permissions");
+      return next(new AppError(403, "Insufficient permissions"));
     }
     next();
   };
+}
+
+/**
+ * Gate premium features behind a live paid subscription (DB-checked).
+ *
+ * Does NOT trust JWT role — validates subscription status, period end, and
+ * captured payment history on every request.
+ */
+export function requireActiveSubscription(req: AuthRequest, _res: Response, next: NextFunction) {
+  if (req.userRole === "ADMIN") return next();
+
+  (async () => {
+    try {
+      const userId = assertUserId(req);
+      const allowed = await hasPremiumAccess(userId, req.userRole);
+      if (!allowed) {
+        return next(
+          new AppError(
+            403,
+            "This feature requires an active Premium subscription",
+            "PREMIUM_REQUIRED",
+          ),
+        );
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  })();
+}
+
+/**
+ * @deprecated Use requireActiveSubscription — JWT role alone is not authoritative.
+ */
+export function requirePremium(req: AuthRequest, res: Response, next: NextFunction) {
+  return requireActiveSubscription(req, res, next);
+}
+
+/**
+ * @deprecated Use requireResumeUploadAllowed — enforces per-plan resume caps.
+ * Kept for backward compatibility; routes should migrate to the new middleware.
+ */
+export function requirePremiumIfResumeCountAtLeast(limit: number) {
+  return (req: AuthRequest, _res: Response, next: NextFunction) => {
+    if (req.userRole === "PREMIUM" || req.userRole === "ADMIN") return next();
+    (async () => {
+      try {
+        const count = await prisma.resume.count({ where: { userId: req.userId } });
+        if (count >= limit) {
+          return next(new AppError(
+            403,
+            `Free plan allows ${limit} resume${limit === 1 ? "" : "s"}. Upgrade to add more.`,
+            "PREMIUM_REQUIRED",
+          ));
+        }
+        next();
+      } catch (err) {
+        next(err);
+      }
+    })();
+  };
+}
+
+/**
+ * Plan-aware resume upload cap. Blocks upload when the user has already
+ * reached their plan's resumeUploads limit.
+ */
+export function requireResumeUploadAllowed(req: AuthRequest, _res: Response, next: NextFunction) {
+  if (req.userRole === "ADMIN") return next();
+  (async () => {
+    try {
+      const userId = assertUserId(req);
+      const plan  = await getUserPlan(userId);
+      const limit = PLAN_ENTITLEMENTS[plan].resumeUploads;
+      const count = await prisma.resume.count({ where: { userId } });
+      if (count >= limit) {
+        return next(new AppError(
+          403,
+          `Your ${plan} plan allows ${limit} resume${limit === 1 ? "" : "s"}. Upgrade to upload more.`,
+          "RESUME_LIMIT_EXCEEDED",
+        ));
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  })();
 }

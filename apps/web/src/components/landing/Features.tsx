@@ -1,370 +1,640 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import Link from "next/link";
+import { useState, useRef } from "react";
+import { useInView, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { motion } from "framer-motion";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import {
-  FileText,
-  Briefcase,
-  MessagesSquare,
-  HelpCircle,
-  BarChart3,
-  PenTool,
-  Trello,
-  Zap,
-  ArrowRight,
-  TrendingUp,
-  Terminal,
-  CheckCircle,
-  Play,
-  User,
-  Sliders,
-  Sparkles
+  FileText, Briefcase, MessagesSquare, HelpCircle,
+  BarChart3, PenTool, KanbanSquare, Zap, ArrowRight,
+  CheckCircle2, ChevronRight, Clock, Sliders, Send,
 } from "lucide-react";
 
-// Animation Variants
-const fadeInUp = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } }
-};
+// ── Data ───────────────────────────────────────────────────────────────────
+const JOBS = [
+  { co: "Stripe",  role: "Staff Eng",   score: "94%", hi: true  },
+  { co: "Vercel",  role: "SWE II",      score: "81%", hi: false },
+  { co: "Linear",  role: "Backend Eng", score: "76%", hi: false },
+] as const;
 
-const staggerContainer = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.04
-    }
-  }
-};
+const PIPELINE = [
+  { label: "Applied",   count: 47, bg: "bg-bg-hover",   text: "text-text-secondary" },
+  { label: "Screening", count: 18, bg: "bg-bg-elevated",   text: "text-text-primary" },
+  { label: "Interview", count: 7,  bg: "bg-brand/80",   text: "text-white font-medium" },
+  { label: "Offer",     count: 2,  bg: "bg-brand",      text: "text-black font-semibold"    },
+] as const;
 
-export function Features() {
+const METRICS = [
+  { label: "Response Rate",  value: "34%", delta: "+8%"  },
+  { label: "Interview Rate", value: "12%", delta: "+5%"  },
+  { label: "Offer Rate",     value: "3%",  delta: "+2%"  },
+] as const;
+
+const CHAT_MSGS = [
+  { from: "ai",   text: "Hi! Ask me about salary, interviews, or your resume." },
+  { from: "user", text: "How do I pitch my remote preference?" },
+  { from: "ai",   text: 'Lead with impact. "I shipped X while fully remote" removes the risk before you even negotiate.' },
+  { from: "user", text: "What about the compensation ask?" },
+] as const;
+
+const LETTER_LINES = [
+  { t: "Dear Hiring Team at Vercel,",                               op: "text-text-primary" },
+  { t: "I'm excited to apply for the Senior Engineer role.",        op: "text-text-secondary" },
+  { t: "My experience building Next.js applications at scale",      op: "text-text-secondary" },
+  { t: "aligns perfectly with Vercel's mission to make the web",   op: "text-text-secondary" },
+  { t: "faster and more accessible for every developer.",           op: "text-text-muted" },
+  { t: "",                                                           op: ""              },
+  { t: "Over the last 3 years I shipped features used by…",        op: "text-text-subtle" },
+] as const;
+
+const CHART_DATA = [28, 34, 29, 46, 42, 55, 50, 63, 58, 72, 68, 85];
+
+// ── Spotlight card ─────────────────────────────────────────────────────────
+function SpotlightCard({
+  children,
+  className = "",
+  intensity = 0.03,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  intensity?: number;
+}) {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
   return (
-    <section id="features" className="py-32 px-6 bg-[#09090b] relative overflow-hidden">
-      {/* Decorative ambient lights */}
-      <div className="absolute top-1/4 left-[-15%] w-[400px] h-[400px] bg-zinc-900/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-[-15%] w-[400px] h-[400px] bg-white/[0.01] rounded-full blur-[120px] pointer-events-none" />
+    <div
+      className={`relative overflow-hidden rounded-2xl group ${className}`}
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        setPos({ x: e.clientX - r.left, y: e.clientY - r.top });
+      }}
+    >
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20"
+        style={{
+          background: `radial-gradient(300px circle at ${pos.x}px ${pos.y}px, var(--spotlight-color), transparent 80%)`,
+        }}
+      />
+      {children}
+    </div>
+  );
+}
+
+// ── ATS ring ───────────────────────────────────────────────────────────────
+const CIRC = 2 * Math.PI * 44; // ≈ 276
+
+function AtsRing({ score, inView }: { score: number; inView: boolean }) {
+  return (
+    <div className="relative w-28 h-28 shrink-0">
+      <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+        <circle cx="50" cy="50" r="44" fill="none" stroke="var(--bg-elevated)" strokeWidth="5.5" />
+        <motion.circle
+          cx="50" cy="50" r="44"
+          fill="none" stroke="#f97316" strokeWidth="5.5" strokeLinecap="round"
+          strokeDasharray={CIRC}
+          initial={{ strokeDashoffset: CIRC }}
+          animate={inView ? { strokeDashoffset: CIRC * (1 - score / 100) } : { strokeDashoffset: CIRC }}
+          transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-extrabold text-text-primary tabular-nums leading-none">{score}</span>
+        <span className="text-[9px] text-text-muted font-semibold uppercase tracking-wider mt-0.5">ATS Score</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Animated category bar ──────────────────────────────────────────────────
+function CatBar({ label, value, inView, delay }: { label: string; value: number; inView: boolean; delay: number }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-[10px]">
+        <span className="text-text-muted">{label}</span>
+        <span className="text-text-secondary font-bold tabular-nums">{value}%</span>
+      </div>
+      <div className="h-[3px] bg-bg-elevated rounded-full overflow-hidden">
+        <motion.div
+          className="h-full rounded-full bg-gradient-to-r from-brand to-orange-300"
+          initial={{ width: 0 }}
+          animate={inView ? { width: `${value}%` } : { width: 0 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── SVG area chart ─────────────────────────────────────────────────────────
+function AreaChart({ inView }: { inView: boolean }) {
+  const W = 200, H = 52;
+  const pts = CHART_DATA.map((v, i) => ({
+    x: (i / (CHART_DATA.length - 1)) * W,
+    y: H - (v / 100) * H,
+  }));
+  const lineD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const areaD = `${lineD} L${W},${H} L0,${H} Z`;
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-full">
+      <defs>
+        <linearGradient id="aGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f97316" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill="url(#aGrad)" />
+      <motion.path
+        d={lineD}
+        fill="none"
+        stroke="#f97316"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={inView ? { pathLength: 1, opacity: 1 } : {}}
+        transition={{ duration: 1.4, ease: "easeOut", delay: 0.2 }}
+      />
+    </svg>
+  );
+}
+
+// ── Main export ────────────────────────────────────────────────────────────
+export function Features() {
+  const heroRef       = useRef<HTMLDivElement>(null);
+  const heroInView    = useInView(heroRef, { once: true, margin: "-60px" });
+  const analyticsRef  = useRef<HTMLDivElement>(null);
+  const analyticsInView = useInView(analyticsRef, { once: true, margin: "-60px" });
+
+  return (
+    <section id="features" className="py-32 px-6 bg-bg-base relative overflow-hidden">
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border-subtle/80 to-transparent" />
 
       <div className="max-w-7xl mx-auto space-y-20">
-        
-        {/* Header */}
+
+        {/* Section header */}
         <ScrollReveal>
-          <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <Badge variant="outline" className="border-zinc-800 text-zinc-400 px-3.5 py-1.5 font-medium bg-zinc-900/30 tracking-wide uppercase text-[10px]">
-              Platform Core
-            </Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-              Designed for the modern professional
+          <div className="space-y-4 max-w-2xl">
+            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.15em]">Platform Core</span>
+            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text-primary leading-[1.06]">
+              Everything you need,<br />in one workspace
             </h2>
-            <p className="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-              Discover a comprehensive suite of AI engines integrated into a unified bento workspace.
+            <p className="text-base text-text-secondary leading-relaxed">
+              Eight AI engines, unified into a single dashboard built for the modern job search.
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[250px]">
-          
-          {/* Card 1: Resume Analyzer (Col Span: 2, Row Span: 2) */}
-          <ScrollReveal className="md:col-span-2 md:row-span-2 group">
-            <Card className="border border-zinc-800/80 bg-zinc-900/10 rounded-2xl p-8 h-full flex flex-col justify-between hover:border-zinc-700 hover:bg-zinc-900/25 transition-all duration-300 overflow-hidden relative">
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 h-full">
-                
-                {/* Left side details */}
-                <div className="lg:col-span-2 flex flex-col justify-between h-full space-y-6">
-                  <div className="space-y-4">
-                    <div className="w-12 h-12 rounded-xl bg-zinc-800/80 flex items-center justify-center text-white">
-                      <FileText className="w-6 h-6" />
+        {/* ── Bento grid ─────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:auto-rows-[260px]">
+
+          {/* 01 — Resume Analyzer ★ 2×2 hero ───────────────────────────── */}
+          <ScrollReveal className="lg:col-span-2 lg:row-span-2">
+            <SpotlightCard intensity={0.05} className="h-full">
+              {/* Brand shimmer edge */}
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand/60 to-transparent pointer-events-none z-10" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-20 bg-brand/[0.06] blur-3xl pointer-events-none" />
+
+              <div
+                ref={heroRef}
+                className="border border-brand/25 bg-bg-card/30 rounded-2xl p-8 h-full flex flex-col gap-6 hover:border-brand/40 transition-all duration-300 overflow-hidden relative"
+              >
+                {/* Card header */}
+                <div className="flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center">
+                      <FileText className="w-3.5 h-3.5 text-brand" />
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold text-white">Resume Analyzer</h3>
-                      <p className="text-sm text-zinc-400 leading-relaxed font-normal">
-                        Checks layout compliance, extracts technical skills semantically, and calculates instantaneous ATS scoring recommendations.
+                    <span className="text-xs font-semibold text-text-secondary">Resume Analyzer</span>
+                  </div>
+                  <Badge className="bg-brand/10 text-brand border border-brand/20 text-[9px] font-bold hover:bg-brand/10">
+                    FEATURED
+                  </Badge>
+                </div>
+
+                {/* Content */}
+                <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 flex-1 min-h-0">
+
+                  {/* Left — ring + candidate pill */}
+                  <div className="flex flex-col items-center lg:items-start gap-4">
+                    <AtsRing score={87} inView={heroInView} />
+                    <div className="bg-bg-base/70 border border-border-subtle/60 rounded-xl p-3.5 w-full space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-bg-elevated border border-border-subtle flex items-center justify-center text-[10px] text-text-primary font-bold shrink-0">
+                          JD
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold text-text-primary leading-none truncate">John Doe</p>
+                          <p className="text-[9px] text-text-muted mt-0.5">Senior Data Engineer</p>
+                        </div>
+                        <span className="text-[8px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded px-1.5 py-0.5 shrink-0">
+                          READY
+                        </span>
+                      </div>
+                      <p className="text-[9px] text-text-muted font-mono border-t border-border-subtle pt-2 leading-relaxed">
+                        Python · SQL · Kafka · K8s · Spark
                       </p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 group-hover:text-white transition-colors duration-300 font-semibold cursor-pointer">
-                    <span>Analyze Resume</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </div>
 
-                {/* Right side high-fidelity resume scanner mockup */}
-                <div className="lg:col-span-3 h-full bg-zinc-950/40 rounded-xl border border-zinc-900 p-5 flex flex-col justify-between font-mono text-[9px] text-zinc-500 overflow-hidden relative">
-                  {/* Scanner neon line */}
-                  <motion.div 
-                    className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/40 to-transparent z-10"
-                    animate={{ top: ["10%", "90%", "10%"] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  />
-
-                  {/* Header sheet mock */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between border-b border-zinc-900 pb-3 text-[10px] font-semibold text-zinc-400">
-                      <span>CV_PARSED_2026.pdf</span>
-                      <span className="text-emerald-400 font-bold">READY</span>
+                  {/* Right — breakdown bars */}
+                  <div className="flex flex-col gap-4">
+                    <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Score breakdown</p>
+                    <div className="space-y-4 flex-1">
+                      <CatBar label="Format & Layout"    value={92} inView={heroInView} delay={0.55} />
+                      <CatBar label="Keyword Coverage"   value={84} inView={heroInView} delay={0.70} />
+                      <CatBar label="Skills Match"       value={81} inView={heroInView} delay={0.85} />
+                      <CatBar label="ATS Compatibility"  value={87} inView={heroInView} delay={1.00} />
                     </div>
+                    <Link href="/signup" className="group/link flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors font-medium w-fit mt-auto">
+                      Analyze Resume <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-0.5 transition-transform" />
+                    </Link>
+                  </div>
 
-                    <div className="space-y-2 font-sans text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] text-white">JD</div>
-                        <div>
-                          <p className="font-bold text-white text-[11px] leading-none">John Doe</p>
-                          <p className="text-[9px] text-zinc-500 leading-none mt-1">Senior Data Engineer</p>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1.5 pt-2 text-[10px]">
-                        <p className="text-zinc-400"><span className="text-zinc-650 font-mono">Summary:</span> Experienced database architect specializing in large-scale pipelines...</p>
-                        <p className="text-zinc-400"><span className="text-zinc-650 font-mono">Skills:</span> Python, SQL, Kafka, Kubernetes, Spark</p>
-                      </div>
+                </div>
+              </div>
+            </SpotlightCard>
+          </ScrollReveal>
+
+          {/* 02 — Semantic Job Match ─────────────────────────────────────── */}
+          <ScrollReveal>
+            <SpotlightCard className="h-full">
+              <div className="border border-border-subtle bg-bg-card/20 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-border-medium hover:bg-bg-card/45 transition-all duration-300">
+                <div className="flex items-center gap-2">
+                   <div className="w-6 h-6 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                    <Briefcase className="w-3 h-3 text-text-secondary" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Match Engine</span>
+                </div>
+
+                {/* Big number */}
+                <div className="text-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <span className="text-6xl font-extrabold text-text-primary tabular-nums leading-none">
+                      94<span className="text-brand text-4xl">%</span>
+                    </span>
+                  </motion.div>
+                  <p className="text-[10px] text-text-muted mt-1.5">Top match · Staff Eng at Stripe</p>
+                </div>
+
+                {/* Job list */}
+                <div className="space-y-1.5">
+                  {JOBS.map(({ co, role, score, hi }) => (
+                    <div
+                      key={co}
+                      className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-[10px] border ${
+                        hi ? "bg-bg-elevated border-border-medium" : "bg-bg-base/50 border-border-subtle"
+                      }`}
+                    >
+                      <span className={hi ? "text-text-primary font-medium" : "text-text-muted"}>
+                        {co} · {role}
+                      </span>
+                      <span className={hi ? "text-brand font-bold" : "text-text-subtle"}>{score}</span>
                     </div>
-                  </div>
-
-                  {/* Metrics bar */}
-                  <div className="space-y-2 border-t border-zinc-900 pt-3">
-                    <div className="flex justify-between text-[10px] font-sans font-medium">
-                      <span className="text-zinc-500">Overall Matching Score</span>
-                      <span className="text-white font-bold">87%</span>
-                    </div>
-                    <Progress value={87} className="h-1 bg-zinc-850" />
-                  </div>
-                </div>
-
-              </div>
-            </Card>
-          </ScrollReveal>
-
-          {/* Card 2: Semantic Job Match (Col Span: 1, Row Span: 1) */}
-          <ScrollReveal className="md:col-span-1 md:row-span-1 group">
-            <Card className="border border-zinc-800/80 bg-zinc-900/10 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-zinc-700 hover:bg-zinc-900/25 transition-all duration-300 relative overflow-hidden">
-              <div className="space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center text-white">
-                  <Briefcase className="w-5 h-5" />
-                </div>
-                <div className="space-y-1.5">
-                  <h3 className="text-base font-bold text-white">Semantic Job Match</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                    Queries databases with vector matching indices instead of loose tag strings.
-                  </p>
-                </div>
-              </div>
-              
-              {/* Graphic Match tag */}
-              <div className="flex justify-between items-center bg-zinc-950/40 border border-zinc-900 rounded-lg p-2.5 px-3 text-[10px]">
-                <span className="text-zinc-400 font-medium">Match Accuracy</span>
-                <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold">92% MATCH</Badge>
-              </div>
-            </Card>
-          </ScrollReveal>
-
-          {/* Card 3: Skill Gap Detection (Col Span: 1, Row Span: 1) */}
-          <ScrollReveal className="md:col-span-1 md:row-span-1 group">
-            <Card className="border border-zinc-800/80 bg-zinc-900/10 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-zinc-700 hover:bg-zinc-900/25 transition-all duration-300 relative overflow-hidden">
-              <div className="space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center text-white">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <div className="space-y-1.5">
-                  <h3 className="text-base font-bold text-white">Skill Gap Detection</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                    Audit skill discrepancies between profile descriptions and live listing markets.
-                  </p>
-                </div>
-              </div>
-
-              {/* Checked/unchecked rows */}
-              <div className="flex justify-between items-center bg-zinc-950/40 border border-zinc-900 rounded-lg p-2.5 px-4 text-[10px] text-zinc-400">
-                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> React</span>
-                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-zinc-650" /> Docker</span>
-              </div>
-            </Card>
-          </ScrollReveal>
-
-          {/* Card 4: AI Career Copilot (Col Span: 1, Row Span: 2) */}
-          <ScrollReveal className="md:col-span-1 md:row-span-2 group">
-            <Card className="border border-zinc-800/80 bg-zinc-900/10 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-zinc-700 hover:bg-zinc-900/25 transition-all duration-300 relative overflow-hidden">
-              <div className="space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center text-white">
-                  <MessagesSquare className="w-5 h-5" />
-                </div>
-                <div className="space-y-1.5">
-                  <h3 className="text-lg font-bold text-white">AI Career Copilot</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                    Draft response emails, request adjustments, and strategize compensation parameters with a dedicated language model.
-                  </p>
-                </div>
-              </div>
-
-              {/* Taller Chat Bubbles Graphic Mockup */}
-              <div className="flex-1 bg-zinc-950/40 rounded-xl border border-zinc-900 p-4 mt-6 space-y-4 font-normal text-[10px] flex flex-col justify-end min-h-[220px]">
-                <div className="space-y-1 flex flex-col items-start">
-                  <span className="text-[8px] text-zinc-600 font-semibold uppercase tracking-wider pl-1">John Doe</span>
-                  <div className="bg-zinc-900/80 text-zinc-300 rounded-2xl rounded-tl-none p-3 border border-zinc-800/40">
-                    How should I pitch my remote schedule proposal?
-                  </div>
-                </div>
-                
-                <div className="space-y-1 flex flex-col items-end">
-                  <span className="text-[8px] text-zinc-600 font-semibold uppercase tracking-wider pr-1">Copilot</span>
-                  <div className="bg-white text-black rounded-2xl rounded-tr-none p-3">
-                    Focus on delivery metrics. Pitch a trial schedule linked to milestone reviews to reduce friction.
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </ScrollReveal>
-
-          {/* Card 5: Application Tracker (Col Span: 2, Row Span: 1) */}
-          <ScrollReveal className="md:col-span-2 md:row-span-1 group">
-            <Card className="border border-zinc-800/80 bg-zinc-900/10 rounded-2xl p-6 h-full flex flex-col md:flex-row justify-between gap-6 hover:border-zinc-700 hover:bg-zinc-900/25 transition-all duration-300 overflow-hidden relative">
-              <div className="flex flex-col justify-between flex-1 space-y-4">
-                <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center text-white mb-2">
-                    <Trello className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Application Tracker</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal max-w-sm">
-                    Auto-organize application files, interview calls, and salary parameters in an interactive board layout.
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-zinc-500 group-hover:text-white transition-colors duration-300 font-semibold cursor-pointer">
-                  <span>Open Kanban Board</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </div>
-
-              {/* Graphic Kanban mockup */}
-              <div className="w-full md:w-60 h-32 md:h-full bg-zinc-950/40 rounded-xl border border-zinc-900 p-3.5 flex gap-2.5 shrink-0 overflow-hidden">
-                {/* Column 1 */}
-                <div className="flex-1 flex flex-col gap-1.5">
-                  <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-wider border-b border-zinc-900 pb-1">Applied (2)</span>
-                  <div className="bg-zinc-900/60 border border-zinc-800 rounded p-1.5 space-y-1">
-                    <div className="text-[7px] font-bold text-white leading-none">Stripe</div>
-                    <div className="text-[6px] text-zinc-500">API Engineer</div>
-                  </div>
-                </div>
-                {/* Column 2 */}
-                <div className="flex-1 flex flex-col gap-1.5">
-                  <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-wider border-b border-zinc-900 pb-1">Interviews (1)</span>
-                  <div className="bg-zinc-900/60 border border-zinc-800 rounded p-1.5 space-y-1 border-l-2 border-l-white">
-                    <div className="text-[7px] font-bold text-white leading-none">Vercel</div>
-                    <div className="text-[6px] text-zinc-500">Frontend role</div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </ScrollReveal>
-
-          {/* Card 6: Analytics Dashboard (Col Span: 2, Row Span: 1) */}
-          <ScrollReveal className="md:col-span-2 md:row-span-1 group">
-            <Card className="border border-zinc-800/80 bg-zinc-900/10 rounded-2xl p-6 h-full flex flex-col md:flex-row justify-between gap-6 hover:border-zinc-700 hover:bg-zinc-900/25 transition-all duration-300 overflow-hidden relative">
-              <div className="flex flex-col justify-between flex-1 space-y-4">
-                <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center text-white mb-2">
-                    <BarChart3 className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Analytics Dashboard</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal max-w-sm">
-                    Assess response rates, track pipeline conversion levels, and analyze average match trends.
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-zinc-500 group-hover:text-white transition-colors duration-300 font-semibold cursor-pointer">
-                  <span>View Dashboard</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </div>
-
-              {/* Sparkline graphics & Mini stats side-by-side */}
-              <div className="w-full md:w-64 h-32 md:h-full bg-zinc-950/40 rounded-xl border border-zinc-900 p-4 flex flex-col justify-between shrink-0 overflow-hidden">
-                <div className="flex justify-between items-center text-[8px] font-bold text-zinc-500 uppercase tracking-wider border-b border-zinc-900 pb-1.5">
-                  <span>Conversion Curve</span>
-                  <span className="text-emerald-400 font-bold">+18%</span>
-                </div>
-                
-                {/* Horizontal bars chart preview */}
-                <div className="flex items-end justify-between gap-1.5 h-16 pt-2">
-                  {[25, 45, 30, 65, 55, 70, 95, 80].map((val, i) => (
-                    <motion.div
-                      key={i}
-                      className="bg-white/80 rounded-sm w-full"
-                      initial={{ height: 0 }}
-                      whileInView={{ height: `${val}%` }}
-                      transition={{ duration: 0.6, delay: i * 0.05 }}
-                    />
                   ))}
                 </div>
               </div>
-            </Card>
+            </SpotlightCard>
           </ScrollReveal>
 
-          {/* Card 7: Interview Prep (Col Span: 1, Row Span: 1) */}
-          <ScrollReveal className="md:col-span-1 md:row-span-1 group">
-            <Card className="border border-zinc-800/80 bg-zinc-900/10 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-zinc-700 hover:bg-zinc-900/25 transition-all duration-300 relative overflow-hidden">
-              <div className="space-y-4">
-                <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center text-white">
-                  <HelpCircle className="w-5 h-5" />
+          {/* 03 — Skill Gap Detection ────────────────────────────────────── */}
+          <ScrollReveal>
+            <SpotlightCard className="h-full">
+              <div className="border border-border-subtle bg-bg-card/20 rounded-2xl p-6 h-full flex flex-col gap-4 hover:border-border-medium hover:bg-bg-card/45 transition-all duration-300">
+                <div className="flex items-center gap-2">
+                   <div className="w-6 h-6 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                    <Zap className="w-3 h-3 text-text-secondary" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Skill Audit</span>
                 </div>
-                <div className="space-y-1.5">
-                  <h3 className="text-base font-bold text-white">Interview Prep</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                    Review generated mock questions tailored specifically to each parsed target role.
-                  </p>
-                </div>
-              </div>
+                <h3 className="text-sm font-bold text-text-primary -mt-1">Skill Gap Detection</h3>
 
-              {/* Prep graphic */}
-              <div className="flex items-center gap-2 bg-zinc-950/40 border border-zinc-900 rounded-lg p-2.5 text-[10px] text-zinc-400">
-                <Play className="w-3.5 h-3.5 text-white fill-white shrink-0" />
-                <span className="truncate">Simulating: Behavioral Panel</span>
+                {/* Two-column have / need */}
+                <div className="grid grid-cols-2 gap-3 flex-1 content-center">
+                  <div className="space-y-1.5">
+                    <p className="text-[8px] font-bold text-emerald-400 uppercase tracking-widest mb-2">✓ You Have</p>
+                    {["React", "TypeScript", "Node.js"].map((s) => (
+                      <div
+                        key={s}
+                        className="flex items-center gap-1.5 text-[10px] text-text-secondary bg-emerald-500/5 border border-emerald-500/15 rounded-lg px-2 py-1.5"
+                      >
+                        <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[8px] font-bold text-brand uppercase tracking-widest mb-2">✕ You Need</p>
+                    {["Docker", "Kubernetes", "Rust"].map((s) => (
+                      <div
+                        key={s}
+                        className="flex items-center gap-1.5 text-[10px] text-text-secondary bg-brand/5 border border-brand/15 rounded-lg px-2 py-1.5"
+                      >
+                        <span className="w-2.5 h-2.5 shrink-0 flex items-center justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand/50" />
+                        </span>
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </Card>
+            </SpotlightCard>
           </ScrollReveal>
 
-          {/* Card 8: Cover Letter Builder (Col Span: 2, Row Span: 1) */}
-          <ScrollReveal className="md:col-span-2 md:row-span-1 group">
-            <Card className="border border-zinc-800/80 bg-zinc-900/10 rounded-2xl p-6 h-full flex flex-col md:flex-row justify-between gap-6 hover:border-zinc-700 hover:bg-zinc-900/25 transition-all duration-300 overflow-hidden relative">
-              <div className="flex flex-col justify-between flex-1 space-y-4">
-                <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-lg bg-zinc-800/80 flex items-center justify-center text-white mb-2">
-                    <PenTool className="w-5 h-5" />
+          {/* 04 — AI Career Copilot ★ tall 1×2 ─────────────────────────── */}
+          <ScrollReveal className="lg:row-span-2">
+            <SpotlightCard className="h-full">
+              {/* Violet shimmer for visual variety */}
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/25 to-transparent pointer-events-none z-10" />
+
+              <div className="border border-border-subtle bg-bg-card/20 rounded-2xl h-full flex flex-col hover:border-border-medium hover:bg-bg-card/45 transition-all duration-300 overflow-hidden">
+
+                {/* Chat header */}
+                <div className="px-5 py-3.5 border-b border-border-subtle/80 bg-bg-base/50 shrink-0 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                      <MessagesSquare className="w-3 h-3 text-text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-text-primary leading-none">AI Copilot</p>
+                      <p className="text-[9px] text-text-muted mt-0.5">AXIOM AI · Always on</p>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold text-white">Cover Letter Builder</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-normal max-w-sm">
-                    Generate targeted, persuasive cover letters matching job descriptions in under a minute.
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[9px] text-text-muted">Live</span>
+                  </div>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 p-4 flex flex-col justify-end gap-3 overflow-hidden">
+                  {CHAT_MSGS.map((msg, i) => (
+                    <motion.div
+                      key={i}
+                      className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, delay: i * 0.09 }}
+                    >
+                      <div
+                        className={`max-w-[86%] rounded-xl px-3 py-2 text-[11px] leading-snug ${
+                          msg.from === "user"
+                            ? "bg-bg-elevated text-text-primary border border-border-subtle font-medium"
+                            : "bg-bg-card text-text-secondary border border-border-subtle/70 rounded-tl-none"
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {/* Typing indicator */}
+                  <div className="flex gap-1 pl-1">
+                    {[0, 120, 240].map((d) => (
+                      <span
+                        key={d}
+                        className="w-1.5 h-1.5 rounded-full bg-border-strong animate-bounce"
+                        style={{ animationDelay: `${d}ms` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Input bar */}
+                <div className="px-4 py-3 border-t border-border-subtle/80 bg-bg-base/30 shrink-0 flex items-center gap-2">
+                  <div className="flex-1 h-8 bg-bg-elevated/60 border border-border-subtle/60 rounded-lg px-3 flex items-center">
+                    <span className="text-[10px] text-text-muted">Ask anything…</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-brand/15 border border-brand/25 flex items-center justify-center shrink-0">
+                    <Send className="w-3 h-3 text-brand" />
+                  </div>
+                </div>
+              </div>
+            </SpotlightCard>
+          </ScrollReveal>
+
+          {/* 05 — Application Tracker ────────────────────────────────────── */}
+          <ScrollReveal className="lg:col-span-2">
+            <SpotlightCard className="h-full">
+              <div className="border border-border-subtle bg-bg-card/20 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-border-medium hover:bg-bg-card/45 transition-all duration-300">
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                      <KanbanSquare className="w-3 h-3 text-text-secondary" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Tracker</span>
+                  </div>
+                  <Link href="/signup" className="group/link flex items-center gap-1 text-[10px] text-text-muted hover:text-text-primary transition-colors font-medium">
+                    Open Board <ArrowRight className="w-3 h-3 group-hover/link:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+
+                <h3 className="text-sm font-bold text-text-primary">Application Pipeline</h3>
+
+                {/* Funnel stages */}
+                <div className="flex items-stretch gap-1.5">
+                  {PIPELINE.map(({ label, count, bg, text }, i) => (
+                    <div key={label} className="flex items-center flex-1 gap-1.5">
+                      <motion.div
+                        className={`flex-1 flex flex-col items-center gap-1.5 ${bg} rounded-xl py-4 px-2`}
+                        initial={{ opacity: 0, scale: 0.92 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <span className={`text-2xl font-extrabold tabular-nums leading-none ${text}`}>{count}</span>
+                        <span className={`text-[8px] font-semibold uppercase tracking-wider ${text} opacity-85 text-center`}>{label}</span>
+                      </motion.div>
+                      {i < PIPELINE.length - 1 && (
+                        <ChevronRight className="w-3 h-3 text-border-medium shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-[10px] text-text-muted">
+                  38% screening rate · 47% interview-to-offer conversion
+                </p>
+              </div>
+            </SpotlightCard>
+          </ScrollReveal>
+
+          {/* 06 — Analytics Dashboard ────────────────────────────────────── */}
+          <ScrollReveal className="lg:col-span-2">
+            <SpotlightCard className="h-full">
+              <div
+                ref={analyticsRef}
+                className="border border-border-subtle bg-bg-card/20 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-border-medium hover:bg-bg-card/45 transition-all duration-300"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                      <BarChart3 className="w-3 h-3 text-text-secondary" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Analytics</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2.5 py-0.5">
+                    +18% this month
+                  </span>
+                </div>
+
+                {/* 3 metric pills */}
+                <div className="grid grid-cols-3 gap-3">
+                  {METRICS.map(({ label, value, delta }) => (
+                    <div key={label} className="bg-bg-base/60 border border-border-subtle rounded-xl p-3 text-center">
+                      <p className="text-lg font-extrabold text-text-primary tabular-nums leading-none">{value}</p>
+                      <p className="text-[8px] text-text-muted mt-0.5 leading-snug">{label}</p>
+                      <p className="text-[9px] text-emerald-400 font-bold mt-1">{delta}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Area chart */}
+                <div className="h-14 w-full">
+                  <AreaChart inView={analyticsInView} />
+                </div>
+              </div>
+            </SpotlightCard>
+          </ScrollReveal>
+
+          {/* 07 — Interview Prep ─────────────────────────────────────────── */}
+          <ScrollReveal>
+            <SpotlightCard className="h-full">
+              <div className="border border-border-subtle bg-bg-card/20 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-border-medium hover:bg-bg-card/45 transition-all duration-300">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                    <HelpCircle className="w-3 h-3 text-text-secondary" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Interview Prep</span>
+                </div>
+
+                {/* Featured question */}
+                <div className="flex-1 flex flex-col justify-center gap-1.5 py-2">
+                  <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Question 3 of 10</p>
+                  <p className="text-sm text-text-primary font-medium leading-snug">
+                    "Tell me about a system you designed under tight deadline pressure."
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-zinc-500 group-hover:text-white transition-colors duration-300 font-semibold cursor-pointer">
-                  <span>Build Cover Letter</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </div>
 
-              {/* Graphic Mockup: side settings + document page preview */}
-              <div className="w-full md:w-56 h-32 md:h-full bg-zinc-950/40 rounded-xl border border-zinc-900 p-4 shrink-0 flex flex-col justify-between space-y-2 overflow-hidden">
-                <div className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-900 pb-1 flex justify-between">
-                  <span>Autofill settings</span>
-                  <Sliders className="w-2.5 h-2.5 text-zinc-650" />
-                </div>
-                
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex justify-between items-center text-[7px] text-zinc-400">
-                    <span>Target:</span> <span className="font-mono text-white">Vercel</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[7px] text-zinc-400">
-                    <span>Length:</span> <span className="font-mono text-white">Concise</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[7px] text-zinc-400">
-                    <span>Tone:</span> <span className="font-mono text-white">Professional</span>
+                {/* Metadata row */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-2 py-0.5">
+                    Medium
+                  </span>
+                  <span className="text-[9px] font-bold text-text-secondary bg-bg-card/80 border border-border-subtle rounded px-2 py-0.5 flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" /> 2:45
+                  </span>
+                  <div className="flex-1 h-1 bg-bg-elevated rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-border-strong rounded-full"
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "30%" }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                    />
                   </div>
                 </div>
               </div>
-            </Card>
+            </SpotlightCard>
+          </ScrollReveal>
+
+          {/* 08 — Cover Letter Builder ───────────────────────────────────── */}
+          <ScrollReveal className="lg:col-span-2">
+            <SpotlightCard className="h-full">
+              <div className="border border-border-subtle bg-bg-card/20 rounded-2xl p-6 h-full flex flex-col lg:flex-row gap-5 hover:border-border-medium hover:bg-bg-card/45 transition-all duration-300 overflow-hidden">
+
+                {/* Left: settings pane */}
+                <div className="flex flex-col justify-between shrink-0 lg:w-36 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center">
+                        <PenTool className="w-3 h-3 text-text-secondary" />
+                      </div>
+                      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">Generator</span>
+                    </div>
+                    <h3 className="text-sm font-bold text-text-primary">Cover Letter</h3>
+                  </div>
+
+                  <div className="bg-bg-base/70 border border-border-subtle/50 rounded-xl p-3 space-y-2.5 flex-1">
+                    <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+                      <Sliders className="w-2.5 h-2.5 text-text-muted" />
+                      <span className="text-[8px] text-text-muted font-semibold uppercase tracking-wider">Settings</span>
+                    </div>
+                    {([["Target", "Vercel"], ["Tone", "Professional"], ["Length", "Concise"]] as const).map(([k, v]) => (
+                      <div key={k} className="flex justify-between text-[9px]">
+                        <span className="text-text-muted">{k}</span>
+                        <span className="text-text-secondary font-medium">{v}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Link href="/signup" className="group/link flex items-center gap-1 text-[10px] text-text-muted hover:text-text-primary transition-colors font-medium w-fit">
+                    Generate <ArrowRight className="w-3 h-3 group-hover/link:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+
+                {/* Right: letter preview */}
+                <div className="flex-1 bg-bg-base/60 border border-border-subtle/50 rounded-xl p-4 overflow-hidden relative min-h-[140px]">
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[9px] font-semibold border-b border-border-subtle pb-2 mb-3">
+                      <span className="text-text-muted uppercase tracking-widest">Generated draft</span>
+                      <span className="text-brand">Done in 23s</span>
+                    </div>
+                    {LETTER_LINES.map((line, i) => (
+                      <motion.p
+                        key={i}
+                        className={`text-[10px] leading-relaxed ${line.op}`}
+                        initial={{ opacity: 0, x: -4 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.08 + i * 0.07 }}
+                      >
+                        {line.t}
+                      </motion.p>
+                    ))}
+                  </div>
+                  {/* Fade bottom */}
+                  <div className="absolute bottom-8 inset-x-0 h-12 bg-gradient-to-t from-bg-base/60 to-transparent pointer-events-none" />
+                  {/* Progress bar at very bottom */}
+                  <div className="absolute bottom-3 left-4 right-4 space-y-1">
+                    <div className="h-[3px] bg-bg-elevated rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-brand to-orange-400"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: "100%" }}
+                        transition={{ duration: 1.8, ease: "easeOut", delay: 0.6 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </SpotlightCard>
           </ScrollReveal>
 
         </div>
+
+        {/* Bottom CTA */}
+        <ScrollReveal>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-7 sm:p-9 rounded-2xl border border-border-subtle bg-bg-card/30">
+            <div className="text-center sm:text-left space-y-1">
+              <p className="text-[10px] font-semibold text-text-muted uppercase tracking-[0.15em]">Everything you need</p>
+              <h3 className="text-xl font-bold text-text-primary">All tools. One platform.</h3>
+              <p className="text-sm text-text-secondary">Resume, matching, copilot, prep — fully connected, free to start.</p>
+            </div>
+            <Link href="/signup" className="shrink-0 w-full sm:w-auto">
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <div className="w-full sm:w-auto flex items-center justify-center gap-2 h-11 px-7 rounded-md bg-brand hover:bg-brand-hover text-black font-semibold text-sm transition-colors duration-200 shadow-[0_0_20px_rgba(249,115,22,0.25)] hover:shadow-[0_0_28px_rgba(249,115,22,0.4)] cursor-pointer">
+                  Explore all features <ArrowRight className="w-4 h-4" />
+                </div>
+              </motion.div>
+            </Link>
+          </div>
+        </ScrollReveal>
+
       </div>
     </section>
   );

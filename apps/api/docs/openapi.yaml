@@ -1,0 +1,1458 @@
+openapi: 3.1.0
+info:
+  title: AXIOM API
+  version: 0.8.0
+  description: |
+    AXIOM REST API.
+
+    Phase 7 covers the resume lifecycle:
+      1. Upload (`POST /api/resumes`) — stores PDF/DOCX in S3/MinIO and kicks off background parsing.
+      2. List / read (`GET /api/resumes`, `GET /api/resumes/{id}`) — returns resumes with short-lived presigned URLs.
+      3. Delete (`DELETE /api/resumes/{id}`) — removes the resume and its S3 object.
+      4. ATS analyze (`POST /api/resumes/{id}/analyze`) — scores a parsed resume against a job description.
+
+    Phase 8 adds the job search + scraping pipeline:
+      1. Search (`GET /api/jobs`) — paginated keyword + filter search backed by Postgres ILIKE.
+      2. Detail (`GET /api/jobs/{id}`) — single job by ID.
+      3. Save / unsave (`POST/DELETE /api/jobs/{id}/save`, `GET /api/jobs/saved`).
+      4. Scrape (`POST /api/jobs/scrape`) — admin-only orchestration trigger for Internshala / Unstop / Naukri scrapers (calls AI service which owns the adapter framework).
+servers:
+  - url: http://localhost:4000
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: Resumes
+    description: Resume upload, retrieval, and ATS analysis.
+  - name: Jobs
+    description: Job search, save/unsave, and admin-only scrape trigger.
+  - name: Interview
+    description: AI-generated interview question sets with session persistence and progress marks.
+  - name: Roadmap
+    description: AI-generated week-by-week career roadmaps with step progress tracking and versioning.
+  - name: Analytics
+    description: Aggregated job-search performance metrics with Redis caching and nightly materialized-view refresh.
+  - name: Notifications
+    description: In-app notifications (real-time via Socket.IO) and job alert subscriptions with frequency caps.
+
+paths:
+  /api/resumes:
+    post:
+      tags: [Resumes]
+      summary: Upload a resume (PDF or DOCX, max 5 MB)
+      operationId: uploadResume
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [resume]
+              properties:
+                resume:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Resume created; parsing runs in the background.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resume: { $ref: "#/components/schemas/Resume" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413":
+          description: File too large (>5 MB).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "415":
+          description: Unsupported media type (only PDF / DOCX accepted).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    get:
+      tags: [Resumes]
+      summary: List the authenticated user's resumes
+      operationId: listResumes
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resumes:
+                    type: array
+                    items: { $ref: "#/components/schemas/Resume" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/resumes/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResumeId"
+    get:
+      tags: [Resumes]
+      summary: Fetch a single resume by ID
+      operationId: getResume
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resume: { $ref: "#/components/schemas/Resume" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Resumes]
+      summary: Delete a resume (also removes the S3 object)
+      operationId: deleteResume
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Resume deleted" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/resumes/{id}/analyze:
+    parameters:
+      - $ref: "#/components/parameters/ResumeId"
+    post:
+      tags: [Resumes]
+      summary: Run ATS analysis against a job description (Phase 7)
+      description: |
+        Scores the parsed resume against a job description using keyword match,
+        completeness, readability, and formatting heuristics. The result is
+        persisted on `Resume.atsScore` and returned in the response.
+
+        Requires the resume to already be parsed — if parsing hasn't completed
+        yet, returns 422 and the client should retry after a short delay.
+      operationId: analyzeResume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobDescription]
+              properties:
+                jobDescription:
+                  type: string
+                  minLength: 20
+                  maxLength: 10000
+                  description: Plain-text job description to analyze against.
+                  example: |
+                    We are hiring a Senior Backend Engineer with strong Python and
+                    FastAPI experience to build production-grade APIs. Must have
+                    PostgreSQL, Redis, Kafka, and AWS experience.
+      responses:
+        "200":
+          description: ATS analysis complete.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resume: { $ref: "#/components/schemas/Resume" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: Validation failed or resume not yet parsed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+        "503":
+          description: AI service unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ── Phase 8: Jobs ──────────────────────────────────────────────────────────
+  /api/jobs:
+    get:
+      tags: [Jobs]
+      summary: Search jobs with filters + pagination
+      operationId: searchJobs
+      parameters:
+        - { in: query, name: q,               schema: { type: string,  maxLength: 200 }, description: Free-text search over title/company/description. }
+        - { in: query, name: location,        schema: { type: string,  maxLength: 120 } }
+        - { in: query, name: remote,          schema: { type: boolean } }
+        - { in: query, name: jobType,         schema: { type: string, enum: [FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, FREELANCE] } }
+        - { in: query, name: experienceLevel, schema: { type: string, enum: [ENTRY, MID, SENIOR, LEAD, EXECUTIVE] } }
+        - { in: query, name: source,          schema: { type: string, enum: [internshala, unstop, naukri, manual] } }
+        - { in: query, name: salaryMin,       schema: { type: integer, minimum: 0 } }
+        - { in: query, name: salaryMax,       schema: { type: integer, minimum: 0 } }
+        - { in: query, name: skills,          schema: { type: string }, description: "Comma-separated list of skill names." }
+        - { in: query, name: page,            schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: pageSize,        schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+        - { in: query, name: sortBy,          schema: { type: string, enum: [date, match], default: date } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /api/jobs/recommended:
+    get:
+      tags: [Jobs]
+      summary: Get recommended jobs based on user's active resume
+      operationId: getRecommendedJobs
+      parameters:
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, default: 20 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Job" }
+        "400":
+          description: Resume not uploaded or active.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/jobs/{id}/match:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    get:
+      tags: [Jobs]
+      summary: Get match score and details for a single job against user's active resume
+      operationId: matchSingleJob
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+        "400":
+          description: Resume not uploaded or active.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/jobs/saved:
+    get:
+      tags: [Jobs]
+      summary: List the authenticated user's saved jobs
+      operationId: listSavedJobs
+      parameters:
+        - { in: query, name: page,     schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: pageSize, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobSearchResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/jobs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    get:
+      tags: [Jobs]
+      summary: Get a single job by ID
+      operationId: getJob
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { job: { $ref: "#/components/schemas/Job" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/jobs/{id}/save:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      tags: [Jobs]
+      summary: Save a job for the authenticated user
+      operationId: saveJob
+      responses:
+        "201":
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Job saved" }
+                  jobId:   { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Jobs]
+      summary: Unsave a job (idempotent)
+      operationId: unsaveJob
+      responses:
+        "200":
+          description: Unsaved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Job unsaved" }
+                  jobId:   { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/jobs/scrape:
+    post:
+      tags: [Jobs]
+      summary: Trigger a scrape run (admin only)
+      description: |
+        Calls the AI service to scrape `source` for `query`, normalizes the
+        results, and upserts into the `jobs` table. Idempotent by unique
+        `sourceUrl` — re-runs update existing rows.
+      operationId: runScrape
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source]
+              properties:
+                source:   { type: string, enum: [internshala, unstop, naukri] }
+                query:    { type: string, maxLength: 200, default: "" }
+                maxPages: { type: integer, minimum: 1, maximum: 10,  default: 2 }
+                maxJobs:  { type: integer, minimum: 1, maximum: 500, default: 100 }
+      responses:
+        "200":
+          description: Scrape complete.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary: { $ref: "#/components/schemas/ScrapeRunSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+        "503":
+          description: Scraper service unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/applications:
+    post:
+      tags: [Applications]
+      summary: Track a new job application
+      description: Create a tracker entry for a specific job with initial status.
+      operationId: createApplication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobId]
+              properties:
+                jobId:  { type: string, example: cmq111j0000001tyi0aaaaaaa1 }
+                status: { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN], default: SAVED }
+                note:   { type: string, maxLength: 1000, example: "Bookmarked this job" }
+      responses:
+        "201":
+          description: Tracker entry created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application: { $ref: "#/components/schemas/Application" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+    get:
+      tags: [Applications]
+      summary: List user applications
+      description: Retrieve user applications with status and date filters.
+      operationId: listApplications
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+        - name: dateFrom
+          in: query
+          required: false
+          schema: { type: string, example: "2026-01-01" }
+        - name: dateTo
+          in: query
+          required: false
+          schema: { type: string, example: "2026-06-01" }
+      responses:
+        "200":
+          description: Applications list returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  applications:
+                    type: array
+                    items: { $ref: "#/components/schemas/Application" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /api/applications/stats:
+    get:
+      tags: [Applications]
+      summary: Retrieve applications analytics
+      description: Get metrics including application counts per status, success rate, and average days to interview.
+      operationId: getStats
+      responses:
+        "200":
+          description: Aggregated analytics stats returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats: { $ref: "#/components/schemas/ApplicationStats" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/applications/{id}:
+    get:
+      tags: [Applications]
+      summary: Get application details
+      description: Retrieve details of a specific application with its full transition timeline history.
+      operationId: getApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Application detail returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application: { $ref: "#/components/schemas/Application" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    patch:
+      tags: [Applications]
+      summary: Update application details or transition status
+      description: Change application status, update cover letter or general notes. State machine checks will reject illegal transitions.
+      operationId: updateApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:      { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+                notes:       { type: string, maxLength: 5000, example: "Spoke to recruiter" }
+                coverLetter: { type: string, maxLength: 15000 }
+                note:        { type: string, maxLength: 1000, example: "Scheduled HR screen" }
+      responses:
+        "200":
+          description: Application updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application: { $ref: "#/components/schemas/Application" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: Invalid status transition or parameter limit violation.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+    delete:
+      tags: [Applications]
+      summary: Delete an application tracker
+      description: Remove an application entry.
+      operationId: deleteApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Application deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Application deleted successfully" }
+                  id:      { type: string, example: cmaaaa0000000000000000000 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ── Interview ──────────────────────────────────────────────────────────────────
+
+  /api/interview/categories:
+    get:
+      tags: [Interview]
+      summary: List available interview question categories
+      operationId: listInterviewCategories
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: Category list with topic examples
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:     { type: string, example: dsa }
+                        topics: { type: array, items: { type: string } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/interview/generate:
+    post:
+      tags: [Interview]
+      summary: Generate interview questions tailored to a job title and difficulty
+      operationId: generateInterviewQuestions
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobTitle]
+              properties:
+                jobTitle:       { type: string, maxLength: 200, example: "Senior Backend Engineer" }
+                jobDescription: { type: string, maxLength: 8000, example: "Build scalable REST APIs…" }
+                difficulty:     { type: string, enum: [easy, medium, hard], default: medium }
+                sections:
+                  type: array
+                  items: { type: string, enum: [dsa, system_design, sql, behavioral, coding, language_specific] }
+                  maxItems: 6
+                  description: Leave empty for auto-selection by role type
+                count:          { type: integer, minimum: 1, maximum: 30, default: 10 }
+      responses:
+        "201":
+          description: Questions generated and session persisted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:   { type: object, properties: { id: { type: string } } }
+                  questions:
+                    type: array
+                    items: { $ref: "#/components/schemas/InterviewQuestion" }
+                  cached:    { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "502": { description: AI service unavailable }
+
+  /api/interview/sessions:
+    get:
+      tags: [Interview]
+      summary: List the current user's interview sessions (most recent 20)
+      operationId: listInterviewSessions
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: Session list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items: { $ref: "#/components/schemas/InterviewSessionSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/interview/sessions/{sessionId}:
+    get:
+      tags: [Interview]
+      summary: Get a session with full questions and marks
+      operationId: getInterviewSession
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Session detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session: { $ref: "#/components/schemas/InterviewSessionDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Interview]
+      summary: Delete an interview session
+      operationId: deleteInterviewSession
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/interview/sessions/{sessionId}/marks:
+    patch:
+      tags: [Interview]
+      summary: Persist "got it" / "needs review" marks for a session
+      operationId: saveInterviewMarks
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [marks]
+              properties:
+                marks:
+                  type: object
+                  description: Map of question index (string) to mark value
+                  additionalProperties:
+                    type: string
+                    enum: [correct, review]
+                    nullable: true
+                  example: { "0": "correct", "2": "review", "5": null }
+      responses:
+        "200":
+          description: Marks saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:    { type: string }
+                  marks: { type: object }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ── Phase 15 — Career Roadmap ──────────────────────────────────────────────
+  #
+  # Versioning policy:
+  #   Each call to POST /api/roadmap/generate for the same (userId, targetRole)
+  #   increments the `version` counter and creates a NEW CareerRoadmap row.
+  #   Previous versions are preserved and remain accessible via GET /api/roadmap.
+  #   The frontend should surface the version number so users can compare plans.
+
+  /api/roadmap/generate:
+    post:
+      tags: [Roadmap]
+      summary: Generate a week-by-week career roadmap
+      operationId: generateRoadmap
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetRole]
+              properties:
+                targetRole: { type: string, example: "Senior Backend Engineer" }
+                gapReport:  { type: object, description: "Phase 11 skill gap report (optional)" }
+                weeks:      { type: integer, minimum: 4, maximum: 52, default: 12 }
+      responses:
+        "201":
+          description: Roadmap created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roadmap: { $ref: "#/components/schemas/RoadmapDetail" }
+                  isNew:   { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "502": { description: AI service unavailable }
+
+  /api/roadmap:
+    get:
+      tags: [Roadmap]
+      summary: List all roadmaps for the authenticated user
+      operationId: listRoadmaps
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Roadmap list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roadmaps:
+                    type: array
+                    items: { $ref: "#/components/schemas/RoadmapSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/roadmap/{roadmapId}:
+    get:
+      tags: [Roadmap]
+      summary: Get roadmap detail (steps + progress)
+      operationId: getRoadmap
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: roadmapId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Roadmap detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roadmap: { $ref: "#/components/schemas/RoadmapDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Roadmap]
+      summary: Delete a roadmap
+      operationId: deleteRoadmap
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: roadmapId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Roadmap deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/roadmap/{roadmapId}/steps/{week}:
+    patch:
+      tags: [Roadmap]
+      summary: Mark a weekly step as done or undone
+      operationId: markRoadmapStep
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: roadmapId, in: path, required: true, schema: { type: string } }
+        - { name: week, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [done]
+              properties:
+                done: { type: boolean }
+      responses:
+        "200":
+          description: Progress updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  progress: { type: object, additionalProperties: { type: boolean } }
+                  stats:
+                    type: object
+                    properties:
+                      completedWeeks: { type: integer }
+                      totalWeeks:     { type: integer }
+                      pct:            { type: integer }
+                      etaWeeks:       { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ── Phase 16 — Analytics ───────────────────────────────────────────────────
+
+  /api/analytics/overview:
+    get:
+      tags: [Analytics]
+      summary: KPI overview (applications, interviews, offers, ATS score)
+      operationId: getAnalyticsOverview
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: range, in: query, schema: { type: integer, enum: [30, 90, 0] }, description: "Days to look back (0 = all time)" }
+      responses:
+        "200":
+          description: Overview data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnalyticsOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/analytics/ats-trend:
+    get:
+      tags: [Analytics]
+      summary: ATS score history per resume version
+      operationId: getAtsTrend
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: ATS trend points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trend:
+                    type: array
+                    items: { $ref: "#/components/schemas/AtsTrendPoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/analytics/applications-monthly:
+    get:
+      tags: [Analytics]
+      summary: Monthly applications / interviews / offers counts
+      operationId: getApplicationsMonthly
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: range, in: query, schema: { type: integer, enum: [30, 90, 0] } }
+      responses:
+        "200":
+          description: Monthly breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  monthly:
+                    type: array
+                    items: { $ref: "#/components/schemas/MonthlyPoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/analytics/skills-demand:
+    get:
+      tags: [Analytics]
+      summary: Top 20 skills from saved + applied jobs
+      operationId: getSkillsDemand
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Skill demand data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skills:
+                    type: array
+                    items: { $ref: "#/components/schemas/SkillDemandPoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/analytics/funnel:
+    get:
+      tags: [Analytics]
+      summary: Application funnel (saved → applied → interview → offer)
+      operationId: getApplicationFunnel
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Funnel stage counts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  funnel:
+                    type: array
+                    items: { $ref: "#/components/schemas/FunnelStage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # ── Phase 17 — Notifications & Job Alerts ─────────────────────────────────
+
+  /api/notifications:
+    get:
+      tags: [Notifications]
+      summary: List in-app notifications (most recent 50)
+      operationId: listNotifications
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Notification list with unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications: { type: array, items: { $ref: "#/components/schemas/AppNotification" } }
+                  unreadCount:   { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      operationId: markAllNotificationsRead
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: All marked read }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/notifications/{id}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark a single notification as read
+      operationId: markNotificationRead
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Notification updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notification: { $ref: "#/components/schemas/AppNotification" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/notifications/alerts:
+    post:
+      tags: [Notifications]
+      summary: Create a job alert subscription
+      operationId: createJobAlert
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:      { type: string, example: "Remote React jobs" }
+                filters:
+                  type: object
+                  properties:
+                    keywords: { type: string }
+                    location: { type: string }
+                    jobType:  { type: string }
+                    remote:   { type: boolean }
+                frequency: { type: string, enum: [instant, daily, weekly], default: daily }
+      responses:
+        "201":
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alert: { $ref: "#/components/schemas/JobAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    get:
+      tags: [Notifications]
+      summary: List job alert subscriptions
+      operationId: listJobAlerts
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Alert list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alerts: { type: array, items: { $ref: "#/components/schemas/JobAlert" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/notifications/alerts/{alertId}:
+    patch:
+      tags: [Notifications]
+      summary: Update a job alert (rename, toggle active, change frequency)
+      operationId: updateJobAlert
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: alertId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:      { type: string }
+                frequency: { type: string, enum: [instant, daily, weekly] }
+                active:    { type: boolean }
+      responses:
+        "200":
+          description: Alert updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alert: { $ref: "#/components/schemas/JobAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Notifications]
+      summary: Delete a job alert
+      operationId: deleteJobAlert
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: alertId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Alert deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  parameters:
+    ResumeId:
+      name: id
+      in: path
+      required: true
+      description: Resume CUID.
+      schema: { type: string, example: cmqmk6ho00002tyi0w4hl2pph }
+    JobId:
+      name: id
+      in: path
+      required: true
+      description: Job CUID.
+      schema: { type: string, example: cmqxxx0000abctyi0aaaa1111 }
+
+  responses:
+    BadRequest:
+      description: Bad request (e.g. missing file).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing or invalid access token.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Authenticated user does not own this resource.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string, example: "Resume not found" }
+      required: [error]
+
+    ValidationError:
+      type: object
+      properties:
+        error: { type: string, example: "Validation failed" }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:   { type: string, example: jobDescription }
+              message: { type: string, example: "Job description must be at least 20 characters" }
+      required: [error]
+
+    Resume:
+      type: object
+      required: [id, userId, fileName, fileUrl, fileType, version, createdAt, updatedAt]
+      properties:
+        id:          { type: string, example: cmqmk6ho00002tyi0w4hl2pph }
+        userId:      { type: string }
+        fileName:    { type: string, example: cv.pdf }
+        fileUrl:     { type: string, format: uri }
+        fileType:    { type: string, enum: [pdf, docx] }
+        version:     { type: integer, example: 1 }
+        parsedData:
+          oneOf:
+            - { $ref: "#/components/schemas/ParsedResume" }
+            - { type: "null" }
+        atsScore:
+          oneOf:
+            - { $ref: "#/components/schemas/ATSScore" }
+            - { type: "null" }
+        downloadUrl: { type: string, format: uri, description: Presigned download URL (short-lived). }
+        createdAt:   { type: string, format: date-time }
+        updatedAt:   { type: string, format: date-time }
+
+    ParsedResume:
+      type: object
+      properties:
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              name:        { type: string }
+              proficiency:
+                oneOf:
+                  - { type: string, enum: [beginner, intermediate, advanced, expert] }
+                  - { type: "null" }
+        experience:
+          type: array
+          items:
+            type: object
+            properties:
+              company:     { type: string }
+              title:       { type: string }
+              startDate:   { type: string }
+              endDate:     { type: string }
+              current:     { type: boolean }
+              description: { type: string }
+              skills:
+                type: array
+                items: { type: string }
+        education:
+          type: array
+          items:
+            type: object
+            properties:
+              institution: { type: string }
+              degree:      { type: string }
+              field:       { type: string }
+              startYear:   { type: integer }
+              endYear:     { oneOf: [{ type: integer }, { type: "null" }] }
+              gpa:         { oneOf: [{ type: number }, { type: "null" }] }
+        projects:
+          type: array
+          items: { type: object }
+        certifications:
+          type: array
+          items: { type: string }
+        summary:  { oneOf: [{ type: string }, { type: "null" }] }
+        email:    { oneOf: [{ type: string }, { type: "null" }] }
+        phone:    { oneOf: [{ type: string }, { type: "null" }] }
+        location: { oneOf: [{ type: string }, { type: "null" }] }
+
+    ATSScore:
+      type: object
+      required: [overall, keywordMatch, completeness, readability, formatting, strengths, missingSkills, suggestions]
+      properties:
+        overall:       { type: integer, minimum: 0, maximum: 100, example: 79 }
+        keywordMatch:  { type: integer, minimum: 0, maximum: 100, example: 76 }
+        completeness:  { type: integer, minimum: 0, maximum: 100, example: 100 }
+        readability:   { type: integer, minimum: 0, maximum: 100, example: 90 }
+        formatting:    { type: integer, minimum: 0, maximum: 100, example: 100 }
+        strengths:
+          type: array
+          items: { type: string }
+          example: ["Strong keyword alignment (13 matched terms)"]
+        missingSkills:
+          type: array
+          items: { type: string }
+          example: ["kafka", "rabbitmq"]
+        suggestions:
+          type: array
+          items: { type: string }
+          example: ["Add a projects section to showcase practical experience"]
+
+    # ── Phase 8: Jobs ────────────────────────────────────────────────────────
+    Job:
+      type: object
+      required: [id, title, company, location, remote, jobType, experienceLevel, source, sourceUrl, postedAt, createdAt, updatedAt]
+      properties:
+        id:               { type: string,  example: cmq111j0000001tyi0aaaaaaa1 }
+        title:            { type: string,  example: "Senior Backend Engineer" }
+        company:          { type: string,  example: "Bluefox Systems" }
+        companyLogoUrl:   { oneOf: [{ type: string, format: uri }, { type: "null" }] }
+        location:         { type: string,  example: "Bengaluru, Karnataka" }
+        remote:           { type: boolean, example: false }
+        jobType:          { type: string, enum: [FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, FREELANCE] }
+        experienceLevel:  { type: string, enum: [ENTRY, MID, SENIOR, LEAD, EXECUTIVE] }
+        salaryMin:        { oneOf: [{ type: integer, minimum: 0 }, { type: "null" }] }
+        salaryMax:        { oneOf: [{ type: integer, minimum: 0 }, { type: "null" }] }
+        currency:         { type: string, example: INR }
+        description:      { type: string }
+        requiredSkills:
+          type: array
+          items: { type: string }
+          example: [python, fastapi, postgresql]
+        niceToHaveSkills:
+          type: array
+          items: { type: string }
+          example: [kafka, redis]
+        source:           { type: string, enum: [internshala, unstop, naukri, manual] }
+        sourceUrl:        { type: string, format: uri }
+        postedAt:         { type: string, format: date-time }
+        expiresAt:        { oneOf: [{ type: string, format: date-time }, { type: "null" }] }
+        createdAt:        { type: string, format: date-time }
+        updatedAt:        { type: string, format: date-time }
+
+    JobSearchResult:
+      type: object
+      required: [jobs, total, page, pageSize]
+      properties:
+        jobs:
+          type: array
+          items: { $ref: "#/components/schemas/Job" }
+        total:    { type: integer, minimum: 0, example: 247 }
+        page:     { type: integer, minimum: 1, example: 1 }
+        pageSize: { type: integer, minimum: 1, example: 20 }
+
+    ScrapeRunSummary:
+      type: object
+      required: [source, fetched, inserted, updated, skipped, errors, durationMs]
+      properties:
+        source:     { type: string, enum: [internshala, unstop, naukri] }
+        fetched:    { type: integer, example: 18 }
+        inserted:   { type: integer, example: 14 }
+        updated:    { type: integer, example: 4 }
+        skipped:    { type: integer, example: 0 }
+        errors:     { type: integer, example: 0 }
+        durationMs: { type: integer, example: 4321 }
+
+    Application:
+      type: object
+      required: [id, userId, jobId, status, timeline, createdAt, updatedAt]
+      properties:
+        id:          { type: string, example: cmaaaa0000000000000000000 }
+        userId:      { type: string }
+        jobId:       { type: string }
+        status:      { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+        coverLetter: { type: string }
+        notes:       { type: string }
+        appliedAt:   { oneOf: [{ type: string, format: date-time }, { type: "null" }] }
+        timeline:
+          type: array
+          items: { $ref: "#/components/schemas/ApplicationTimelineEntry" }
+        job:         { $ref: "#/components/schemas/Job" }
+        createdAt:   { type: string, format: date-time }
+        updatedAt:   { type: string, format: date-time }
+
+    ApplicationTimelineEntry:
+      type: object
+      required: [status, at, note]
+      properties:
+        status: { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+        at:     { type: string, format: date-time }
+        note:   { type: string }
+
+    ApplicationStats:
+      type: object
+      required: [counts, successRate, avgTimeToInterviewDays]
+      properties:
+        counts:
+          type: object
+          properties:
+            SAVED:               { type: integer }
+            APPLIED:             { type: integer }
+            OA_RECEIVED:         { type: integer }
+            INTERVIEW_SCHEDULED: { type: integer }
+            OFFER_RECEIVED:      { type: integer }
+            REJECTED:            { type: integer }
+            WITHDRAWN:           { type: integer }
+        successRate:            { type: number, format: float, example: 12.5 }
+        avgTimeToInterviewDays: { type: number, format: float, example: 8.3 }
+
+    RoadmapStep:
+      type: object
+      required: [week, skill, tier, resources, estimated_hours]
+      properties:
+        week:            { type: integer, example: 1 }
+        skill:           { type: string, example: "Docker" }
+        tier:            { type: string, enum: [must_have, should_have, nice_to_have] }
+        resources:       { type: array, items: { type: string } }
+        estimated_hours: { type: integer, example: 20 }
+
+    RoadmapSummary:
+      type: object
+      properties:
+        id:         { type: string }
+        title:      { type: string }
+        targetRole: { type: string, example: "Senior Backend Engineer" }
+        weeks:      { type: integer, example: 12 }
+        version:    { type: integer, example: 1 }
+        createdAt:  { type: string, format: date-time }
+        stepCount:  { type: integer }
+        doneCount:  { type: integer }
+        pct:        { type: integer, example: 25 }
+
+    RoadmapDetail:
+      allOf:
+        - $ref: "#/components/schemas/RoadmapSummary"
+        - type: object
+          properties:
+            content:
+              type: array
+              items: { $ref: "#/components/schemas/RoadmapStep" }
+            progress:
+              type: object
+              description: Map of week number (string) → true when completed
+              additionalProperties: { type: boolean }
+
+    InterviewQuestion:
+      type: object
+      required: [category, question, expected_answer_hint, difficulty]
+      properties:
+        category:             { type: string, enum: [dsa, system_design, sql, behavioral, coding, language_specific] }
+        question:             { type: string, example: "How would you design a rate limiter at scale?" }
+        expected_answer_hint: { type: string, example: "Token bucket algorithm, Redis sliding window, distributed coordination." }
+        difficulty:           { type: string, enum: [easy, medium, hard] }
+
+    InterviewSessionSummary:
+      type: object
+      required: [id, jobTitle, difficulty, sections, createdAt]
+      properties:
+        id:         { type: string }
+        jobTitle:   { type: string, example: "Senior Backend Engineer" }
+        difficulty: { type: string, enum: [easy, medium, hard] }
+        sections:   { type: array, items: { type: string } }
+        createdAt:  { type: string, format: date-time }
+
+    InterviewSessionDetail:
+      allOf:
+        - $ref: "#/components/schemas/InterviewSessionSummary"
+        - type: object
+          properties:
+            questions:
+              type: array
+              items: { $ref: "#/components/schemas/InterviewQuestion" }
+            marks:
+              type: object
+              description: Map of question index → mark ("correct" | "review" | null)
+              additionalProperties:
+                type: string
+                nullable: true
+
+    # ── Phase 16 — Analytics ────────────────────────────────────────────────────
+
+    AnalyticsOverview:
+      type: object
+      properties:
+        totalApplications: { type: integer, example: 24 }
+        interviews:        { type: integer, example: 6 }
+        offers:            { type: integer, example: 2 }
+        successRate:       { type: number,  example: 8.3 }
+        avgAtsScore:       { type: integer, nullable: true, example: 78 }
+        savedJobs:         { type: integer, example: 12 }
+        roadmaps:          { type: integer, example: 2 }
+
+    AtsTrendPoint:
+      type: object
+      properties:
+        version: { type: integer, example: 2 }
+        score:   { type: integer, example: 81 }
+        date:    { type: string, format: date, example: "2026-03-15" }
+
+    MonthlyPoint:
+      type: object
+      properties:
+        month:       { type: string, example: "2026-03" }
+        applied:     { type: integer, example: 8 }
+        interviewed: { type: integer, example: 3 }
+        offered:     { type: integer, example: 1 }
+
+    SkillDemandPoint:
+      type: object
+      properties:
+        skill: { type: string, example: "TypeScript" }
+        count: { type: integer, example: 18 }
+
+    FunnelStage:
+      type: object
+      properties:
+        stage: { type: string, enum: [SAVED, APPLIED, OA_RECEIVED, INTERVIEW_SCHEDULED, OFFER_RECEIVED, REJECTED, WITHDRAWN] }
+        count: { type: integer, example: 7 }
+
+    # ── Phase 17 — Notifications ────────────────────────────────────────────────
+
+    AppNotification:
+      type: object
+      properties:
+        id:        { type: string }
+        type:      { type: string, example: JOB_ALERT }
+        payload:   { type: object }
+        readAt:    { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    JobAlert:
+      type: object
+      properties:
+        id:         { type: string }
+        name:       { type: string, example: "Remote React jobs" }
+        filters:
+          type: object
+          properties:
+            keywords: { type: string }
+            location: { type: string }
+            jobType:  { type: string }
+            remote:   { type: boolean }
+        frequency:  { type: string, enum: [instant, daily, weekly] }
+        active:     { type: boolean }
+        lastSentAt: { type: string, format: date-time, nullable: true }
+        createdAt:  { type: string, format: date-time }

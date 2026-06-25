@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
     setError("");
     setLoading(true);
     try {
-      await api.post("/api/auth/forgot-password", { email });
+      await api.post("/auth/forgot-password", { email });
       setSent(true);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
         {[300, 500, 700, 900].map((size, i) => (
           <motion.div
             key={size}
-            className="absolute rounded-full border border-zinc-800/40"
+            className="absolute rounded-full border border-border-subtle/40"
             style={{ width: size, height: size }}
             animate={{ scale: [1, 1.03, 1], opacity: [0.4, 0.15, 0.4] }}
             transition={{ duration: 4 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.6 }}
@@ -55,8 +55,8 @@ export default function ForgotPasswordPage() {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2.5 mb-10 group">
-          <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
-          <span className="font-bold text-xl tracking-tight text-white">AXIOM</span>
+          <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-bold text-xl text-black group-hover:scale-105 transition-transform">A</div>
+          <span className="font-bold text-xl tracking-tight text-text-primary">AXIOM</span>
         </Link>
 
         {!sent ? (
@@ -64,27 +64,27 @@ export default function ForgotPasswordPage() {
             {/* Icon */}
             <div className="flex justify-center">
               <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-xl">
-                  <ShieldCheck className="w-8 h-8 text-zinc-300" />
+                <div className="w-16 h-16 rounded-2xl bg-bg-elevated border border-border-subtle flex items-center justify-center shadow-xl">
+                  <ShieldCheck className="w-8 h-8 text-text-secondary" />
                 </div>
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center">
-                  <span className="text-black text-[10px] font-bold">?</span>
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-text-primary rounded-full flex items-center justify-center">
+                  <span className="text-bg-base text-[10px] font-bold">?</span>
                 </div>
               </div>
             </div>
 
             <div className="text-center space-y-1.5">
-              <h1 className="text-2xl font-bold text-white">Forgot password?</h1>
-              <p className="text-sm text-zinc-400">No worries — we&apos;ll send you reset instructions.</p>
+              <h1 className="text-2xl font-bold text-text-primary">Forgot password?</h1>
+              <p className="text-sm text-text-secondary">No worries — we&apos;ll send you reset instructions.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-zinc-300">Email</Label>
+                <Label htmlFor="email" className="text-sm font-medium text-text-secondary">Email</Label>
                 <Input
                   id="email" type="email" placeholder="you@example.com"
                   value={email} onChange={(e) => setEmail(e.target.value)} required
-                  className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-white/20 focus-visible:border-zinc-600 h-11"
+                  className="bg-bg-elevated border-border-subtle text-text-primary placeholder:text-text-muted focus-visible:ring-brand/20 focus-visible:border-border-medium h-11"
                 />
               </div>
 
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit" disabled={loading}
-                className="w-full bg-white hover:bg-zinc-100 text-black h-11 font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
+                className="w-full bg-brand hover:bg-brand-hover text-black h-11 font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export default function ForgotPasswordPage() {
               </Button>
             </form>
 
-            <Link href="/login" className="flex items-center justify-center gap-1.5 text-sm text-zinc-500 hover:text-white transition-colors">
+            <Link href="/login" className="flex items-center justify-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to login
             </Link>
@@ -130,31 +130,31 @@ export default function ForgotPasswordPage() {
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-xl"
+                className="w-16 h-16 rounded-2xl bg-bg-elevated border border-border-subtle flex items-center justify-center shadow-xl"
               >
-                <Mail className="w-8 h-8 text-white" />
+                <Mail className="w-8 h-8 text-text-primary" />
               </motion.div>
             </div>
 
             <div className="text-center space-y-1.5">
-              <h1 className="text-2xl font-bold text-white">Check your inbox</h1>
-              <p className="text-sm text-zinc-400">
+              <h1 className="text-2xl font-bold text-text-primary">Check your inbox</h1>
+              <p className="text-sm text-text-secondary">
                 We sent a 6-digit code to{" "}
-                <span className="text-white font-medium">{email}</span>
+                <span className="text-text-primary font-medium">{email}</span>
               </p>
             </div>
 
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-1.5">
+            <div className="p-4 bg-bg-card border border-border-subtle rounded-xl space-y-1.5">
               {["Check spam/junk if not visible", "Code expires in 10 minutes", "Only the latest code is valid"].map((tip) => (
-                <div key={tip} className="flex items-center gap-2 text-xs text-zinc-400">
-                  <div className="w-1 h-1 bg-zinc-600 rounded-full shrink-0" />
+                <div key={tip} className="flex items-center gap-2 text-xs text-text-secondary">
+                  <div className="w-1 h-1 bg-text-muted rounded-full shrink-0" />
                   {tip}
                 </div>
               ))}
             </div>
 
             <Link href={`/verify-otp?email=${encodeURIComponent(email)}&mode=reset`} className="block">
-              <Button className="w-full bg-white hover:bg-zinc-100 text-black h-11 font-semibold flex items-center justify-center gap-2 group">
+              <Button className="w-full bg-brand hover:bg-brand-hover text-black h-11 font-semibold flex items-center justify-center gap-2 group">
                 Enter Reset Code
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Button>
@@ -162,7 +162,7 @@ export default function ForgotPasswordPage() {
 
             <button
               type="button" onClick={() => setSent(false)}
-              className="w-full text-center text-sm text-zinc-500 hover:text-white transition-colors"
+              className="w-full text-center text-sm text-text-muted hover:text-text-primary transition-colors"
             >
               Try a different email
             </button>

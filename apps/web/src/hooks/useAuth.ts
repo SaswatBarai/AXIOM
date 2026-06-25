@@ -1,50 +1,41 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 import { setCredentials, clearCredentials, setLoading } from "@/store/authSlice";
-import { api } from "@/lib/api";
+import { api, setAccessToken, getAccessToken } from "@/lib/api";
 
 export function useAuth() {
   const dispatch = useDispatch<AppDispatch>();
   const { user, accessToken, isAuthenticated, isLoading } = useSelector(
     (state: RootState) => state.auth,
   );
+  const initialized = useRef(false);
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-    if (!token) {
+    if (initialized.current || isAuthenticated) {
       dispatch(setLoading(false));
       return;
     }
-    if (isAuthenticated) {
-      dispatch(setLoading(false));
-      return;
-    }
+    initialized.current = true;
     api
-      .get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+      .get("/auth/me", { withCredentials: true })
       .then(({ data }) => {
-        dispatch(setCredentials({ user: data.user, accessToken: token }));
+        // _accessToken is either null (cookie still valid — interceptor didn't need
+        // to fire) or the freshly-refreshed token (interceptor ran silently).
+        // Either way, sync whatever the module has into Redux.
+        dispatch(setCredentials({ user: data.user, accessToken: getAccessToken() ?? "" }));
       })
       .catch(() => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        setAccessToken(null);
         dispatch(clearCredentials());
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dispatch, isAuthenticated]);
 
-  function logout() {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      api
-        .post("/api/auth/logout", {}, { headers: { Authorization: `Bearer ${token}` } })
-        .catch(() => {});
-    }
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    dispatch(clearCredentials());
+  async function logout() {
+    try { await api.post("/auth/logout", {}, { withCredentials: true }); }
+    finally { setAccessToken(null); dispatch(clearCredentials()); }
   }
 
   return { user, accessToken, isAuthenticated, isLoading, logout };

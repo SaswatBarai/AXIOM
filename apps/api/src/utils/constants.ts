@@ -12,12 +12,15 @@ export const TTL = {
 // ── Redis key factory ─────────────────────────────────────────────────────
 export const CacheKey = {
   refreshToken: (userId: string) => `auth:refresh:${userId}`,
-  blacklist: (token: string) => `auth:blacklist:${token}`,
+  blacklist: (jti: string) => `auth:bl:${jti}`,
   otp: (email: string) => `auth:otp:${email}`,
+  resetOtp: (email: string) => `auth:reset:${email}`,
   userProfile: (userId: string) => `user:profile:${userId}`,
   jobList: (page: number, filters: string) => `jobs:list:${page}:${filters}`,
   jobDetail: (jobId: string) => `jobs:detail:${jobId}`,
   atsResult: (resumeId: string) => `resume:ats:${resumeId}`,
+  suspension: (userId: string) => `user:suspended:${userId}`,
+  appStats: (userId: string) => `applications:stats:${userId}`,
 } as const;
 
 // ── Rate limiting ─────────────────────────────────────────────────────────
@@ -32,7 +35,6 @@ export const RATE_LIMIT = {
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_LIMIT: 20,
-  MAX_LIMIT: 100,
 } as const;
 
 // ── File upload ───────────────────────────────────────────────────────────

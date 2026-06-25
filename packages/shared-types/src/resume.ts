@@ -52,15 +52,40 @@ export interface ATSScore {
   suggestions: string[];
 }
 
+export type ResumeStatus = "UPLOADING" | "PARSING" | "COMPLETED" | "FAILED";
+
+export type DiscoveryStatus = "PENDING" | "SCRAPING" | "COMPLETED" | "FAILED";
+
 export interface Resume {
   id: string;
   userId: string;
   fileName: string;
   fileUrl: string;
   fileType: "pdf" | "docx";
+  status: ResumeStatus;
+  parsingError?: string | null;
   parsedData: ParsedResume | null;
   atsScore: ATSScore | null;
   version: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface JobDiscovery {
+  id: string;
+  resumeId: string;
+  status: DiscoveryStatus;
+  error?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface JobRecommendation {
+  id: string;
+  resumeId: string;
+  jobId: string;
+  score: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  createdAt: Date;
 }

@@ -37,6 +37,11 @@ class RedisService {
     return this.client.get(key);
   }
 
+  /** Atomic get+delete — returns the value before deletion. Returns null if key did not exist. */
+  async getdel(key: string): Promise<string | null> {
+    return this.client.getDel(key);
+  }
+
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
     if (ttlSeconds) {
       await this.client.setEx(key, ttlSeconds, value);
@@ -53,8 +58,16 @@ class RedisService {
     return (await this.client.exists(key)) === 1;
   }
 
+  async incr(key: string): Promise<number> {
+    return this.client.incr(key);
+  }
+
   async expire(key: string, ttlSeconds: number): Promise<void> {
     await this.client.expire(key, ttlSeconds);
+  }
+
+  async pexpire(key: string, ttlMs: number): Promise<void> {
+    await this.client.pExpire(key, ttlMs);
   }
 
   async ttl(key: string): Promise<number> {

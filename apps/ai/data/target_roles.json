@@ -1,0 +1,89 @@
+{
+  "version": "v1",
+  "roles": {
+    "frontend_engineer": {
+      "label": "Frontend Engineer",
+      "description": "Builds user interfaces using modern web technologies",
+      "must_have": ["react", "typescript", "javascript", "html", "css"],
+      "should_have": ["nextjs", "redux", "tailwindcss", "jest", "webpack"],
+      "nice_to_have": ["graphql", "storybook", "cypress", "figma", "webrtc"]
+    },
+    "backend_engineer": {
+      "label": "Backend Engineer",
+      "description": "Builds server-side APIs, services, and data pipelines",
+      "must_have": ["python", "nodejs", "postgresql", "rest", "docker"],
+      "should_have": ["redis", "fastapi", "expressjs", "kafka", "aws"],
+      "nice_to_have": ["grpc", "elasticsearch", "terraform", "kubernetes", "mongodb"]
+    },
+    "fullstack_engineer": {
+      "label": "Fullstack Engineer",
+      "description": "Builds both frontend and backend components end-to-end",
+      "must_have": ["react", "nodejs", "typescript", "postgresql", "rest"],
+      "should_have": ["nextjs", "docker", "redis", "tailwindcss", "aws"],
+      "nice_to_have": ["graphql", "kubernetes", "terraform", "kafka", "elasticsearch"]
+    },
+    "devops_engineer": {
+      "label": "DevOps / Platform Engineer",
+      "description": "Manages infrastructure, CI/CD pipelines, and cloud deployments",
+      "must_have": ["docker", "kubernetes", "aws", "ci/cd", "linux"],
+      "should_have": ["terraform", "ansible", "prometheus", "grafana", "bash"],
+      "nice_to_have": ["helm", "argocd", "vault", "datadog", "gcp"]
+    },
+    "data_scientist": {
+      "label": "Data Scientist",
+      "description": "Analyses data and builds statistical / ML models for insights",
+      "must_have": ["python", "pandas", "numpy", "sql", "statistics"],
+      "should_have": ["scikit-learn", "matplotlib", "jupyter", "spark", "tableau"],
+      "nice_to_have": ["tensorflow", "pytorch", "airflow", "dbt", "bigquery"]
+    },
+    "ml_engineer": {
+      "label": "ML / AI Engineer",
+      "description": "Designs, trains, and deploys machine-learning models at scale",
+      "must_have": ["python", "pytorch", "tensorflow", "numpy", "docker"],
+      "should_have": ["mlflow", "fastapi", "aws", "kubernetes", "pandas"],
+      "nice_to_have": ["cuda", "triton", "langchain", "ray", "dvc"]
+    },
+    "android_developer": {
+      "label": "Android Developer",
+      "description": "Builds native Android applications using Kotlin / Java",
+      "must_have": ["kotlin", "android", "java", "rest", "git"],
+      "should_have": ["jetpack compose", "room", "retrofit", "mvvm", "firebase"],
+      "nice_to_have": ["coroutines", "dagger", "gradle", "espresso", "play store"]
+    },
+    "ios_developer": {
+      "label": "iOS Developer",
+      "description": "Builds native iOS / macOS applications using Swift",
+      "must_have": ["swift", "ios", "xcode", "uikit", "rest"],
+      "should_have": ["swiftui", "combine", "core data", "firebase", "mvvm"],
+      "nice_to_have": ["rxswift", "instruments", "cloudkit", "testflight", "spm"]
+    },
+    "cloud_engineer": {
+      "label": "Cloud Engineer",
+      "description": "Architects and manages cloud infrastructure across providers",
+      "must_have": ["aws", "terraform", "docker", "linux", "networking"],
+      "should_have": ["kubernetes", "gcp", "azure", "ansible", "python"],
+      "nice_to_have": ["cloudformation", "pulumi", "vault", "consul", "istio"]
+    },
+    "qa_engineer": {
+      "label": "QA / Test Engineer",
+      "description": "Ensures software quality through automated and manual testing",
+      "must_have": ["selenium", "python", "rest", "sql", "git"],
+      "should_have": ["playwright", "pytest", "postman", "jira", "ci/cd"],
+      "nice_to_have": ["k6", "locust", "appium", "allure", "testng"]
+    },
+    "cybersecurity_engineer": {
+      "label": "Cybersecurity Engineer",
+      "description": "Protects systems and data through security engineering and analysis",
+      "must_have": ["linux", "networking", "python", "owasp", "cryptography"],
+      "should_have": ["penetration testing", "wireshark", "metasploit", "splunk", "aws"],
+      "nice_to_have": ["burp suite", "nmap", "kubernetes", "zero trust", "siem"]
+    },
+    "blockchain_developer": {
+      "label": "Blockchain Developer",
+      "description": "Builds decentralised applications and smart contracts",
+      "must_have": ["solidity", "ethereum", "javascript", "web3", "git"],
+      "should_have": ["hardhat", "typescript", "react", "ipfs", "truffle"],
+      "nice_to_have": ["rust", "solana", "polygon", "chainlink", "foundry"]
+    }
+  }
+}

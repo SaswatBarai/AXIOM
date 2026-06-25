@@ -1,8 +1,23 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
+import { requireAuth, requireActiveSubscription } from "../middleware/auth.middleware";
+import { validate } from "../middleware/validate.middleware";
+import { notificationAlertSchema, updateNotificationAlertSchema } from "../utils/schemas";
+import {
+  listHandler, markReadHandler, markAllReadHandler,
+  createAlertHandler, listAlertsHandler, updateAlertHandler, deleteAlertHandler,
+} from "../controllers/notification.controller";
 
-const router: IRouter = Router();
+export const notificationRoutes = Router();
 
-// TODO: implement notification routes in Phase 3+
-router.get("/", (_req, res) => res.json({ route: "notification", status: "scaffold" }));
+notificationRoutes.use(requireAuth);
 
-export default router;
+// In-app notifications
+notificationRoutes.get("/",                   listHandler);
+notificationRoutes.post("/read-all",          markAllReadHandler);
+notificationRoutes.post("/:id/read",          markReadHandler);
+
+// Job alerts (premium)
+notificationRoutes.post("/alerts",            requireActiveSubscription, validate(notificationAlertSchema), createAlertHandler);
+notificationRoutes.get("/alerts",             requireActiveSubscription, listAlertsHandler);
+notificationRoutes.patch("/alerts/:alertId",  requireActiveSubscription, validate(updateNotificationAlertSchema), updateAlertHandler);
+notificationRoutes.delete("/alerts/:alertId", requireActiveSubscription, deleteAlertHandler);

@@ -1,29 +1,86 @@
 import "dotenv/config";
-import express, { Application } from "express";
+import http from "http";
+import express, { type Application, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import compression from "compression";
+import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
-import { xss } from "express-xss-sanitizer";
+import { v4 as uuid } from "uuid";
 
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import resumeRoutes from "./routes/resume.routes";
 import jobRoutes from "./routes/job.routes";
 import applicationRoutes from "./routes/application.routes";
+import paymentRoutes from "./routes/payment.routes";
+import { webhookHandler as paymentWebhookHandler } from "./controllers/payment.controller";
+import { reconcileExpiredSubscriptions } from "./services/payment.service";
+import skillRoutes from "./routes/skill.routes";
+import chatRoutes from "./routes/chat.routes";
+import coverLetterRoutes from "./routes/coverLetter.routes";
+import { interviewRoutes }       from "./routes/interview.routes";
+import { roadmapRoutes }         from "./routes/roadmap.routes";
+import { analyticsRoutes }       from "./routes/analytics.routes";
+import { notificationRoutes }    from "./routes/notification.routes";
+import adminRoutes            from "./routes/admin.routes";
+import { refreshMaterializedViews } from "./services/analytics.service";
+import { scheduleWeeklyDigest, scheduleDiscoveryTimeoutCheck }  from "./services/queue.service";
+import { deleteStaleNotifications } from "./services/notification.service";
+import { initSocketIO }          from "./lib/socket";
 import { errorHandler } from "./middleware/errorHandler.middleware";
 import { prisma } from "@axiom/database";
 import { redis } from "./services/redis.service";
 import { logger } from "./utils/logger";
 
+// ── Startup validation ──────────────────────────────────────
+function requireEnv(name: string): string {
+  const val = process.env[name];
+  if (!val) throw new Error(`Missing required environment variable: ${name}`);
+  return val;
+}
+
+requireEnv("JWT_SECRET_KEY");
+requireEnv("AI_SERVICE_SECRET");
+
 const app: Application = express();
 const PORT = process.env.API_PORT ?? 4000;
 
+// ── Request ID ──────────────────────────────────────────────
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  req.id = req.headers["x-request-id"] as string || uuid();
+  next();
+});
+
 // ── Security ────────────────────────────────────────────────
 app.use(helmet());
+
+/**
+ * CORS — allow our frontend across all the contexts we actually run in:
+ *   - localhost dev          (http://localhost:3000)
+ *   - ngrok tunnels in dev   (https://*.ngrok-free.dev|app)
+ *   - whatever FRONTEND_URL points at in prod
+ *
+ * Server-to-server callers (Razorpay webhook, the AI service, curl) send no
+ * Origin header — we allow those through (CORS is a browser policy only).
+ */
+const ALLOWED_ORIGINS = new Set<string>([
+  "http://localhost:3000",
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  ...(process.env.EXTRA_CORS_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ?? []),
+]);
+
+const NGROK_RE = /^https:\/\/[a-z0-9-]+\.ngrok-free\.(dev|app)$/i;
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
+    origin: (origin, cb) => {
+      if (!origin)                  return cb(null, true);   // curl, webhooks
+      if (ALLOWED_ORIGINS.has(origin)) return cb(null, true);
+      if (NGROK_RE.test(origin))    return cb(null, true);
+      return cb(new Error(`CORS: origin ${origin} not allowed`), false);
+    },
     credentials: true,
   })
 );
@@ -32,16 +89,41 @@ app.use(
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: process.env.NODE_ENV === "development" ? 1000 : 300,
     message: { error: "Too many requests, please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
   })
 );
 
+// ── Compression ─────────────────────────────────────────────
+app.use(compression());
+
+// ── Cookie parsing ──────────────────────────────────────────
+app.use(cookieParser());
+
+// ── Razorpay webhook ────────────────────────────────────────
+// MUST be mounted before express.json so the body stays a raw Buffer for
+// HMAC verification. See payment.service.handleWebhook for signature check.
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max:      process.env.NODE_ENV === "development" ? 200 : 60,
+  message:  { error: "Too many webhook requests." },
+  standardHeaders: true,
+  legacyHeaders:   false,
+});
+
+app.post(
+  "/api/payments/webhook",
+  webhookLimiter,
+  express.raw({ type: "application/json", limit: "1mb" }),
+  paymentWebhookHandler,
+);
+
 // ── Parsing & sanitization ──────────────────────────────────
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(xss()); // strip XSS payloads from req.body / req.query / req.params
-app.use(morgan("dev"));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // ── Health check ────────────────────────────────────────────
 app.get("/health", async (_req, res) => {
@@ -52,8 +134,9 @@ app.get("/health", async (_req, res) => {
   const status = dbOk && redisOk ? "ok" : "degraded";
   res.status(status === "ok" ? 200 : 503).json({
     status,
-    timestamp: new Date().toISOString(),
-    services: { db: dbOk ? "up" : "down", redis: redisOk ? "up" : "down" },
+    uptime: process.uptime(),
+    db: dbOk ? "up" : "down",
+    redis: redisOk ? "up" : "down",
   });
 });
 
@@ -63,20 +146,123 @@ app.use("/api/users", userRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/payments",     paymentRoutes);
+app.use("/api/skills", skillRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/cover-letter", coverLetterRoutes);
+app.use("/api/interview",    interviewRoutes);
+app.use("/api/roadmap",      roadmapRoutes);
+app.use("/api/analytics",      analyticsRoutes);
+app.use("/api/notifications",  notificationRoutes);
+app.use("/api/admin",          adminRoutes);
 
 // ── Error handler ───────────────────────────────────────────
 app.use(errorHandler);
 
+function scheduleNightlyRefresh() {
+  const now = new Date();
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+  const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+
+  setTimeout(async function tick() {
+    try {
+      await refreshMaterializedViews();
+      logger.info("Materialized views refreshed");
+    } catch (err) {
+      logger.error("Failed to refresh materialized views", err);
+    }
+    try {
+      const deleted = await deleteStaleNotifications();
+      if (deleted > 0) logger.info(`Cleaned up ${deleted} stale notifications`);
+    } catch (err) {
+      logger.error("Failed to clean up stale notifications", err);
+    }
+    setTimeout(tick, 24 * 60 * 60 * 1000);
+  }, msUntilMidnight);
+}
+
+async function verifyPgVector() {
+  try {
+    const result = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT EXISTS (
+        SELECT 1 FROM pg_extension WHERE extname = 'vector'
+      ) as exists;
+    `;
+    if (!result[0]?.exists) {
+      logger.warn("⚠️ Warning: PostgreSQL 'vector' extension is not enabled. Job matching features may fail. Run 'CREATE EXTENSION IF NOT EXISTS vector;' on your database.");
+    } else {
+      logger.info("✅ PostgreSQL 'vector' extension verified.");
+    }
+  } catch (err) {
+    logger.warn("⚠️ Warning: Failed to query PostgreSQL extension list. pgvector availability could not be verified.", err);
+  }
+}
+
+function scheduleSubscriptionReconciliation() {
+  const INTERVAL_MS = 60 * 60 * 1000; // hourly
+  const tick = async () => {
+    try {
+      const n = await reconcileExpiredSubscriptions();
+      if (n > 0) logger.info(`Subscription reconciliation: ${n} user(s) downgraded`);
+    } catch (err) {
+      logger.error("Subscription reconciliation failed", err);
+    }
+  };
+  void tick();
+  setInterval(() => void tick(), INTERVAL_MS);
+  logger.info("Subscription reconciliation scheduled: every hour");
+}
+
 async function bootstrap() {
   await redis.connect();
-  app.listen(PORT, () => {
+  await verifyPgVector();
+  const httpServer = http.createServer(app);
+  initSocketIO(httpServer);
+  httpServer.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      logger.error(`Port ${PORT} is already in use`);
+    } else {
+      logger.error("Failed to start server", err);
+    }
+    process.exit(1);
+  });
+  httpServer.listen(PORT, () => {
     logger.info(`API running on http://localhost:${PORT}`);
   });
+  scheduleNightlyRefresh();
+  scheduleSubscriptionReconciliation();
+  await scheduleWeeklyDigest();
+  await scheduleDiscoveryTimeoutCheck();
 }
 
 bootstrap().catch((err) => {
   logger.error("Failed to start server", err);
   process.exit(1);
 });
+
+// ── Graceful shutdown ───────────────────────────────────────
+async function shutdown(signal: string) {
+  logger.info(`${signal} received — shutting down gracefully`);
+  try {
+    await redis.disconnect();
+    await prisma.$disconnect();
+    process.exit(0);
+  } catch (err) {
+    logger.error("Error during shutdown", err);
+    process.exit(1);
+  }
+}
+
+// ── Crash safety net ─────────────────────────────────────────
+process.on("unhandledRejection", (reason) => {
+  logger.error({ err: reason }, "UNHANDLED_REJECTION");
+});
+process.on("uncaughtException", (err) => {
+  logger.error({ err }, "UNCAUGHT_EXCEPTION");
+  process.exit(1);
+});
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 export default app;
