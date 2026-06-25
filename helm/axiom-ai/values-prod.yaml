@@ -1,0 +1,4 @@
+image:
+  tag: abc1234f
+
+replicaCount: 1

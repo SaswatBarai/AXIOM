@@ -1,0 +1,50 @@
+image:
+  repository: 833453046877.dkr.ecr.us-east-1.amazonaws.com/axiom-web
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+service:
+  type: ClusterIP
+  port: 3000
+
+env:
+  NODE_ENV: production
+  PORT: "3000"
+
+envFrom:
+  - secretRef:
+      name: axiom-secrets
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+hpa:
+  minReplicas: 2
+  maxReplicas: 6
+  cpuTargetUtilization: 70
+  memoryTargetUtilization: 80
