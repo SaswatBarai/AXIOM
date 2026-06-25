@@ -412,7 +412,7 @@ Return ONLY valid JSON array (no markdown, no explanation):
   }}
 ]
 
-IMPORTANT: job_id must be the exact ID string shown in brackets before each recommendation, not a number.
+IMPORTANT: job_id must be the exact string shown inside the square brackets [ ] before each recommendation.
 
 Rules:
 - "keep": false for any recommendation that feels wrong, irrelevant, or that the person would never apply to.
@@ -438,10 +438,10 @@ def _rerank(results: list[dict], profile_text: str, directions: list[CareerDirec
     profile_summary = profile_text[:1500]
     directions_text = "; ".join(f"{d.name} ({d.confidence:.0%})" for d in directions[:3])
     results_text = "\n".join(
-        f"[{i}] job_id={r['job_id']} score={r['score']} | {r['title']} @ {r['company']} | "
+        f"[{r['job_id']}] score={r['score']} | {r['title']} @ {r['company']} | "
         f"matched={r['matched_skills'][:4]} missing={r['missing_skills'][:4]} | "
         f"verdict={r['match_reason'].get('verdict','?')}"
-        for i, r in enumerate(results)
+        for r in results
     )
 
     prompt = _RANK_PROMPT.format(
@@ -458,7 +458,12 @@ def _rerank(results: list[dict], profile_text: str, directions: list[CareerDirec
         if not isinstance(ranking, list):
             logger.warning(f"[rank] unexpected type: {type(ranking)}")
             return results
-        logger.debug(f"[rank] LLM returned {len(ranking)} entries")
+        logger.info(
+            f"[rank] LLM returned {len(ranking)} entries; "
+            f"ids={[e.get('job_id') for e in ranking if isinstance(e, dict)][:8]} "
+            f"keep={[e.get('keep') for e in ranking if isinstance(e, dict)][:8]} | "
+            f"result_ids={[r['job_id'] for r in results][:8]}"
+        )
     except (json.JSONDecodeError, ValueError) as e:
         logger.warning(f"[rank] Gemini parse error: {e}")
         return results
@@ -486,6 +491,19 @@ def _rerank(results: list[dict], profile_text: str, directions: list[CareerDirec
             r["match_reason"]["would_apply"] = ranking_map[jid].get("would_apply", True)
 
     logger.info(f"[rank] {len(results)} → {len(kept)} after AI reranking")
+
+    # Fallback: never drop every recommendation. If the reranker emptied the
+    # list (job_id mismatch, over-aggressive keep=false, or parse drift) but we
+    # had genuine scored matches, surface the top scored results instead of
+    # showing the user an empty dashboard.
+    if not kept and results:
+        logger.warning(
+            f"[rank] reranker returned 0 of {len(results)} — "
+            f"falling back to top scored matches"
+        )
+        fallback = sorted(results, key=lambda r: r.get("score", 0), reverse=True)
+        return fallback
+
     return kept
 
 
