@@ -1,8 +1,11 @@
 name: CI
 
 on:
+  # main is covered by the Deploy workflow (which calls this via workflow_call),
+  # so only run standalone on develop and PRs — avoids a duplicate, immediately
+  # cancelled CI run on every push to main.
   push:
-    branches: [main, develop]
+    branches: [develop]
   pull_request:
     branches: [main]
   workflow_call:
@@ -77,7 +80,7 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:4000
 
       - name: Run API tests
-        run: pnpm --filter @axiom/api test --passWithNoTests
+        run: pnpm --filter @axiom/api exec vitest run --passWithNoTests
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
           NODE_ENV: test
