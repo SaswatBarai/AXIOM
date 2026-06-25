@@ -13,11 +13,17 @@ vi.mock("../services/interview.service", () => ({
   saveMarks:                  vi.fn(),
 }));
 
+vi.mock("../middleware/rateLimit.middleware", () => ({
+  planRateLimit: () => (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+  rateLimit:     () => (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+}));
+
 vi.mock("../middleware/auth.middleware", () => ({
   requireAuth: (req: express.Request & { userId?: string }, _res: express.Response, next: express.NextFunction) => {
     req.userId = "user-1";
     next();
   },
+  requireActiveSubscription: (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
   assertUserId: (req: any) => req.userId,
 }));
 

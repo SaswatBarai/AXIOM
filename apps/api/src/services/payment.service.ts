@@ -32,6 +32,7 @@ import {
   revokePremiumRole,
   WEBHOOK_MAX_AGE_MS,
 } from "./subscription.service";
+import { getEntitlements } from "../config/plan-entitlements";
 
 type Tx = Prisma.TransactionClient;
 
@@ -93,6 +94,7 @@ export interface SubscriptionView {
   currentPeriodStart: Date | null;
   currentPeriodEnd:   Date | null;
   cancelAtPeriodEnd:  boolean;
+  entitlements:       ReturnType<typeof getEntitlements>;
 }
 
 export interface VerifyResult {
@@ -112,14 +114,17 @@ export async function getSubscription(userId: string): Promise<SubscriptionView>
     return {
       plan: "FREE", status: "ACTIVE",
       currentPeriodStart: null, currentPeriodEnd: null, cancelAtPeriodEnd: false,
+      entitlements: getEntitlements("FREE"),
     };
   }
+  const plan = sub.plan as SubscriptionView["plan"];
   return {
-    plan:               sub.plan as SubscriptionView["plan"],
+    plan,
     status:             sub.status as SubscriptionView["status"],
     currentPeriodStart: sub.currentPeriodStart,
     currentPeriodEnd:   sub.currentPeriodEnd,
     cancelAtPeriodEnd:  sub.cancelAtPeriodEnd,
+    entitlements:       getEntitlements(plan),
   };
 }
 
@@ -653,14 +658,17 @@ async function getSubscriptionInTx(tx: Tx, userId: string): Promise<Subscription
     return {
       plan: "FREE", status: "ACTIVE",
       currentPeriodStart: null, currentPeriodEnd: null, cancelAtPeriodEnd: false,
+      entitlements: getEntitlements("FREE"),
     };
   }
+  const plan = sub.plan as SubscriptionView["plan"];
   return {
-    plan:               sub.plan as SubscriptionView["plan"],
+    plan,
     status:             sub.status as SubscriptionView["status"],
     currentPeriodStart: sub.currentPeriodStart,
     currentPeriodEnd:   sub.currentPeriodEnd,
     cancelAtPeriodEnd:  sub.cancelAtPeriodEnd,
+    entitlements:       getEntitlements(plan),
   };
 }
 

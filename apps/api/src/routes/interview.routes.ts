@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, requireActiveSubscription } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate.middleware";
-import { rateLimit } from "../middleware/rateLimit.middleware";
+import { planRateLimit } from "../middleware/rateLimit.middleware";
 import { interviewGenerateSchema, interviewMarksSchema } from "../utils/schemas";
 import {
   generateHandler,
@@ -17,7 +17,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/categories",                                                            listCategoriesHandler);
-router.post("/generate",      requireActiveSubscription, rateLimit(20, 3600), validate(interviewGenerateSchema), generateHandler);
+router.post("/generate",      requireActiveSubscription, planRateLimit("interviewSessionsPerHour"), validate(interviewGenerateSchema), generateHandler);
 router.get("/sessions",                                          listSessionsHandler);
 router.get("/sessions/:sessionId",                               getSessionHandler);
 router.patch("/sessions/:sessionId/marks", validate(interviewMarksSchema), saveMarksHandler);

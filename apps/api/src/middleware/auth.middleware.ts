@@ -4,7 +4,8 @@ import { redis } from "../services/redis.service";
 import { prisma } from "@axiom/database";
 import { CacheKey } from "../utils/constants";
 import { verifyToken, extractJti } from "../utils/jwt";
-import { hasPremiumAccess } from "../services/subscription.service";
+import { hasPremiumAccess, getUserPlan } from "../services/subscription.service";
+import { PLAN_ENTITLEMENTS } from "../config/plan-entitlements";
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -114,7 +115,8 @@ export function requirePremium(req: AuthRequest, res: Response, next: NextFuncti
 }
 
 /**
- * Soft cap: free tier allows N resumes; further uploads require Premium.
+ * @deprecated Use requireResumeUploadAllowed — enforces per-plan resume caps.
+ * Kept for backward compatibility; routes should migrate to the new middleware.
  */
 export function requirePremiumIfResumeCountAtLeast(limit: number) {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {
@@ -135,4 +137,30 @@ export function requirePremiumIfResumeCountAtLeast(limit: number) {
       }
     })();
   };
+}
+
+/**
+ * Plan-aware resume upload cap. Blocks upload when the user has already
+ * reached their plan's resumeUploads limit.
+ */
+export function requireResumeUploadAllowed(req: AuthRequest, _res: Response, next: NextFunction) {
+  if (req.userRole === "ADMIN") return next();
+  (async () => {
+    try {
+      const userId = assertUserId(req);
+      const plan  = await getUserPlan(userId);
+      const limit = PLAN_ENTITLEMENTS[plan].resumeUploads;
+      const count = await prisma.resume.count({ where: { userId } });
+      if (count >= limit) {
+        return next(new AppError(
+          403,
+          `Your ${plan} plan allows ${limit} resume${limit === 1 ? "" : "s"}. Upgrade to upload more.`,
+          "RESUME_LIMIT_EXCEEDED",
+        ));
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  })();
 }

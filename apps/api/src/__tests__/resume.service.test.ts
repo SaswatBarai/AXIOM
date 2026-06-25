@@ -3,17 +3,34 @@ import { prisma } from "@axiom/database";
 import * as s3 from "../services/s3.service";
 import * as aiService from "../services/ai.service";
 
+vi.mock("../services/queue.service", () => ({
+  resumeParsingQueue: { add: vi.fn().mockResolvedValue(undefined) },
+  emailQueue:         { add: vi.fn().mockResolvedValue(undefined) },
+  notificationQueue:  { add: vi.fn().mockResolvedValue(undefined) },
+  digestQueue:        { add: vi.fn().mockResolvedValue(undefined) },
+  jobDiscoveryQueue:  { add: vi.fn().mockResolvedValue(undefined) },
+}));
+
 vi.mock("@axiom/database", () => ({
   prisma: {
     resume: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      count: vi.fn(),
-      aggregate: vi.fn().mockResolvedValue({ _max: { version: null } }),
+      findUnique:  vi.fn(),
+      findMany:    vi.fn(),
+      findFirst:   vi.fn(),
+      create:      vi.fn(),
+      update:      vi.fn(),
+      delete:      vi.fn(),
+      count:       vi.fn(),
+      aggregate:   vi.fn().mockResolvedValue({ _max: { version: null } }),
     },
+    user: {
+      findUnique: vi.fn(),
+      update:     vi.fn(),
+    },
+    $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn({
+      resume: { delete: vi.fn(), findFirst: vi.fn().mockResolvedValue(null) },
+      user:   { update: vi.fn() },
+    })),
   },
 }));
 

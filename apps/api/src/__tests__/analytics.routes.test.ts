@@ -18,6 +18,7 @@ vi.mock("../middleware/auth.middleware", () => ({
     req.userId = "user-1";
     next();
   },
+  requireActiveSubscription: (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
   assertUserId: (req: any) => req.userId,
 }));
 

@@ -11,12 +11,24 @@ export interface PlanCatalogItem {
   intervalMonths: number;
 }
 
+export interface Entitlements {
+  chatMessagesPerHour: number;
+  coverLettersPerHour: number;
+  interviewSessionsPerHour: number;
+  roadmapsPerHour: number;
+  skillGapsPerHour: number;
+  maxJobAlerts: number;
+  resumeUploads: number;
+  analyzePerMonth: number;
+}
+
 export interface SubscriptionView {
   plan: PlanView;
   status: SubscriptionStatus;
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+  entitlements: Entitlements;
 }
 
 export interface PaymentRow {

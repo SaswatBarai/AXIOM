@@ -1,6 +1,8 @@
 import { prisma, Prisma } from "@axiom/database";
 import { AppError } from "../middleware/errorHandler.middleware";
 import type { Server as SocketServer } from "socket.io";
+import { getUserPlan } from "./subscription.service";
+import { PLAN_ENTITLEMENTS } from "../config/plan-entitlements";
 
 let io: SocketServer | null = null;
 
@@ -83,6 +85,24 @@ export async function createAlert(
   filters:   AlertFilters,
   frequency: "instant" | "daily" | "weekly" = "daily",
 ) {
+  const plan = await getUserPlan(userId);
+  const { maxJobAlerts } = PLAN_ENTITLEMENTS[plan];
+
+  if (maxJobAlerts === 0) {
+    throw new AppError(403, "Job alerts require a Premium subscription.", "PREMIUM_REQUIRED");
+  }
+
+  if (maxJobAlerts > 0) {
+    const existing = await prisma.jobAlert.count({ where: { userId } });
+    if (existing >= maxJobAlerts) {
+      throw new AppError(
+        403,
+        `Your ${plan} plan allows ${maxJobAlerts} job alert${maxJobAlerts === 1 ? "" : "s"}. Upgrade to add more.`,
+        "JOB_ALERT_LIMIT",
+      );
+    }
+  }
+
   return prisma.jobAlert.create({ data: { userId, name, filters: filters as Prisma.InputJsonValue, frequency } });
 }
 

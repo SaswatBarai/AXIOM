@@ -17,7 +17,10 @@ vi.mock("@axiom/database", () => ({
       findUnique: vi.fn(),
       update:     vi.fn(),
       delete:     vi.fn(),
+      count:      vi.fn(),
     },
+    subscription: { findUnique: vi.fn() },
+    payment:      { count: vi.fn() },
   },
   Prisma: {},
 }));
@@ -168,8 +171,19 @@ describe("unreadCount", () => {
 
 // ── createAlert ───────────────────────────────────────────────────────────────
 
+const future = new Date(Date.now() + 30 * 86_400_000);
+
+function mockMonthlyPlan() {
+  vi.mocked(prisma.subscription.findUnique).mockResolvedValue({
+    plan: "MONTHLY", status: "ACTIVE", currentPeriodEnd: future,
+  } as never);
+  vi.mocked(prisma.payment.count).mockResolvedValue(1);
+  vi.mocked(prisma.jobAlert.count).mockResolvedValue(0); // under cap
+}
+
 describe("createAlert", () => {
   it("creates a job alert with default daily frequency", async () => {
+    mockMonthlyPlan();
     vi.mocked(prisma.jobAlert.create).mockResolvedValue(MOCK_ALERT as never);
 
     const result = await createAlert("user-1", "Remote TypeScript jobs", { keywords: "TypeScript", remote: true });
@@ -186,6 +200,7 @@ describe("createAlert", () => {
   });
 
   it("respects explicit frequency override", async () => {
+    mockMonthlyPlan();
     vi.mocked(prisma.jobAlert.create).mockResolvedValue({ ...MOCK_ALERT, frequency: "weekly" } as never);
 
     await createAlert("user-1", "Weekly jobs", {}, "weekly");

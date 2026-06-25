@@ -7,6 +7,7 @@
 import { prisma, type Prisma } from "@axiom/database";
 import { AppError } from "../middleware/errorHandler.middleware";
 import { logger } from "../utils/logger";
+import type { PlanView } from "@axiom/shared-types";
 
 /** Grace period after a failed renewal before revoking access. */
 export const PAST_DUE_GRACE_DAYS = 3;
@@ -127,6 +128,20 @@ export async function assertCanCreateSubscription(userId: string): Promise<void>
   ) {
     throw new AppError(409, "You already have an open subscription. Cancel it or wait for the current period to end.", "SUBSCRIPTION_ALREADY_OPEN");
   }
+}
+
+/**
+ * Single source of truth for "which plan does this user currently have access to?".
+ * Never trust JWT role for tier — always consult DB subscription state.
+ */
+export async function getUserPlan(userId: string): Promise<PlanView> {
+  const sub = await prisma.subscription.findUnique({ where: { userId } });
+  if (!sub || sub.plan === "FREE") return "FREE";
+
+  const allowed = await hasPremiumAccess(userId);
+  if (!allowed) return "FREE";
+
+  return sub.plan as PlanView;
 }
 
 export function addDays(d: Date, days: number): Date {

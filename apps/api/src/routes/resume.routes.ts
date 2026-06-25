@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
 import { rateLimit } from "express-rate-limit";
-import { requireAuth } from "../middleware/auth.middleware";
+import { requireAuth, requireResumeUploadAllowed } from "../middleware/auth.middleware";
 import {
   uploadResumeHandler,
   listResumesHandler,
@@ -37,7 +37,7 @@ const upload = multer({
   },
 });
 
-router.post(  "/",           requireAuth, uploadLimiter, upload.single("resume"), uploadResumeHandler);
+router.post(  "/",           requireAuth, requireResumeUploadAllowed, uploadLimiter, upload.single("resume"), uploadResumeHandler);
 router.get(   "/",           requireAuth,                                   listResumesHandler);
 router.get(   "/:id",        requireAuth,                                   getResumeHandler);
 router.delete("/:id",        requireAuth,                                   deleteResumeHandler);

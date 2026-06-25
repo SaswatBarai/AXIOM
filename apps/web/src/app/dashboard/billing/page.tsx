@@ -253,6 +253,23 @@ export default function BillingPage() {
         )}
       </Card>
 
+      {/* Plan entitlements */}
+      {!isFree && subscription.entitlements && (
+        <Card className="border border-border-subtle bg-bg-card/40 p-6 sm:p-8 rounded-2xl">
+          <h2 className="text-sm font-semibold text-text-primary mb-4">Included in your plan</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <EntitlementTile label="AI chat messages/hr"   value={subscription.entitlements.chatMessagesPerHour} />
+            <EntitlementTile label="Cover letters/hr"      value={subscription.entitlements.coverLettersPerHour} />
+            <EntitlementTile label="Interview sessions/hr" value={subscription.entitlements.interviewSessionsPerHour} />
+            <EntitlementTile label="Roadmaps/hr"           value={subscription.entitlements.roadmapsPerHour} />
+            <EntitlementTile label="Skill analyses/hr"     value={subscription.entitlements.skillGapsPerHour} />
+            <EntitlementTile label="Job alerts"            value={subscription.entitlements.maxJobAlerts} />
+            <EntitlementTile label="Resumes stored"        value={subscription.entitlements.resumeUploads} />
+            <EntitlementTile label="ATS analyses/month"    value={subscription.entitlements.analyzePerMonth} />
+          </div>
+        </Card>
+      )}
+
       {/* Cancel confirmation */}
       {confirmOpen && (
         <Card className="border border-amber-500/30 bg-amber-500/5 p-6 rounded-2xl">
@@ -348,6 +365,16 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex items-baseline justify-between gap-3">
       <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">{label}</span>
       <span className="text-sm text-text-primary">{value}</span>
+    </div>
+  );
+}
+
+function EntitlementTile({ label, value }: { label: string; value: number }) {
+  const display = value === -1 ? "Unlimited" : String(value);
+  return (
+    <div className="rounded-xl border border-border-subtle/60 bg-bg-elevated/40 px-4 py-3 flex flex-col gap-1">
+      <span className="text-lg font-bold text-text-primary tabular-nums">{display}</span>
+      <span className="text-[10px] font-medium text-text-muted uppercase tracking-wide leading-tight">{label}</span>
     </div>
   );
 }
