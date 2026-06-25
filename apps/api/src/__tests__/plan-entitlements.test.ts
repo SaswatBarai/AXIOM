@@ -11,7 +11,11 @@ vi.mock("@axiom/database", () => ({
 }));
 
 vi.mock("../services/redis.service", () => ({
-  redis: { get: vi.fn(), incr: vi.fn(), pexpire: vi.fn() },
+  redis: {
+    get: vi.fn(),
+    incr: vi.fn(async () => 0),
+    pexpire: vi.fn(async () => undefined),
+  },
 }));
 
 // ── Imports ───────────────────────────────────────────────────────────────────
@@ -136,7 +140,7 @@ describe("planRateLimit() — blocks at plan threshold", () => {
 
     // Redis incr returns 51 (one over the 50 limit)
     vi.mocked(redis.incr).mockResolvedValue(51);
-    vi.mocked(redis.pexpire).mockResolvedValue(1);
+    vi.mocked(redis.pexpire).mockResolvedValue(undefined);
 
     const middleware = planRateLimit("chatMessagesPerHour");
     const req  = makeReq("user-monthly");
@@ -157,7 +161,7 @@ describe("planRateLimit() — blocks at plan threshold", () => {
     vi.mocked(prisma.payment.count).mockResolvedValue(1);
 
     vi.mocked(redis.incr).mockResolvedValue(50);
-    vi.mocked(redis.pexpire).mockResolvedValue(1);
+    vi.mocked(redis.pexpire).mockResolvedValue(undefined);
 
     const middleware = planRateLimit("chatMessagesPerHour");
     const req  = makeReq("user-monthly");

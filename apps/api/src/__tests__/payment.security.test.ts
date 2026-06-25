@@ -156,7 +156,7 @@ describe("reconcileExpiredSubscriptions", () => {
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => fn({
       subscription: { update: vi.fn().mockResolvedValue({}) },
       user:         { update: vi.fn().mockResolvedValue({}) },
-    }));
+    } as never));
 
     const n = await reconcileExpiredSubscriptions();
     expect(n).toBe(1);

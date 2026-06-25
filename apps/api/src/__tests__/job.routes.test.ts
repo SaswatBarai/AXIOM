@@ -242,6 +242,7 @@ describe("POST /api/jobs/scrape", () => {
       skipped: 0,
       errors: 0,
       durationMs: 4321,
+      jobIds: [],
     });
 
     const res = await request(app)

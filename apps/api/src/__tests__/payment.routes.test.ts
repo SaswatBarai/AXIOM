@@ -3,6 +3,7 @@ import request from "supertest";
 import express, { type Application } from "express";
 
 import { errorHandler, AppError } from "../middleware/errorHandler.middleware";
+import { getEntitlements } from "../config/plan-entitlements";
 
 // Mock the service before routes import — routes pull in the service transitively.
 vi.mock("../services/payment.service", () => ({
@@ -203,6 +204,7 @@ describe("GET /api/payments/subscription", () => {
       currentPeriodStart: null,
       currentPeriodEnd:   null,
       cancelAtPeriodEnd:  false,
+      entitlements: getEntitlements("FREE"),
     });
     const res = await request(app).get("/api/payments/subscription");
     expect(res.status).toBe(200);
@@ -220,6 +222,7 @@ describe("POST /api/payments/cancel", () => {
       currentPeriodStart: new Date(),
       currentPeriodEnd:   new Date(Date.now() + 86400 * 1000),
       cancelAtPeriodEnd:  true,
+      entitlements: getEntitlements("MONTHLY"),
     });
     const res = await request(app).post("/api/payments/cancel");
     expect(res.status).toBe(200);

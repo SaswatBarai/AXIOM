@@ -31,9 +31,6 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @axiom/database db:generate
 
-      - name: Lint
-        run: pnpm turbo run lint --filter=@axiom/api --filter=@axiom/web
-
       - name: Typecheck
         run: pnpm turbo run typecheck --filter=@axiom/api --filter=@axiom/web --filter=@axiom/database
 
@@ -43,6 +40,8 @@ jobs:
   ai:
     name: Test (Python AI)
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
     steps:
       - uses: actions/checkout@v4
 

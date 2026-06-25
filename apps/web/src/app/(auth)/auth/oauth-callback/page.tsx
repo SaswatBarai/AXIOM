@@ -30,14 +30,16 @@ function OAuthCallbackContent() {
       return;
     }
 
+    const token = accessToken;
+
     // Remove token from the address bar as soon as we read it.
     window.history.replaceState({}, "", "/auth/oauth-callback");
 
     async function finishLogin() {
       try {
-        setAccessToken(accessToken);
+        setAccessToken(token);
         const { data } = await api.get("/auth/me");
-        dispatch(setCredentials({ user: data.user, accessToken }));
+        dispatch(setCredentials({ user: data.user, accessToken: token }));
         router.replace(returnTo.startsWith("/") ? returnTo : "/dashboard");
       } catch {
         setAccessToken(null);
