@@ -48,6 +48,10 @@ requireEnv("AI_SERVICE_SECRET");
 const app: Application = express();
 const PORT = process.env.API_PORT ?? 4000;
 
+// Trust the first proxy hop (nginx ingress) so req.ip reflects the real
+// client IP from X-Forwarded-For — required for per-IP rate limiting.
+app.set("trust proxy", 1);
+
 // ── Request ID ──────────────────────────────────────────────
 app.use((req: Request, _res: Response, next: NextFunction) => {
   req.id = req.headers["x-request-id"] as string || uuid();
