@@ -1,4 +1,4 @@
 image:
-  tag: latest
+  tag: bbd1ccfa
 
 replicaCount: 2
