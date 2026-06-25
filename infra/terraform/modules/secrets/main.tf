@@ -43,9 +43,12 @@ resource "aws_secretsmanager_secret_version" "axiom_prod" {
     DEEPSEEK_API_KEY = var.deepseek_api_key
 
     # Payments (Razorpay)
-    RAZORPAY_KEY_ID        = var.razorpay_key_id
-    RAZORPAY_KEY_SECRET    = var.razorpay_key_secret
+    RAZORPAY_KEY_ID         = var.razorpay_key_id
+    RAZORPAY_KEY_SECRET     = var.razorpay_key_secret
     RAZORPAY_WEBHOOK_SECRET = var.razorpay_webhook_secret
+    RAZORPAY_PLAN_MONTHLY   = var.razorpay_plan_monthly
+    RAZORPAY_PLAN_QUARTERLY = var.razorpay_plan_quarterly
+    RAZORPAY_PLAN_ANNUAL    = var.razorpay_plan_annual
 
     # URLs
     FRONTEND_URL      = "https://axiom.${var.domain}"

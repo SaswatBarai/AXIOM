@@ -115,6 +115,9 @@ module "secrets" {
   razorpay_key_id         = var.razorpay_key_id
   razorpay_key_secret     = var.razorpay_key_secret
   razorpay_webhook_secret = var.razorpay_webhook_secret
+  razorpay_plan_monthly   = var.razorpay_plan_monthly
+  razorpay_plan_quarterly = var.razorpay_plan_quarterly
+  razorpay_plan_annual    = var.razorpay_plan_annual
   aws_s3_bucket        = var.aws_s3_bucket
   aws_region           = var.aws_region
   domain               = var.domain

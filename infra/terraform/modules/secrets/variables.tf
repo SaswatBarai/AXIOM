@@ -60,6 +60,21 @@ variable "razorpay_webhook_secret" {
   sensitive   = true
 }
 
+variable "razorpay_plan_monthly" {
+  description = "Razorpay plan ID for monthly subscription"
+  type        = string
+}
+
+variable "razorpay_plan_quarterly" {
+  description = "Razorpay plan ID for quarterly subscription"
+  type        = string
+}
+
+variable "razorpay_plan_annual" {
+  description = "Razorpay plan ID for annual subscription"
+  type        = string
+}
+
 variable "ses_smtp_user" {
   description = "IAM access key ID for SES SMTP (axiom-ses-smtp user)"
   type        = string

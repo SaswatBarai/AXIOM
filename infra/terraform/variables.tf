@@ -85,6 +85,24 @@ variable "razorpay_webhook_secret" {
   sensitive   = true
 }
 
+variable "razorpay_plan_monthly" {
+  description = "Razorpay plan ID for monthly subscription"
+  type        = string
+  default     = ""
+}
+
+variable "razorpay_plan_quarterly" {
+  description = "Razorpay plan ID for quarterly subscription"
+  type        = string
+  default     = ""
+}
+
+variable "razorpay_plan_annual" {
+  description = "Razorpay plan ID for annual subscription"
+  type        = string
+  default     = ""
+}
+
 variable "aws_s3_bucket" {
   description = "S3 bucket name for storing resume files"
   type        = string
