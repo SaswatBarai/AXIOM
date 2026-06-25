@@ -37,3 +37,19 @@ vi.mock("../services/redis.service", () => ({
     connect: vi.fn().mockResolvedValue(undefined),
   },
 }));
+
+const mockQueue = {
+  add: vi.fn().mockResolvedValue({ id: "job-1" }),
+  process: vi.fn(),
+  on: vi.fn(),
+};
+
+vi.mock("../services/queue.service", () => ({
+  emailQueue: mockQueue,
+  notificationQueue: mockQueue,
+  digestQueue: mockQueue,
+  resumeParsingQueue: mockQueue,
+  jobDiscoveryQueue: mockQueue,
+  scheduleWeeklyDigest: vi.fn(),
+  scheduleDiscoveryTimeoutCheck: vi.fn(),
+}));
