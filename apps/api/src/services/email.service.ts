@@ -1,25 +1,22 @@
 import nodemailer from "nodemailer";
-import { Resend } from "resend";
 import { logger } from "../utils/logger";
 
-// ── Transport (Resend for production, Nodemailer/SMTP for dev fallback) ───────
+// ── SES SMTP transport ────────────────────────────────────────────────────────
+// Credentials: IAM user axiom-ses-smtp (ses:SendRawEmail only).
+// SMTP password is the SES-derived v4 password, NOT the raw IAM secret key.
+// Set SES_SMTP_USER and SES_SMTP_PASS in AWS Secrets Manager (axiom/prod).
 
-const RESEND_API_KEY = process.env["RESEND_API_KEY"];
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+const transporter = nodemailer.createTransport({
+  host:   "email-smtp.us-east-1.amazonaws.com",
+  port:   587,
+  secure: false,
+  auth: {
+    user: process.env["SES_SMTP_USER"] ?? "",
+    pass: process.env["SES_SMTP_PASS"] ?? "",
+  },
+});
 
-const transporter = !resend
-  ? nodemailer.createTransport({
-      host:   process.env["SMTP_HOST"]     ?? "smtp.ethereal.email",
-      port:   Number(process.env["SMTP_PORT"]   ?? 587),
-      secure: process.env["SMTP_SECURE"]   !== "false",
-      auth: {
-        user: process.env["SMTP_USER"]  ?? "",
-        pass: process.env["SMTP_PASS"]  ?? "",
-      },
-    })
-  : null;
-
-const FROM = process.env["EMAIL_FROM"] ?? "AXIOM <noreply@axiom.dev>";
+const FROM = process.env["EMAIL_FROM"] ?? "AXIOM <noreply@saswat.app>";
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 
@@ -146,23 +143,12 @@ export async function sendEmail(opts: {
   data:     TemplateData;
 }): Promise<void> {
   const { subject, html } = renderTemplate(opts.template, opts.data);
-  
-  if (resend) {
-    const { error } = await resend.emails.send({
-      from: FROM,
-      to: [opts.to],
-      subject,
-      html,
-    });
-    if (error) {
-      logger.error("Failed to send email via Resend", error);
-      throw error;
-    }
-    logger.info(`Email sent via Resend to ${opts.to} [Template: ${opts.template}]`);
-  } else if (transporter) {
-    await transporter.sendMail({ from: FROM, to: opts.to, subject, html });
-    logger.info(`Email sent via Nodemailer fallback to ${opts.to} [Template: ${opts.template}]`);
-  } else {
-    logger.warn(`No email provider configured. Skip sending email to ${opts.to}`);
+
+  if (!process.env["SES_SMTP_USER"] || !process.env["SES_SMTP_PASS"]) {
+    logger.warn(`SES credentials not configured. Skipping email to ${opts.to} [${opts.template}]`);
+    return;
   }
+
+  await transporter.sendMail({ from: FROM, to: opts.to, subject, html });
+  logger.info(`Email sent via SES SMTP to ${opts.to} [Template: ${opts.template}]`);
 }

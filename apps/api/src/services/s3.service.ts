@@ -6,24 +6,25 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const ENDPOINT  = process.env.S3_ENDPOINT;
-const BUCKET    = process.env.AWS_S3_BUCKET ?? "axiom-resumes";
-const ACCESS_KEY = process.env.AWS_ACCESS_KEY_ID;
-const SECRET_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+const ENDPOINT = process.env.S3_ENDPOINT;
+const BUCKET   = process.env.AWS_S3_BUCKET ?? "axiom-resumes";
 
-if (!ACCESS_KEY || !SECRET_KEY) {
-  throw new Error("Missing required environment variables: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY");
-}
-
+// Credentials are resolved automatically:
+// - In dev: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars (or MinIO via S3_ENDPOINT)
+// - In prod: EC2 instance IAM role via IMDS (no explicit keys needed)
 const s3 = new S3Client({
   region: process.env.AWS_REGION ?? "us-east-1",
-  credentials: {
-    accessKeyId:     ACCESS_KEY,
-    secretAccessKey: SECRET_KEY,
-  },
+  ...(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+    ? {
+        credentials: {
+          accessKeyId:     process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
+      }
+    : {}),
   ...(ENDPOINT && {
-    endpoint:         ENDPOINT,
-    forcePathStyle:   true,
+    endpoint:       ENDPOINT,
+    forcePathStyle: true,
   }),
 });
 
