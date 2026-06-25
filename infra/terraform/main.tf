@@ -110,8 +110,11 @@ module "secrets" {
   jwt_refresh_secret   = var.jwt_refresh_secret
   ai_service_secret    = var.ai_service_secret
   deepseek_api_key     = var.deepseek_api_key
-  ses_smtp_user        = module.email.ses_smtp_user
-  ses_smtp_pass        = module.email.ses_smtp_password
+  ses_smtp_user           = module.email.ses_smtp_user
+  ses_smtp_pass           = module.email.ses_smtp_password
+  razorpay_key_id         = var.razorpay_key_id
+  razorpay_key_secret     = var.razorpay_key_secret
+  razorpay_webhook_secret = var.razorpay_webhook_secret
   aws_s3_bucket        = var.aws_s3_bucket
   aws_region           = var.aws_region
   domain               = var.domain

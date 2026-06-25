@@ -67,6 +67,24 @@ variable "deepseek_api_key" {
   sensitive   = true
 }
 
+variable "razorpay_key_id" {
+  description = "Razorpay API key ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "razorpay_key_secret" {
+  description = "Razorpay API key secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "razorpay_webhook_secret" {
+  description = "Razorpay webhook signing secret"
+  type        = string
+  sensitive   = true
+}
+
 variable "aws_s3_bucket" {
   description = "S3 bucket name for storing resume files"
   type        = string
