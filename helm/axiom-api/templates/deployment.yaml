@@ -21,10 +21,18 @@ spec:
         {{- include "axiom-api.selectorLabels" . | nindent 8 }}
     spec:
       terminationGracePeriodSeconds: 30
+      volumes:
+        - name: rds-ca
+          configMap:
+            name: {{ include "axiom-api.fullname" . }}-rds-ca
       containers:
         - name: axiom-api
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: rds-ca
+              mountPath: /etc/ssl/rds
+              readOnly: true
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
