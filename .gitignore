@@ -72,3 +72,11 @@ docker/volumes/
 *.pem
 *.key
 .vscode/
+
+# Terraform — never commit state, provider binaries, or secret var files
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
