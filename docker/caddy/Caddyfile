@@ -1,0 +1,22 @@
+# AXIOM production — saswat.app subdomains
+# Caddy obtains Let's Encrypt certificates automatically.
+
+{
+	email {$ACME_EMAIL}
+}
+
+# Main app: Next.js + API under /api (same-origin cookies)
+axiom.saswat.app {
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:4000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}
+
+# Direct API host — OAuth callbacks, Razorpay webhooks, health checks
+api.axiom.saswat.app {
+	reverse_proxy api:4000
+}
