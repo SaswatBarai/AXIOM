@@ -13,6 +13,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app ./
 COPY apps/api ./apps/api
+# Prisma config requires DATABASE_URL at generate time; runtime uses compose env.
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
 RUN pnpm --filter @axiom/database db:generate
 RUN pnpm --filter @axiom/api build
 
