@@ -13,6 +13,7 @@ import { setCredentials } from "@/store/authSlice";
 import type { AppDispatch } from "@/store";
 import { PasswordInput } from "./PasswordInput";
 import { AuthFooter } from "./AuthFooter";
+import { SocialAuthButtons } from "./SocialAuthButtons";
 
 export function LoginForm() {
   const router = useRouter();
@@ -143,24 +144,7 @@ export function LoginForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 bg-bg-card border-border-subtle text-text-primary hover:bg-bg-hover rounded-xl text-xs font-semibold cursor-pointer"
-            onClick={() => alert("Social sign-in coming soon!")}
-          >
-            Google
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 bg-bg-card border-border-subtle text-text-primary hover:bg-bg-hover rounded-xl text-xs font-semibold cursor-pointer"
-            onClick={() => alert("Social sign-in coming soon!")}
-          >
-            GitHub
-          </Button>
-        </div>
+        <SocialAuthButtons returnTo="/dashboard" />
       </div>
 
       {/* Auth Footer & Sign up link */}

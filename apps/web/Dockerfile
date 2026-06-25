@@ -13,7 +13,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app ./
 COPY apps/web ./apps/web
-# Set environment variables if needed during build (e.g. Next.js build variables)
+ARG NEXT_PUBLIC_API_URL=https://axiom.saswat.app/api
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @axiom/web build
 

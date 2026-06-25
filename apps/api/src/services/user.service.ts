@@ -89,7 +89,7 @@ export async function exportData(userId: string) {
   });
   if (!user) throw new AppError(404, "User not found");
   // Strip credentials before export
-  const { password: _, googleId: _g, chatHistory: _ch, ...safeUser } = user;
+  const { password: _, googleId: _g, githubId: _gh, chatHistory: _ch, ...safeUser } = user;
   return safeUser;
 }
 

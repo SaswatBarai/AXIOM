@@ -1,0 +1,155 @@
+# Production stack for AXIOM on a single VPS (e.g. axiom.saswat.app)
+# Images are built by GitHub Actions and pushed to GHCR.
+#
+# Required on server: /opt/axiom/.env (see deploy/env.prod.example)
+
+name: axiom-prod
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-axiom}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-axiom}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [axiom]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass "${REDIS_PASSWORD}"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [axiom]
+
+  db-migrate:
+    image: ${GHCR_IMAGE_PREFIX}/axiom-api:${IMAGE_TAG:-latest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    command: ["sh", "-c", "cd packages/database && npx prisma migrate deploy"]
+    restart: "no"
+    networks: [axiom]
+
+  ai:
+    image: ${GHCR_IMAGE_PREFIX}/axiom-ai:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      KAFKA_ENABLED: "false"
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      AI_SERVICE_PORT: 8000
+      AI_SERVICE_SECRET: ${AI_SERVICE_SECRET}
+    networks: [axiom]
+
+  api:
+    image: ${GHCR_IMAGE_PREFIX}/axiom-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+      ai:
+        condition: service_started
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRY: ${JWT_EXPIRY:-7d}
+      NODE_ENV: production
+      API_PORT: 4000
+      FRONTEND_URL: ${FRONTEND_URL}
+      API_PUBLIC_URL: ${API_PUBLIC_URL}
+      AI_SERVICE_URL: http://ai:8000
+      AI_SERVICE_SECRET: ${AI_SERVICE_SECRET}
+      KAFKA_ENABLED: "false"
+      EMAIL_FROM: ${EMAIL_FROM}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
+      RAZORPAY_PLAN_MONTHLY: ${RAZORPAY_PLAN_MONTHLY}
+      RAZORPAY_PLAN_QUARTERLY: ${RAZORPAY_PLAN_QUARTERLY}
+      RAZORPAY_PLAN_ANNUAL: ${RAZORPAY_PLAN_ANNUAL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+    networks: [axiom]
+
+  web:
+    image: ${GHCR_IMAGE_PREFIX}/axiom-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_URL: http://api:4000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    networks: [axiom]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+    networks: [axiom]
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  axiom:
+    driver: bridge

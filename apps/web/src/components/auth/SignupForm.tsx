@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { PasswordInput } from "./PasswordInput";
 import { AuthFooter } from "./AuthFooter";
+import { SocialAuthButtons } from "./SocialAuthButtons";
 
 const PASSWORD_REQS = [
   { label: "At least 8 characters", test: (pw: string) => pw.length >= 8 },
@@ -186,24 +187,7 @@ export function SignupForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 bg-bg-card border-border-subtle text-text-primary hover:bg-bg-hover rounded-xl text-xs font-semibold cursor-pointer"
-            onClick={() => alert("Social sign-up coming soon!")}
-          >
-            Google
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 bg-bg-card border-border-subtle text-text-primary hover:bg-bg-hover rounded-xl text-xs font-semibold cursor-pointer"
-            onClick={() => alert("Social sign-up coming soon!")}
-          >
-            GitHub
-          </Button>
-        </div>
+        <SocialAuthButtons returnTo="/dashboard" />
       </div>
 
       {/* Redirect & Trust signals footer */}

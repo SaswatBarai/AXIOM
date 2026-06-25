@@ -3,6 +3,7 @@ export const TTL = {
   ACCESS_TOKEN: 15 * 60,          // 15 min
   REFRESH_TOKEN: 7 * 24 * 60 * 60, // 7 days
   OTP: 15 * 60,                   // 15 min
+  OAUTH_STATE: 10 * 60,           // 10 min
   USER_PROFILE: 5 * 60,           // 5 min
   JOB_LIST: 10 * 60,              // 10 min
   JOB_DETAIL: 30 * 60,            // 30 min
@@ -15,6 +16,7 @@ export const CacheKey = {
   blacklist: (jti: string) => `auth:bl:${jti}`,
   otp: (email: string) => `auth:otp:${email}`,
   resetOtp: (email: string) => `auth:reset:${email}`,
+  oauthState: (state: string) => `auth:oauth:state:${state}`,
   userProfile: (userId: string) => `user:profile:${userId}`,
   jobList: (page: number, filters: string) => `jobs:list:${page}:${filters}`,
   jobDetail: (jobId: string) => `jobs:detail:${jobId}`,

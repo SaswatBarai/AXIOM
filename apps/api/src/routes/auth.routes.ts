@@ -12,6 +12,10 @@ import {
   forgotPasswordHandler,
   resetPasswordHandler,
   meHandler,
+  googleOAuthStartHandler,
+  googleOAuthCallbackHandler,
+  githubOAuthStartHandler,
+  githubOAuthCallbackHandler,
 } from "../controllers/auth.controller";
 import {
   registerSchema,
@@ -58,5 +62,10 @@ router.post("/logout",         authLimiter,  requireAuth,                      l
 router.post("/forgot-password", emailLimiter, validate(forgotPasswordSchema),  forgotPasswordHandler);
 router.post("/reset-password",  emailLimiter, validate(resetPasswordSchema),   resetPasswordHandler);
 router.get( "/me",             authLimiter,  requireAuth,                      meHandler);
+
+router.get("/google",           authLimiter,                                    googleOAuthStartHandler);
+router.get("/google/callback",  authLimiter,                                    googleOAuthCallbackHandler);
+router.get("/github",           authLimiter,                                    githubOAuthStartHandler);
+router.get("/github/callback",  authLimiter,                                    githubOAuthCallbackHandler);
 
 export default router;

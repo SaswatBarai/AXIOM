@@ -17,6 +17,7 @@ import applicationRoutes from "./routes/application.routes";
 import paymentRoutes from "./routes/payment.routes";
 import { webhookHandler as paymentWebhookHandler } from "./controllers/payment.controller";
 import { reconcileExpiredSubscriptions } from "./services/payment.service";
+import { logOAuthMisconfig } from "./services/oauth.service";
 import skillRoutes from "./routes/skill.routes";
 import chatRoutes from "./routes/chat.routes";
 import coverLetterRoutes from "./routes/coverLetter.routes";
@@ -231,6 +232,7 @@ async function bootstrap() {
   });
   scheduleNightlyRefresh();
   scheduleSubscriptionReconciliation();
+  logOAuthMisconfig();
   await scheduleWeeklyDigest();
   await scheduleDiscoveryTimeoutCheck();
 }

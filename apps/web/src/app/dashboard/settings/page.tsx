@@ -23,6 +23,7 @@ import { useTheme } from "next-themes";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/UserAvatar";
 
 type TabId = "profile" | "security" | "appearance" | "notifs" | "danger";
 
@@ -639,7 +640,7 @@ export default function SettingsPage() {
 
   const displayName = profile?.name ?? user?.name ?? "User";
   const displayEmail = profile?.email ?? user?.email ?? "";
-  const initial = displayName.charAt(0).toUpperCase();
+  const displayAvatar = profile?.avatarUrl ?? user?.avatarUrl;
 
   if (isLoading) {
     return <SettingsPageSkeleton />;
@@ -683,9 +684,14 @@ export default function SettingsPage() {
         >
           <Card className="mb-8 border border-border-subtle bg-bg-card/40 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg">
               <div className="p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/20 flex items-center justify-center shrink-0 shadow-inner">
-                  <span className="text-2xl font-bold text-brand">{initial}</span>
-                </div>
+                <UserAvatar
+                  name={displayName}
+                  email={displayEmail}
+                  avatarUrl={displayAvatar}
+                  size={64}
+                  rounded="xl"
+                  className="shadow-inner"
+                />
                 <div className="flex-1 text-center sm:text-left min-w-0">
                   <p className="text-lg font-bold text-text-primary truncate">{displayName}</p>
                   <p className="text-sm text-text-secondary truncate">{displayEmail}</p>

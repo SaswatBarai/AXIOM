@@ -21,6 +21,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { UserAvatar } from "@/components/UserAvatar";
 import { SidebarResizeHandle } from "@/components/dashboard/SidebarResizeHandle";
 import { cn } from "@/lib/utils";
 
@@ -208,11 +209,12 @@ export function Sidebar({
               isCollapsed ? "h-10 w-10 justify-center mx-auto" : "gap-3 px-3 py-1",
             )}
           >
-            <div className="w-8 h-8 rounded-full bg-bg-elevated border border-border-subtle flex items-center justify-center shrink-0">
-              <span className="text-xs font-semibold text-text-primary uppercase">
-                {user.name?.charAt(0) ?? user.email.charAt(0)}
-              </span>
-            </div>
+            <UserAvatar
+              name={user.name}
+              email={user.email}
+              avatarUrl={user.avatarUrl}
+              size={32}
+            />
             {!isCollapsed && (
               <div className="min-w-0 flex flex-col justify-center">
                 <p className="text-xs font-semibold text-text-primary truncate leading-none">

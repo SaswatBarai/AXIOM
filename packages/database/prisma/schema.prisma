@@ -76,6 +76,7 @@ model User {
   // Auth
   emailVerified    Boolean   @default(false)
   googleId         String?   @unique
+  githubId         String?   @unique
 
   // Phase 11 — most-recent skill gap report
   latestGapReport Json?

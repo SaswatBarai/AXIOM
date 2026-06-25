@@ -1,8 +1,11 @@
-import type { Response, NextFunction } from "express";
+import type { Response, NextFunction, Request } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware";
 import { assertUserId } from "../middleware/auth.middleware";
 import * as authService from "../services/auth.service";
+import * as oauthService from "../services/oauth.service";
 import { prisma } from "@axiom/database";
+import { AppError } from "../middleware/errorHandler.middleware";
+import { logger } from "../utils/logger";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -98,4 +101,66 @@ export async function meHandler(req: AuthRequest, res: Response, next: NextFunct
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ user });
   } catch (err) { next(err); }
+}
+
+export async function googleOAuthStartHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const returnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : undefined;
+    const state = await oauthService.createOAuthState("google", returnTo);
+    res.redirect(oauthService.getGoogleAuthUrl(state));
+  } catch (err) { next(err); }
+}
+
+export async function googleOAuthCallbackHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const code = typeof req.query.code === "string" ? req.query.code : null;
+    const state = typeof req.query.state === "string" ? req.query.state : null;
+    const oauthError = typeof req.query.error === "string" ? req.query.error : null;
+
+    if (oauthError) {
+      return res.redirect(oauthService.oauthErrorRedirect("Google sign-in was cancelled"));
+    }
+    if (!code || !state) {
+      return res.redirect(oauthService.oauthErrorRedirect("Invalid Google callback"));
+    }
+
+    const result = await oauthService.completeOAuthLogin("google", code, state);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.redirect(oauthService.oauthSuccessRedirect(result.accessToken, result.returnTo));
+  } catch (err) {
+    logger.warn({ err }, "Google OAuth callback failed");
+    const message = err instanceof AppError ? err.message : "Google sign-in failed";
+    res.redirect(oauthService.oauthErrorRedirect(message));
+  }
+}
+
+export async function githubOAuthStartHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const returnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : undefined;
+    const state = await oauthService.createOAuthState("github", returnTo);
+    res.redirect(oauthService.getGitHubAuthUrl(state));
+  } catch (err) { next(err); }
+}
+
+export async function githubOAuthCallbackHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const code = typeof req.query.code === "string" ? req.query.code : null;
+    const state = typeof req.query.state === "string" ? req.query.state : null;
+    const oauthError = typeof req.query.error === "string" ? req.query.error : null;
+
+    if (oauthError) {
+      return res.redirect(oauthService.oauthErrorRedirect("GitHub sign-in was cancelled"));
+    }
+    if (!code || !state) {
+      return res.redirect(oauthService.oauthErrorRedirect("Invalid GitHub callback"));
+    }
+
+    const result = await oauthService.completeOAuthLogin("github", code, state);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.redirect(oauthService.oauthSuccessRedirect(result.accessToken, result.returnTo));
+  } catch (err) {
+    logger.warn({ err }, "GitHub OAuth callback failed");
+    const message = err instanceof AppError ? err.message : "GitHub sign-in failed";
+    res.redirect(oauthService.oauthErrorRedirect(message));
+  }
 }
